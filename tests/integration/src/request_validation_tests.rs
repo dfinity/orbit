@@ -36,6 +36,7 @@ fn assert_list_requests_only_one_active_requests_with_dedup_key(
             sort_by: None,
             only_approvable: false,
             with_evaluation_results: false,
+            tags: None,
         },),
     )
     .unwrap();
@@ -83,6 +84,7 @@ fn test_request_deduplication() {
         }),
         expiration_dt: None,
         deduplication_key: Some("test".to_string()),
+        tags: None,
     };
 
     let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(

@@ -160,6 +160,7 @@ mod mnanage_system_info_test_utils {
                 mock_manage_system_info_api_input(),
             ),
             deduplication_key: None,
+            tags: None,
         }
     }
 }

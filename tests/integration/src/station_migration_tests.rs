@@ -477,6 +477,7 @@ fn assert_can_list_requests(
                 limit: Some(25),
             }),
             deduplication_keys: None,
+            tags: None,
         },),
     )
     .unwrap();

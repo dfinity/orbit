@@ -177,6 +177,7 @@ mod test {
                 created_timestamp: 0,
                 last_modification_timestamp: 0,
                 deduplication_key: None,
+                tags: vec!["test_tag1".to_string(), "test_tag2".to_string()],
             },
             Request {
                 id: [1u8; 16],
@@ -210,6 +211,7 @@ mod test {
                 created_timestamp: 0,
                 last_modification_timestamp: 0,
                 deduplication_key: Some("deduplication_key_1".to_string()),
+                tags: vec!["test_tag1".to_string()],
             },
             Request {
                 id: [2u8; 16],
@@ -240,6 +242,7 @@ mod test {
                 created_timestamp: 0,
                 last_modification_timestamp: 0,
                 deduplication_key: Some("deduplication_key_2".to_string()),
+                tags: vec![],
             },
             Request {
                 id: [3u8; 16],
@@ -264,6 +267,7 @@ mod test {
                 created_timestamp: 0,
                 last_modification_timestamp: 0,
                 deduplication_key: Some("deduplication_key_3".to_string()),
+                tags: vec!["test_tag1".to_string(), "test_tag2".to_string()],
             },
         ];
 

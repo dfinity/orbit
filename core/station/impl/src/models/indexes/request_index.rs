@@ -20,6 +20,8 @@ pub struct RequestIndexFields {
     pub rejected_by: BTreeSet<UserId>,
     pub resources: Vec<Resource>,
     pub deduplication_key: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
 }
 
 #[storable]
@@ -75,6 +77,7 @@ impl Request {
                 .collect(),
             resources: self.operation.to_resources(),
             deduplication_key: self.deduplication_key.clone(),
+            tags: self.tags.clone(),
         }
     }
 

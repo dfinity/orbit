@@ -62,6 +62,9 @@ pub struct Request {
     pub last_modification_timestamp: Timestamp,
     /// The deduplication key of the request.
     pub deduplication_key: Option<String>,
+    /// The tags of the request.
+    #[serde(default)]
+    pub tags: Vec<String>,
 }
 
 #[storable]
@@ -124,6 +127,44 @@ fn validate_expiration_dt(expiration_dt: &Timestamp) -> ModelValidatorResult<Req
         return Err(RequestError::ValidationError {
             info: "The expiration date must be in the future".to_owned(),
         });
+    }
+
+    Ok(())
+}
+
+fn validate_tags(tags: &[String]) -> ModelValidatorResult<RequestError> {
+    if tags.is_empty() {
+        return Ok(());
+    }
+
+    if tags.len() > Request::MAX_TAGS_LEN as usize {
+        return Err(RequestError::ValidationError {
+            info: format!(
+                "The number of tags exceeds the maximum allowed: {}",
+                Request::MAX_TAGS_LEN
+            ),
+        });
+    }
+
+    if tags
+        .iter()
+        .any(|tag| tag.len() > Request::MAX_TAG_LEN as usize)
+    {
+        return Err(RequestError::ValidationError {
+            info: format!(
+                "The tag length exceeds the maximum allowed: {}",
+                Request::MAX_TAG_LEN
+            ),
+        });
+    }
+
+    let mut unique_tags = HashSet::new();
+    for tag in tags {
+        if !unique_tags.insert(tag.as_str()) {
+            return Err(RequestError::ValidationError {
+                info: "The tags must be unique".to_owned(),
+            });
+        }
     }
 
     Ok(())
@@ -270,6 +311,7 @@ impl ModelValidator<RequestError> for Request {
         self.operation.validate()?;
 
         validate_deduplication_key(&self.deduplication_key, &self.status)?;
+        validate_tags(&self.tags)?;
 
         Ok(())
     }
@@ -280,6 +322,8 @@ impl Request {
     pub const MAX_CANCEL_REASON_LEN: u16 = 1000;
     pub const MAX_SUMMARY_LEN: u16 = 1000;
     pub const MAX_DEDUPLICATION_KEY_LEN: u8 = 64;
+    pub const MAX_TAGS_LEN: u8 = 10;
+    pub const MAX_TAG_LEN: u8 = 64;
 
     /// Creates a new request key from the given key components.
     pub fn key(request_id: RequestId) -> RequestKey {
@@ -687,6 +731,82 @@ mod tests {
         let result = validate_deduplication_key(&request.deduplication_key, &request.status);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn fail_request_tags_too_many() {
+        let mut request = mock_request();
+        for i in 0..Request::MAX_TAGS_LEN as usize + 1 {
+            request.tags.push(format!("tag{}", i));
+        }
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: format!(
+                    "The number of tags exceeds the maximum allowed: {}",
+                    Request::MAX_TAGS_LEN
+                ),
+            }
+        );
+    }
+
+    #[test]
+    fn fail_request_tag_too_long() {
+        let mut request = mock_request();
+        request.tags = vec!["a".repeat(Request::MAX_TAG_LEN as usize + 1)];
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: format!(
+                    "The tag length exceeds the maximum allowed: {}",
+                    Request::MAX_TAG_LEN
+                ),
+            }
+        );
+    }
+
+    #[test]
+    fn fail_request_tags_not_unique() {
+        let mut request = mock_request();
+        request.tags = vec!["tag1".to_string(), "tag1".to_string()];
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The tags must be unique".to_owned(),
+            }
+        );
+    }
+
+    #[test]
+    fn test_request_tags_is_valid() {
+        let mut request = mock_request();
+        request.tags = vec!["tag1".to_string(), "tag2".to_string()];
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_request_tags_is_empty() {
+        let mut request = mock_request();
+        request.tags = vec![];
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_ok());
+    }
 }
 
 #[cfg(any(test, feature = "canbench"))]
@@ -733,6 +853,7 @@ pub mod request_test_utils {
             created_timestamp: 0,
             last_modification_timestamp: 0,
             deduplication_key: None,
+            tags: vec!["tag1".to_string(), "tag2".to_string()],
         }
     }
 }

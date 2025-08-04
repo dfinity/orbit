@@ -213,6 +213,7 @@ impl RequestService {
                 not_requesters: filter_by_votable,
                 excluded_ids: vec![],
                 deduplication_keys: input.deduplication_keys.unwrap_or_default(),
+                tags: input.tags.unwrap_or_default(),
             },
             input.sort_by,
         )?;
@@ -295,6 +296,7 @@ impl RequestService {
                 not_requesters: filter_by_votable,
                 excluded_ids: exclude_request_ids,
                 deduplication_keys: vec![],
+                tags: vec![],
             },
             input.sort_by,
         )?;
@@ -789,6 +791,7 @@ mod tests {
                     execution_plan: None,
                     expiration_dt: None,
                     deduplication_key: None,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -834,6 +837,7 @@ mod tests {
                     execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
                     expiration_dt: None,
                     deduplication_key: None,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1027,6 +1031,7 @@ mod tests {
             sort_by: None,
             statuses: None,
             deduplication_keys: None,
+            tags: None,
         };
 
         let users = vec![requester, approver, another_user];
@@ -1098,6 +1103,7 @@ mod tests {
                     only_approvable: false,
                     with_evaluation_results: false,
                     deduplication_keys: None,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1234,6 +1240,7 @@ mod tests {
                     only_approvable: true,
                     with_evaluation_results: false,
                     deduplication_keys: None,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1260,6 +1267,7 @@ mod tests {
                     only_approvable: true,
                     with_evaluation_results: false,
                     deduplication_keys: None,
+                    tags: None,
                 },
                 &CallContext::new(transfer_requester_user.identities[0]),
             )
@@ -1285,6 +1293,7 @@ mod tests {
                     only_approvable: true,
                     with_evaluation_results: false,
                     deduplication_keys: None,
+                    tags: None,
                 },
                 &CallContext::new(no_access_user.identities[0]),
             )
@@ -1327,6 +1336,7 @@ mod tests {
                     only_approvable: true,
                     with_evaluation_results: false,
                     deduplication_keys: None,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1472,6 +1482,7 @@ mod tests {
                     only_approvable: true,
                     with_evaluation_results: false,
                     deduplication_keys: None,
+                    tags: None,
                 },
                 &CallContext::new(user_2.identities[0]),
             )
@@ -1515,6 +1526,7 @@ mod tests {
             summary: None,
             title: None,
             deduplication_key: None,
+            tags: None,
         };
 
         let request_before_approval = REQUEST_SERVICE
@@ -1595,6 +1607,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: false,
                     with_evaluation_results: false,
+                    tags: None,
                 },
                 &CallContext::new(user_2.identities[0]),
             )
@@ -1704,6 +1717,7 @@ mod benchs {
                             only_approvable: false,
                             with_evaluation_results: false,
                             deduplication_keys: None,
+                            tags: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
@@ -1750,6 +1764,7 @@ mod benchs {
                             only_approvable: false,
                             with_evaluation_results: false,
                             deduplication_keys: None,
+                            tags: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )

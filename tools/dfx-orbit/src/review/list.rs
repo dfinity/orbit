@@ -100,6 +100,7 @@ impl DfxOrbit {
             only_approvable: args.only_approvable,
             with_evaluation_results: true,
             deduplication_keys: None,
+            tags: None,
         }
     }
 

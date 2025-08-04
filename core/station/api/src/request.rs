@@ -240,6 +240,7 @@ pub struct RequestDTO {
     pub expiration_dt: TimestampRfc3339,
     pub execution_plan: RequestExecutionScheduleDTO,
     pub deduplication_key: Option<String>,
+    pub tags: Vec<String>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -264,6 +265,7 @@ pub struct CreateRequestInput {
     pub execution_plan: Option<RequestExecutionScheduleDTO>,
     pub expiration_dt: Option<TimestampRfc3339>,
     pub deduplication_key: Option<String>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -326,6 +328,7 @@ pub struct ListRequestsInput {
     pub only_approvable: bool,
     pub with_evaluation_results: bool,
     pub deduplication_keys: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

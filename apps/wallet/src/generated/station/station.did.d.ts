@@ -304,6 +304,7 @@ export interface CreateRequestInput {
   'execution_plan' : [] | [RequestExecutionSchedule],
   'expiration_dt' : [] | [TimestampRFC3339],
   'deduplication_key' : [] | [string],
+  'tags' : [] | [Array<string>],
   'summary' : [] | [string],
   'operation' : RequestOperationInput,
 }
@@ -915,6 +916,7 @@ export interface ListRequestsInput {
   'deduplication_keys' : [] | [Array<string>],
   'with_evaluation_results' : boolean,
   'expiration_from_dt' : [] | [TimestampRFC3339],
+  'tags' : [] | [Array<string>],
   'created_to_dt' : [] | [TimestampRFC3339],
   'statuses' : [] | [Array<RequestStatusCode>],
   'approver_ids' : [] | [Array<UUID>],
@@ -1155,6 +1157,7 @@ export interface Request {
   'execution_plan' : RequestExecutionSchedule,
   'expiration_dt' : TimestampRFC3339,
   'deduplication_key' : [] | [string],
+  'tags' : Array<string>,
   'created_at' : TimestampRFC3339,
   'requested_by' : UUID,
   'summary' : [] | [string],

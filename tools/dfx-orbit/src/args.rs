@@ -190,6 +190,7 @@ impl RequestArgs {
             execution_plan: None,
             expiration_dt: None,
             deduplication_key: None,
+            tags: None,
         })
     }
 }

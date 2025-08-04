@@ -887,6 +887,7 @@ export const idlFactory = ({ IDL }) => {
     'execution_plan' : RequestExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
     'deduplication_key' : IDL.Opt(IDL.Text),
+    'tags' : IDL.Vec(IDL.Text),
     'created_at' : TimestampRFC3339,
     'requested_by' : UUID,
     'summary' : IDL.Opt(IDL.Text),
@@ -1032,6 +1033,7 @@ export const idlFactory = ({ IDL }) => {
     'execution_plan' : IDL.Opt(RequestExecutionSchedule),
     'expiration_dt' : IDL.Opt(TimestampRFC3339),
     'deduplication_key' : IDL.Opt(IDL.Text),
+    'tags' : IDL.Opt(IDL.Vec(IDL.Text)),
     'summary' : IDL.Opt(IDL.Text),
     'operation' : RequestOperationInput,
   });
@@ -1606,6 +1608,7 @@ export const idlFactory = ({ IDL }) => {
     'deduplication_keys' : IDL.Opt(IDL.Vec(IDL.Text)),
     'with_evaluation_results' : IDL.Bool,
     'expiration_from_dt' : IDL.Opt(TimestampRFC3339),
+    'tags' : IDL.Opt(IDL.Vec(IDL.Text)),
     'created_to_dt' : IDL.Opt(TimestampRFC3339),
     'statuses' : IDL.Opt(IDL.Vec(RequestStatusCode)),
     'approver_ids' : IDL.Opt(IDL.Vec(UUID)),

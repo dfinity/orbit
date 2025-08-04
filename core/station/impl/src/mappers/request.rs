@@ -25,6 +25,7 @@ impl Request {
         title: String,
         summary: Option<String>,
         deduplication_key: Option<String>,
+        tags: Vec<String>,
     ) -> Request {
         let now = next_time();
 
@@ -41,6 +42,7 @@ impl Request {
             created_timestamp: now,
             last_modification_timestamp: now,
             deduplication_key,
+            tags,
         }
     }
 
@@ -75,6 +77,7 @@ impl Request {
                 .map(|approval| approval.to_owned().into())
                 .collect(),
             deduplication_key: self.deduplication_key,
+            tags: self.tags,
         }
     }
 
@@ -117,6 +120,7 @@ impl Request {
             request_config.title.unwrap_or(request_default_title),
             request_config.summary,
             request_config.deduplication_key,
+            request_config.tags.unwrap_or_default(),
         )
     }
 }
