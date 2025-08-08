@@ -39,7 +39,7 @@
 import { mdiContentCopy } from '@mdi/js';
 import { copyToClipboard } from '~/utils/app.utils';
 import TextOverflow from '../TextOverflow.vue';
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 
 const props = withDefaults(
   defineProps<{

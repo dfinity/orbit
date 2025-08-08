@@ -1,4 +1,4 @@
-import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
+import { Actor, ActorSubclass, HttpAgent } from '@icp-sdk/core/agent';
 import { icAgent } from '~/core/ic-agent.core';
 import { idlFactory as IcpIndexIdlFactory } from '~/generated/icp_index';
 import { idlFactory as IcpLedgerIdlFactory } from '~/generated/icp_ledger';

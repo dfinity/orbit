@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
 import { AccountBalance, FetchAccountBalancesResult, UUID } from '~/generated/station/station.did';

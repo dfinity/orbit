@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { gunzip } from 'fflate';
 import { appInitConfig } from '~/configs/init.config';
 import { RegistryEntry, WasmModuleExtraChunks } from '~/generated/control-panel/control_panel.did';
