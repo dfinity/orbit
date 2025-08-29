@@ -53,8 +53,9 @@ export function statusReasonsToTextSummary(
   const reasonList = reasons
     .map(reason => i18n.global.t(summaryReasonToI18nKey(reason, finalStatus)))
     .join(', ');
+  const reason = reasonList || "No matching approval policy";
 
   return `${i18n.global.t(summaryKey, {
     count: reasons.length,
-  })} ${reasonList}.`;
+  })} ${reason}.`;
 }
