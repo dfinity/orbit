@@ -1,4 +1,4 @@
-import { HttpAgent } from '@dfinity/agent';
+import { HttpAgent } from '@icp-sdk/core/agent';
 import { describe, expect, it, vi } from 'vitest';
 import { RegistryEntry } from '~/generated/control-panel/control_panel.did';
 import { ControlPanelService } from '~/services/control-panel.service';

@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { defineStore } from 'pinia';
 import { appInitConfig } from '~/configs/init.config';
 import { createCompatibilityLayer, fetchCanisterVersion } from '~/core/compatibility.core';

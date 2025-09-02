@@ -27,7 +27,7 @@ export function convertDate(date: Date | undefined, options?: ConvertDateOptions
 
 export function convertDate(
   date: Date | undefined,
-  { time, tz }: ConvertDateOptions = {},
+  { time, tz = 'keep' }: ConvertDateOptions = {},
 ): Date | undefined {
   if (!date) {
     return undefined;

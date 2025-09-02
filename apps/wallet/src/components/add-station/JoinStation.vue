@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiChevronLeft, mdiContentCopy } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';

@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/configs/routes.config';
 import { REQUEST_DIALOG_QUERY_PARAM, STATION_ID_QUERY_PARAM } from '~/core/constants.core';
 import { ApiError } from '~/generated/control-panel/control_panel.did';

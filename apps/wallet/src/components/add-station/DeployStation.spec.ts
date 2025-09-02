@@ -4,7 +4,7 @@ import DeployStation from './DeployStation.vue';
 import { services } from '~/plugins/services.plugin';
 import { flushPromises } from '@vue/test-utils';
 import { CanDeployStationResponse, User } from '~/generated/control-panel/control_panel.did';
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { StationService } from '~/services/station.service';
 import { ControlPanelService } from '~/services/control-panel.service';
 

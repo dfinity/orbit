@@ -1,4 +1,4 @@
-import { AnonymousIdentity, HttpAgent } from '@dfinity/agent';
+import { AnonymousIdentity, HttpAgent } from '@icp-sdk/core/agent';
 import { appInitConfig } from '~/configs/init.config';
 import { logger } from './logger.core';
 import { AuthService } from '~/services/auth.service';

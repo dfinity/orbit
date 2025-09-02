@@ -1,6 +1,6 @@
-import { Certificate, LookupStatus } from '@dfinity/agent';
+import { Certificate, LookupStatus } from '@icp-sdk/core/agent';
 import { decode, encode, getServiceMethods } from '@dfinity/didc';
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { icAgent } from '~/core/ic-agent.core';
 
 export { decode, encode, getServiceMethods };

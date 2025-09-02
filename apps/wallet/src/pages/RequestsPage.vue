@@ -115,7 +115,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
 import { computed, Ref, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

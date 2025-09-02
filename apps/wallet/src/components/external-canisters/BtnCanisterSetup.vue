@@ -34,7 +34,7 @@
 import { ref } from 'vue';
 import { VBtn } from 'vuetify/components';
 import CanisterSetupDialog from './CanisterSetupDialog.vue';
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 
 const props = withDefaults(
   defineProps<{

@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import isUUID from 'validator/es/lib/isUUID';
 import { i18n } from '~/plugins/i18n.plugin';
 import { detectAddressFormat } from './asset.utils';
