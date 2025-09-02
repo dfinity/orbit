@@ -86,7 +86,7 @@
     "station": {
       "currentVersion": "0.6.0",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.7.0"
     },
     "upgrader-api": {
       "currentVersion": "0.2.0",
@@ -140,12 +140,12 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.6.0"
     },
     "dfx-orbit": {
       "currentVersion": "0.10.0",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.11.0"
     },
     "marketing-dapp": {
       "currentVersion": "0.3.0",
@@ -153,8 +153,8 @@
       "dependentProjects": []
     },
     "wallet-dapp": {
-      "currentVersion": "0.6.0",
-      "newVersion": "0.6.1",
+      "currentVersion": "0.6.1",
+      "newVersion": "0.7.0",
       "dependentProjects": []
     },
     "docs-portal": {
@@ -164,13 +164,37 @@
     }
   },
   "changes": {
-    "wallet-dapp": {
+    "station": {
       "releaseVersion": {
-        "rawVersion": "0.6.1",
-        "gitTag": "@orbit/wallet-dapp-v0.6.1",
+        "rawVersion": "0.7.0",
+        "gitTag": "@orbit/station-v0.7.0",
         "isPrerelease": false
       },
-      "contents": "## 0.6.1 (2025-07-28)\n\n\n### 🩹 Fixes\n\n- **ui:** degraded experience when failed to load system info ([#585](https://github.com/dfinity/orbit/pull/585))\n\n- **wallet:** remove invalid check for new controller input ([#593](https://github.com/dfinity/orbit/pull/593))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital"
+      "contents": "## 0.7.0 (2025-09-02)\n\n\n### 🚀 Features\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.6.0\n\n\n### ❤️  Thank You\n\n- mraszyk @mraszyk\n- tomer-dfinity"
+    },
+    "station-api": {
+      "releaseVersion": {
+        "rawVersion": "0.6.0",
+        "gitTag": "@orbit/station-api-v0.6.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.6.0 (2025-09-02)\n\n\n### 🚀 Features\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### ❤️  Thank You\n\n- mraszyk @mraszyk\n- tomer-dfinity"
+    },
+    "wallet-dapp": {
+      "releaseVersion": {
+        "rawVersion": "0.7.0",
+        "gitTag": "@orbit/wallet-dapp-v0.7.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.7.0 (2025-09-02)\n\n\n### 🚀 Features\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### ❤️  Thank You\n\n- mraszyk @mraszyk\n- tomer-dfinity"
+    },
+    "dfx-orbit": {
+      "releaseVersion": {
+        "rawVersion": "0.11.0",
+        "gitTag": "@orbit/dfx-orbit-v0.11.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.11.0 (2025-09-02)\n\n\n### 🚀 Features\n\n- **marketing:** marketing site home page ([#500](https://github.com/dfinity/orbit/pull/500))\n\n- **docs:** initial docs portal ([#493](https://github.com/dfinity/orbit/pull/493))\n\n- **station:** configurable station initialization ([#482](https://github.com/dfinity/orbit/pull/482))\n\n- **upgrader:** new endpoint to list station snapshots ([#545](https://github.com/dfinity/orbit/pull/545))\n\n- **station:** update Request::last_modification_timestamp on adding approval ([#576](https://github.com/dfinity/orbit/pull/576))\n\n- **wallet:** DR UI ([#557](https://github.com/dfinity/orbit/pull/557))\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### 🩹 Fixes\n\n- **CI:** use rustup 1.27.1 for docker build ([#532](https://github.com/dfinity/orbit/pull/532))\n\n- **station:** bump ic-cdk to fix canister_status parsing ([#538](https://github.com/dfinity/orbit/pull/538))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.6.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos\n- tomer-dfinity"
     }
   }
 }
