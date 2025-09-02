@@ -1,6 +1,6 @@
 import { EvaluationStatus, EvaluationSummaryReason } from '~/generated/station/station.did';
-import { unreachable, variantIs } from './helper.utils';
 import { i18n } from '~/plugins/i18n.plugin';
+import { unreachable, variantIs } from './helper.utils';
 
 export function statusToI18nKeyPrefix(status: EvaluationStatus): string {
   if (variantIs(status, 'Approved')) {
@@ -53,8 +53,9 @@ export function statusReasonsToTextSummary(
   const reasonList = reasons
     .map(reason => i18n.global.t(summaryReasonToI18nKey(reason, finalStatus)))
     .join(', ');
+  const reason = reasonList || 'No matching approval policy';
 
   return `${i18n.global.t(summaryKey, {
     count: reasons.length,
-  })} ${reasonList}.`;
+  })} ${reason}.`;
 }
