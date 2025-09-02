@@ -280,6 +280,8 @@ fn upgrade_reinstall_list_test() {
         sort_by: None,
         only_approvable: false,
         with_evaluation_results: false,
+        deduplication_keys: None,
+        tags: None,
     };
     let res: (ApiResult<ListRequestsResponse>,) = update_candid_as(
         &env,
@@ -308,6 +310,8 @@ fn upgrade_reinstall_list_test() {
         sort_by: None,
         only_approvable: false,
         with_evaluation_results: false,
+        deduplication_keys: None,
+        tags: None,
     };
     let res: (ApiResult<ListRequestsResponse>,) = update_candid_as(
         &env,
@@ -334,6 +338,8 @@ fn upgrade_reinstall_list_test() {
         sort_by: None,
         only_approvable: false,
         with_evaluation_results: false,
+        deduplication_keys: None,
+        tags: None,
     };
     let res: (ApiResult<ListRequestsResponse>,) = update_candid_as(
         &env,

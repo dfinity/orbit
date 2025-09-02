@@ -41,4 +41,26 @@ describe('CanisterIcSettingsForm', () => {
     expect(select.exists()).toBe(true);
     expect(select.vm.items.length).toEqual(3);
   });
+
+  it('add controllers btn is clickable', async () => {
+    const form = mount(CanisterIcSettingsForm, {
+      props: {
+        modelValue: { canisterId: Principal.anonymous(), controllers: [Principal.anonymous()] },
+        display: { canisterId: true },
+      },
+    });
+
+    const btn = form.find("[data-test-id='add-controller-button']");
+
+    expect(btn.exists()).toBe(true);
+    expect(btn.attributes().disabled).toBeDefined();
+
+    const controllerInput = form.find("[name='new_controller']");
+
+    expect(controllerInput.exists()).toBe(true);
+
+    await controllerInput.setValue('ryjl3-tyaaa-aaaaa-aaaba-cai');
+
+    expect(btn.attributes().disabled).toBeUndefined();
+  });
 });

@@ -154,6 +154,7 @@ fn test_canister_migration_path_with_previous_stable_memory_version(stable_memor
     env.tick();
     env.tick();
     env.tick();
+    env.tick();
 
     // Set the stable memory of the canister to the previous version of the canister
     env.set_stable_memory(
@@ -475,6 +476,8 @@ fn assert_can_list_requests(
                 offset: Some(0),
                 limit: Some(25),
             }),
+            deduplication_keys: None,
+            tags: None,
         },),
     )
     .unwrap();

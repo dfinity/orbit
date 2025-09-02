@@ -1294,6 +1294,10 @@ type Request = record {
   expiration_dt : TimestampRFC3339;
   // The time at which the request should be executed if approved.
   execution_plan : RequestExecutionSchedule;
+  // The optional deduplication key used to ensure request uniqueness.
+  deduplication_key : opt text;
+  // The tags that were provided during request creation.
+  tags : vec text;
 };
 
 // The input type for creating a request.
@@ -1308,6 +1312,10 @@ type CreateRequestInput = record {
   execution_plan : opt RequestExecutionSchedule;
   // The time at which the request will expire if still pending.
   expiration_dt : opt TimestampRFC3339;
+  // The optional deduplication key used to ensure request uniqueness.
+  deduplication_key : opt text;
+  // The list of tags for the request.
+  tags : opt vec text;
 };
 
 // The result type for creating a request.
@@ -1456,6 +1464,10 @@ type ListRequestsInput = record {
   only_approvable : bool;
   // Return the full evaluation results for the requests.
   with_evaluation_results : bool;
+  // Return only requests with one of these deduplication keys.
+  deduplication_keys : opt vec text;
+  // The tags to search. Return only requests which have at least one matching tag.
+  tags : opt vec text;
 };
 
 // The result type for getting the list of requests.

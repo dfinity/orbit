@@ -90,6 +90,8 @@ fn review() {
                 sort_by: None,
                 only_approvable: true,
                 with_evaluation_results: false,
+                deduplication_keys: None,
+                tags: None,
             })
             .await
             .unwrap();

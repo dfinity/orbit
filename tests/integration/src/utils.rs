@@ -205,6 +205,8 @@ pub fn submit_delayed_request_raw(
             execution_time: execution_time_nanos,
         }),
         expiration_dt: None,
+        deduplication_key: None,
+        tags: None,
     };
     update_candid_as(
         env,
@@ -227,6 +229,8 @@ pub fn submit_request_raw(
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
         expiration_dt: None,
+        deduplication_key: None,
+        tags: None,
     };
     update_candid_as(
         env,
@@ -707,6 +711,8 @@ pub fn create_account(
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
         expiration_dt: None,
+        deduplication_key: None,
+        tags: None,
     };
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         env,
@@ -781,6 +787,8 @@ pub fn create_transfer(
         summary: None,
         expiration_dt: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+        deduplication_key: None,
+        tags: None,
     };
     let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
         env,

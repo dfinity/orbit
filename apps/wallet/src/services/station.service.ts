@@ -278,6 +278,8 @@ export class StationService {
       title: [],
       summary: [],
       operation: { RemoveUserGroup: input },
+      deduplication_key: [],
+      tags: [],
     });
 
     if ('Err' in result) {
@@ -294,6 +296,8 @@ export class StationService {
       title: [],
       summary: [],
       operation: { AddUserGroup: input },
+      deduplication_key: [],
+      tags: [],
     });
 
     if ('Err' in result) {
@@ -310,6 +314,8 @@ export class StationService {
       title: [],
       summary: [],
       operation: { EditUserGroup: input },
+      deduplication_key: [],
+      tags: [],
     });
 
     if ('Err' in result) {
@@ -326,6 +332,8 @@ export class StationService {
       title: [],
       summary: [],
       operation: { AddUser: input },
+      deduplication_key: [],
+      tags: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -342,6 +350,8 @@ export class StationService {
       title: [],
       summary: [],
       operation: { EditUser: input },
+      deduplication_key: [],
+      tags: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -502,6 +512,8 @@ export class StationService {
       sort_by: sortingCriteria,
       only_approvable: !!onlyApprovable,
       with_evaluation_results: false,
+      deduplication_keys: [],
+      tags: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -694,9 +706,11 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         FundExternalCanister: input,
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -712,9 +726,11 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         MonitorExternalCanister: input,
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -733,12 +749,14 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         ConfigureExternalCanister: {
           canister_id: canisterId,
           kind: { NativeSettings: input },
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -757,9 +775,11 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         ChangeExternalCanister: input,
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -783,12 +803,14 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         ConfigureExternalCanister: {
           canister_id: input.canisterId,
           kind: operationKind,
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -871,8 +893,10 @@ export class StationService {
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddAsset: input },
       expiration_dt: [],
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -911,7 +935,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { CreateExternalCanister: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -926,8 +952,10 @@ export class StationService {
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditAsset: input },
       expiration_dt: [],
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -942,8 +970,10 @@ export class StationService {
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveAsset: input },
       expiration_dt: [],
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -987,7 +1017,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddAddressBookEntry: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1003,7 +1035,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditAddressBookEntry: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1088,7 +1122,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { CreateExternalCanister: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1113,6 +1149,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         CallExternalCanister: {
           execution_method: {
@@ -1124,6 +1161,7 @@ export class StationService {
           validation_method: call.validationMethod !== undefined ? [call.validationMethod] : [],
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1142,6 +1180,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         ConfigureExternalCanister: {
           canister_id: canisterId,
@@ -1150,6 +1189,7 @@ export class StationService {
           },
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1182,6 +1222,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         SnapshotExternalCanister: {
           canister_id: canisterId,
@@ -1189,6 +1230,7 @@ export class StationService {
           force: opts.force ?? false,
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1208,12 +1250,14 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         RestoreExternalCanister: {
           canister_id: canisterId,
           snapshot_id: snapshotId,
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1233,6 +1277,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         PruneExternalCanister: {
           canister_id: canisterId,
@@ -1241,6 +1286,7 @@ export class StationService {
           },
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1270,7 +1316,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditPermission: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1286,7 +1334,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditRequestPolicy: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1302,7 +1352,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddRequestPolicy: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1318,7 +1370,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { ManageSystemInfo: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1336,11 +1390,13 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         SetDisasterRecovery: {
           committee: [input],
         },
       },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1356,7 +1412,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditAccount: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1372,7 +1430,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddAccount: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1388,7 +1448,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: summary ? [summary] : [],
+      tags: [],
       operation: { Transfer: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1407,7 +1469,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: { SystemUpgrade: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1454,7 +1518,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveRequestPolicy: { policy_id: id } },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1470,7 +1536,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveAddressBookEntry: { address_book_entry_id: id } },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1507,7 +1575,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveNamedRule: { named_rule_id: id } },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1533,7 +1603,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditNamedRule: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -1549,7 +1621,9 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddNamedRule: input },
+      deduplication_key: [],
     });
 
     if (variantIs(result, 'Err')) {

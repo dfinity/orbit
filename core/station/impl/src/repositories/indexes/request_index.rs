@@ -84,6 +84,19 @@ impl RequestIndexRepository {
         )
     }
 
+    /// Returns all the requests that are in the given deduplication key.
+    pub fn find_by_deduplication_key(
+        &self,
+        deduplication_key: String,
+        take_limit: Option<usize>,
+    ) -> HashMap<RequestId, RequestIndexFields> {
+        self.find_by_criteria(
+            RequestIndexKeyKind::DeduplicationKey(deduplication_key.clone()),
+            RequestIndexKeyKind::DeduplicationKey(deduplication_key),
+            take_limit,
+        )
+    }
+
     /// Returns all the entries that are between the given keys.
     fn find_by_criteria(
         &self,

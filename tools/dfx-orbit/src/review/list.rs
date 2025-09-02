@@ -99,6 +99,8 @@ impl DfxOrbit {
             sort_by: Some(ListRequestsSortBy::CreatedAt(SortDirection::Desc)),
             only_approvable: args.only_approvable,
             with_evaluation_results: true,
+            deduplication_keys: None,
+            tags: None,
         }
     }
 
