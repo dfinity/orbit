@@ -1,5 +1,7 @@
 use super::{RequestApprovalStatus, UserId};
+use crate::core::validation::{StringFieldValidator, StringFieldValidatorBuilder, ValidateField};
 use crate::errors::RequestError;
+use lazy_static::lazy_static;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -25,21 +27,20 @@ impl RequestApproval {
     pub const MAX_REASON_LEN: u8 = 200;
 }
 
-fn validate_reason(reason: &Option<String>) -> ModelValidatorResult<RequestError> {
-    if let Some(reason) = reason {
-        if reason.len() > RequestApproval::MAX_REASON_LEN as usize {
-            return Err(RequestError::ApprovalReasonTooLong {
-                max_len: RequestApproval::MAX_REASON_LEN,
-            });
-        }
-    }
-
-    Ok(())
+lazy_static! {
+    pub static ref REQUEST_APPROVAL_REASON_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("status reason".to_string())
+            .min_length(0)
+            .max_length(RequestApproval::MAX_REASON_LEN as usize)
+            .build()
+    };
 }
 
 impl ModelValidator<RequestError> for RequestApproval {
     fn validate(&self) -> ModelValidatorResult<RequestError> {
-        validate_reason(&self.status_reason)?;
+        if let Some(reason) = &self.status_reason {
+            REQUEST_APPROVAL_REASON_VALIDATOR.validate_field(reason)?;
+        }
 
         Ok(())
     }
@@ -57,10 +58,12 @@ mod tests {
         let result = decision.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            RequestError::ApprovalReasonTooLong { max_len: 200 }
-        );
+        let error = result.unwrap_err();
+        if let RequestError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 200"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]

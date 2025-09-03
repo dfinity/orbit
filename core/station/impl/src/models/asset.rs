@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use orbit_essentials::{
     model::{ModelKey, ModelValidator, ModelValidatorResult},
     storable,
@@ -5,13 +6,43 @@ use orbit_essentials::{
 };
 
 use super::{Blockchain, TokenStandard};
-use crate::{errors::AssetError, models::Metadata, repositories::ASSET_REPOSITORY};
+use crate::{
+    core::validation::{
+        NumberFieldValidator, NumberFieldValidatorBuilder, StringCharacterSet,
+        StringFieldValidator, StringFieldValidatorBuilder, ValidateField,
+    },
+    errors::AssetError,
+    models::Metadata,
+    repositories::ASSET_REPOSITORY,
+};
 use std::{
     collections::BTreeSet,
     hash::{Hash, Hasher},
 };
 
 pub type AssetId = UUID;
+
+lazy_static! {
+    pub static ref ASSET_SYMBOL_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("symbol".to_string())
+            .min_length(Asset::SYMBOL_RANGE.0 as usize)
+            .max_length(Asset::SYMBOL_RANGE.1 as usize)
+            .char_set(StringCharacterSet::Alphanumeric)
+            .build()
+    };
+    pub static ref ASSET_NAME_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("name".to_string())
+            .min_length(Asset::NAME_RANGE.0 as usize)
+            .max_length(Asset::NAME_RANGE.1 as usize)
+            .build()
+    };
+    pub static ref ASSET_DECIMALS_VALIDATOR: NumberFieldValidator<u32> = {
+        NumberFieldValidatorBuilder::new("decimals".to_string())
+            .min(Asset::DECIMALS_RANGE.0)
+            .max(Asset::DECIMALS_RANGE.1)
+            .build()
+    };
+}
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -72,45 +103,6 @@ pub struct AssetEntryKey {
     pub id: AssetId,
 }
 
-fn validate_symbol(symbol: &str) -> ModelValidatorResult<AssetError> {
-    if (symbol.len() < Asset::SYMBOL_RANGE.0 as usize)
-        || (symbol.len() > Asset::SYMBOL_RANGE.1 as usize)
-    {
-        return Err(AssetError::InvalidSymbolLength {
-            min_length: Asset::SYMBOL_RANGE.0,
-            max_length: Asset::SYMBOL_RANGE.1,
-        });
-    }
-
-    if !symbol.chars().all(|c| c.is_ascii_alphanumeric()) {
-        return Err(AssetError::InvalidSymbol);
-    }
-
-    Ok(())
-}
-
-fn validate_name(name: &str) -> ModelValidatorResult<AssetError> {
-    if (name.len() < Asset::NAME_RANGE.0 as usize) || (name.len() > Asset::NAME_RANGE.1 as usize) {
-        return Err(AssetError::InvalidNameLength {
-            min_length: Asset::NAME_RANGE.0,
-            max_length: Asset::NAME_RANGE.1,
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_decimals(decimals: u32) -> ModelValidatorResult<AssetError> {
-    if (decimals < Asset::DECIMALS_RANGE.0) || (decimals > Asset::DECIMALS_RANGE.1) {
-        return Err(AssetError::InvalidDecimals {
-            min: Asset::DECIMALS_RANGE.0,
-            max: Asset::DECIMALS_RANGE.1,
-        });
-    }
-
-    Ok(())
-}
-
 fn validate_uniqueness(
     asset_id: &AssetId,
     symbol: &str,
@@ -132,9 +124,9 @@ fn validate_uniqueness(
 
 impl ModelValidator<AssetError> for Asset {
     fn validate(&self) -> ModelValidatorResult<AssetError> {
-        validate_symbol(&self.symbol)?;
-        validate_name(&self.name)?;
-        validate_decimals(self.decimals)?;
+        ASSET_SYMBOL_VALIDATOR.validate_field(&self.symbol)?;
+        ASSET_NAME_VALIDATOR.validate_field(&self.name)?;
+        ASSET_DECIMALS_VALIDATOR.validate_field(self.decimals)?;
         validate_uniqueness(&self.id, &self.symbol, &self.blockchain)?;
 
         self.metadata.validate()?;

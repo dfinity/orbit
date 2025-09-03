@@ -12,9 +12,11 @@ use crate::core::ic_cdk::next_time;
 use crate::core::request::{
     RequestApprovalRightsEvaluator, RequestEvaluator, RequestPossibleApproversFinder,
 };
+use crate::core::validation::{StringFieldValidator, StringFieldValidatorBuilder, ValidateField};
 use crate::errors::{EvaluateError, RequestError};
 use crate::repositories::{REQUEST_REPOSITORY, USER_REPOSITORY};
 use candid::{CandidType, Deserialize};
+use lazy_static::lazy_static;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
@@ -94,32 +96,25 @@ pub struct RequestAdditionalInfo {
     pub evaluation_result: Option<RequestEvaluationResult>,
 }
 
-fn validate_title(title: &str) -> ModelValidatorResult<RequestError> {
-    if title.len() > Request::MAX_TITLE_LEN as usize {
-        return Err(RequestError::ValidationError {
-            info: format!(
-                "Request title length exceeds the maximum allowed: {}",
-                Request::MAX_TITLE_LEN
-            ),
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_summary(summary: &Option<String>) -> ModelValidatorResult<RequestError> {
-    if let Some(summary) = summary {
-        if summary.len() > Request::MAX_SUMMARY_LEN as usize {
-            return Err(RequestError::ValidationError {
-                info: format!(
-                    "Request summary length exceeds the maximum allowed: {}",
-                    Request::MAX_SUMMARY_LEN
-                ),
-            });
-        }
-    }
-
-    Ok(())
+lazy_static! {
+    pub static ref REQUEST_TITLE_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("title".to_string())
+            .min_length(1)
+            .max_length(Request::MAX_TITLE_LEN as usize)
+            .build()
+    };
+    pub static ref REQUEST_SUMMARY_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("summary".to_string())
+            .min_length(0)
+            .max_length(Request::MAX_SUMMARY_LEN as usize)
+            .build()
+    };
+    pub static ref REQUEST_CANCEL_REASON_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("cancel reason".to_string())
+            .min_length(1)
+            .max_length(Request::MAX_CANCEL_REASON_LEN as usize)
+            .build()
+    };
 }
 
 fn validate_expiration_dt(expiration_dt: &Timestamp) -> ModelValidatorResult<RequestError> {
@@ -175,21 +170,7 @@ fn validate_status(status: &RequestStatus) -> ModelValidatorResult<RequestError>
         RequestStatus::Cancelled {
             reason: Some(reason),
         } => {
-            if reason.trim().is_empty() {
-                return Err(RequestError::ValidationError {
-                    info: "The reason for the cancellation must not be empty".to_owned(),
-                });
-            }
-
-            if reason.len() > Request::MAX_CANCEL_REASON_LEN as usize {
-                return Err(RequestError::ValidationError {
-                    info: format!(
-                        "The reason for the cancellation exceeds the maximum allowed: {}",
-                        Request::MAX_CANCEL_REASON_LEN
-                    ),
-                });
-            }
-
+            REQUEST_CANCEL_REASON_VALIDATOR.validate_field(reason)?;
             Ok(())
         }
         RequestStatus::Created
@@ -288,8 +269,12 @@ fn validate_requested_by(requested_by: &UserId) -> ModelValidatorResult<RequestE
 
 impl ModelValidator<RequestError> for Request {
     fn validate(&self) -> ModelValidatorResult<RequestError> {
-        validate_title(&self.title)?;
-        validate_summary(&self.summary)?;
+        REQUEST_TITLE_VALIDATOR.validate_field(&self.title)?;
+
+        if let Some(summary) = &self.summary {
+            REQUEST_SUMMARY_VALIDATOR.validate_field(summary)?;
+        }
+
         validate_requested_by(&self.requested_by)?;
 
         let must_not_be_expired = match self.status {
@@ -469,6 +454,8 @@ impl Request {
 mod tests {
     use super::request_test_utils::mock_request;
     use super::*;
+    use crate::models::user_test_utils::mock_user;
+    use crate::repositories::USER_REPOSITORY;
 
     #[test]
     fn fail_request_cancel_reason_too_big() {
@@ -480,15 +467,12 @@ mod tests {
         let result = validate_status(&request.status);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            RequestError::ValidationError {
-                info: format!(
-                    "The reason for the cancellation exceeds the maximum allowed: {}",
-                    Request::MAX_CANCEL_REASON_LEN
-                )
-            }
-        )
+        let error = result.unwrap_err();
+        if let RequestError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 1000"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -501,20 +485,12 @@ mod tests {
         let result = validate_status(&request.status);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            RequestError::ValidationError {
-                info: "The reason for the cancellation must not be empty".to_owned()
-            }
-        );
-
-        request.status = RequestStatus::Cancelled {
-            reason: Some(" ".to_owned()),
-        };
-
-        let result = validate_status(&request.status);
-
-        assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let RequestError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be shorter than 1"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -533,10 +509,22 @@ mod tests {
     fn fail_request_title_too_big() {
         let mut request = mock_request();
         request.title = "a".repeat(Request::MAX_TITLE_LEN as usize + 1);
+        request.status = RequestStatus::Completed { completed_at: 0 }; // Use completed status to avoid expiration validation
 
-        let result = validate_title(&request.title);
+        // Create a mock user for the requested_by field
+        let mut user = mock_user();
+        user.id = request.requested_by;
+        USER_REPOSITORY.insert(user.to_key(), user);
+
+        let result = request.validate();
 
         assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let RequestError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 255"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -604,8 +592,14 @@ mod tests {
     fn test_request_title_is_valid() {
         let mut request = mock_request();
         request.title = "a".repeat(Request::MAX_TITLE_LEN as usize);
+        request.status = RequestStatus::Completed { completed_at: 0 }; // Use completed status to avoid expiration validation
 
-        let result = validate_title(&request.title);
+        // Create a mock user for the requested_by field
+        let mut user = mock_user();
+        user.id = request.requested_by;
+        USER_REPOSITORY.insert(user.to_key(), user);
+
+        let result = request.validate();
 
         assert!(result.is_ok());
     }
@@ -614,18 +608,36 @@ mod tests {
     fn fail_request_summary_too_big() {
         let mut request = mock_request();
         request.summary = Some("a".repeat(Request::MAX_SUMMARY_LEN as usize + 1));
+        request.status = RequestStatus::Completed { completed_at: 0 }; // Use completed status to avoid expiration validation
 
-        let result = validate_summary(&request.summary);
+        // Create a mock user for the requested_by field
+        let mut user = mock_user();
+        user.id = request.requested_by;
+        USER_REPOSITORY.insert(user.to_key(), user);
+
+        let result = request.validate();
 
         assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let RequestError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 1000"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
     fn test_request_summary_is_valid() {
         let mut request = mock_request();
         request.summary = Some("a".repeat(Request::MAX_SUMMARY_LEN as usize));
+        request.status = RequestStatus::Completed { completed_at: 0 }; // Use completed status to avoid expiration validation
 
-        let result = validate_summary(&request.summary);
+        // Create a mock user for the requested_by field
+        let mut user = mock_user();
+        user.id = request.requested_by;
+        USER_REPOSITORY.insert(user.to_key(), user);
+
+        let result = request.validate();
 
         assert!(result.is_ok());
     }

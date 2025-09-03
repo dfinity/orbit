@@ -2,13 +2,48 @@ use super::{AddressFormat, Blockchain};
 use crate::errors::AddressBookError;
 use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
+use lazy_static::lazy_static;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, hash::Hash, sync::Arc};
+
+use crate::core::validation::{
+    StringFieldValidator, StringFieldValidatorBuilder, ValidateField, VecFieldValidator,
+    VecFieldValidatorBuilder,
+};
+
+lazy_static! {
+    pub static ref ADDRESS_BOOK_ADDRESS_OWNER_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("address_owner".to_string())
+            .min_length(AddressBookEntry::ADDRESS_OWNER_RANGE.0)
+            .max_length(AddressBookEntry::ADDRESS_OWNER_RANGE.1)
+            .build()
+    };
+    pub static ref ADDRESS_BOOK_ADDRESS_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("address".to_string())
+            .min_length(AddressBookEntry::ADDRESS_RANGE.0)
+            .max_length(AddressBookEntry::ADDRESS_RANGE.1)
+            .build()
+    };
+    pub static ref ADDRESS_BOOK_LABEL_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("label".to_string())
+            .min_length(1)
+            .max_length(AddressBookEntry::MAX_LABEL_LENGTH)
+            .build()
+    };
+    pub static ref ADDRESS_BOOK_LABELS_VALIDATOR: VecFieldValidator<String> = {
+        VecFieldValidatorBuilder::new(
+            "labels".to_string(),
+            Arc::new(ADDRESS_BOOK_LABEL_VALIDATOR.clone()),
+        )
+        .max_length(AddressBookEntry::MAX_LABELS)
+        .build()
+    };
+}
 
 /// The address book entry id, which is a UUID.
 pub type AddressBookEntryId = UUID;
@@ -49,77 +84,23 @@ impl ModelKey<AddressBookEntryKey> for AddressBookEntry {
     }
 }
 
-fn validate_address_owner(address_owner: &str) -> ModelValidatorResult<AddressBookError> {
-    if (address_owner.len() < AddressBookEntry::ADDRESS_OWNER_RANGE.0 as usize)
-        || (address_owner.len() > AddressBookEntry::ADDRESS_OWNER_RANGE.1 as usize)
-    {
-        return Err(AddressBookError::InvalidAddressOwnerLength {
-            min_length: AddressBookEntry::ADDRESS_OWNER_RANGE.0,
-            max_length: AddressBookEntry::ADDRESS_OWNER_RANGE.1,
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_address(address: &str) -> ModelValidatorResult<AddressBookError> {
-    if (address.len() < AddressBookEntry::ADDRESS_RANGE.0 as usize)
-        || (address.len() > AddressBookEntry::ADDRESS_RANGE.1 as usize)
-    {
-        return Err(AddressBookError::InvalidAddressLength {
-            min_length: AddressBookEntry::ADDRESS_RANGE.0,
-            max_length: AddressBookEntry::ADDRESS_RANGE.1,
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_labels(labels: &[String]) -> ModelValidatorResult<AddressBookError> {
-    for label in labels {
-        if label.is_empty() {
-            return Err(AddressBookError::ValidationError {
-                info: "Label entry cannot be empty".to_string(),
-            });
-        }
-
-        if label.len() > AddressBookEntry::MAX_LABEL_LENGTH {
-            return Err(AddressBookError::ValidationError {
-                info: format!(
-                    "Label entry cannot be longer than {} characters",
-                    AddressBookEntry::MAX_LABEL_LENGTH
-                ),
-            });
-        }
-    }
-
-    if labels.len() > AddressBookEntry::MAX_LABELS {
-        return Err(AddressBookError::ValidationError {
-            info: format!(
-                "Address book entry cannot have more than {} labels",
-                AddressBookEntry::MAX_LABELS
-            ),
-        });
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<AddressBookError> for AddressBookEntry {
     fn validate(&self) -> ModelValidatorResult<AddressBookError> {
-        validate_address_owner(&self.address_owner)?;
-        validate_address(&self.address)?;
-        validate_labels(&self.labels)?;
+        ADDRESS_BOOK_ADDRESS_OWNER_VALIDATOR.validate_field(&self.address_owner)?;
+        ADDRESS_BOOK_ADDRESS_VALIDATOR.validate_field(&self.address)?;
+        ADDRESS_BOOK_LABELS_VALIDATOR.validate_field(&self.labels)?;
 
         self.metadata.validate()?;
+
+        self.address_format.validate_address(&self.address)?;
 
         Ok(())
     }
 }
 
 impl AddressBookEntry {
-    pub const ADDRESS_RANGE: (u16, u16) = (1, 255);
-    pub const ADDRESS_OWNER_RANGE: (u16, u16) = (1, 255);
+    pub const ADDRESS_RANGE: (usize, usize) = (1, 255);
+    pub const ADDRESS_OWNER_RANGE: (usize, usize) = (1, 255);
     pub const MAX_LABELS: usize = 10;
     pub const MAX_LABEL_LENGTH: usize = 150;
 
@@ -178,9 +159,9 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
-            AddressBookError::InvalidAddressOwnerLength {
-                min_length: AddressBookEntry::ADDRESS_OWNER_RANGE.0,
-                max_length: AddressBookEntry::ADDRESS_OWNER_RANGE.1,
+            AddressBookError::ValidationError {
+                info: "The field `address_owner` is invalid: Length cannot be shorter than 1."
+                    .to_string(),
             }
         );
     }
@@ -196,9 +177,9 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
-            AddressBookError::InvalidAddressOwnerLength {
-                min_length: AddressBookEntry::ADDRESS_OWNER_RANGE.0,
-                max_length: AddressBookEntry::ADDRESS_OWNER_RANGE.1,
+            AddressBookError::ValidationError {
+                info: "The field `address_owner` is invalid: Length cannot be longer than 255."
+                    .to_string(),
             }
         );
     }
@@ -213,9 +194,9 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
-            AddressBookError::InvalidAddressLength {
-                min_length: AddressBookEntry::ADDRESS_RANGE.0,
-                max_length: AddressBookEntry::ADDRESS_RANGE.1,
+            AddressBookError::ValidationError {
+                info: "The field `address` is invalid: Length cannot be shorter than 1."
+                    .to_string(),
             }
         );
     }
@@ -230,9 +211,9 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
-            AddressBookError::InvalidAddressLength {
-                min_length: AddressBookEntry::ADDRESS_RANGE.0,
-                max_length: AddressBookEntry::ADDRESS_RANGE.1,
+            AddressBookError::ValidationError {
+                info: "The field `address` is invalid: Length cannot be longer than 255."
+                    .to_string(),
             }
         );
     }
@@ -248,10 +229,7 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             AddressBookError::ValidationError {
-                info: format!(
-                    "Label entry cannot be longer than {} characters",
-                    AddressBookEntry::MAX_LABEL_LENGTH
-                ),
+                info: "The field `label` is invalid: Length cannot be longer than 150.".to_string(),
             }
         );
     }
@@ -260,7 +238,10 @@ mod tests {
 #[cfg(test)]
 pub mod address_book_entry_test_utils {
     use super::*;
-    use crate::repositories::ADDRESS_BOOK_REPOSITORY;
+    use crate::{
+        models::address_format_test_utils::VALID_ACCOUNT_IDENTIFIER,
+        repositories::ADDRESS_BOOK_REPOSITORY,
+    };
     use orbit_essentials::repository::Repository;
     use uuid::Uuid;
 
@@ -268,7 +249,7 @@ pub mod address_book_entry_test_utils {
         AddressBookEntry {
             id: *Uuid::new_v4().as_bytes(),
             address_owner: "foo".to_string(),
-            address: "0x1234".to_string(),
+            address: VALID_ACCOUNT_IDENTIFIER.to_string(),
             address_format: AddressFormat::ICPAccountIdentifier,
             labels: Vec::new(),
             blockchain: Blockchain::InternetComputer,
