@@ -4,29 +4,8 @@ use ic_ledger_types::{
     DEFAULT_SUBACCOUNT,
 };
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
-use std::collections::{HashMap, HashSet};
 
 use crate::setup::{create_canister_with_cycles, get_canister_wasm};
-
-#[derive(CandidType)]
-pub enum NnsLedgerCanisterPayload {
-    Init(NnsLedgerCanisterInitPayload),
-}
-
-#[derive(CandidType)]
-pub struct NnsLedgerCanisterInitPayload {
-    pub minting_account: String,
-    pub initial_values: HashMap<String, Tokens>,
-    pub send_whitelist: HashSet<Principal>,
-    pub transfer_fee: Option<Tokens>,
-    pub token_symbol: Option<String>,
-    pub token_name: Option<String>,
-}
-
-#[derive(CandidType)]
-pub struct NnsIndexCanisterInitPayload {
-    pub ledger_id: Principal,
-}
 
 pub fn get_icp_balance(env: &PocketIc, user_id: Principal) -> u64 {
     let ledger_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
@@ -112,7 +91,7 @@ pub fn mint_icp(
     to: &AccountIdentifier,
     e8s: u64,
 ) -> Result<u64, TransferError> {
-    send_icp_to_account(env, minter_id, *to, e8s, 0, None, Some(0))
+    send_icp_to_account(env, minter_id, *to, e8s, 0, None, None)
 }
 
 #[derive(CandidType)]
