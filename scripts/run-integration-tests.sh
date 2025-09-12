@@ -2,7 +2,7 @@
 
 set -eEuo pipefail
 
-POCKET_IC_SERVER_VERSION="9.0.3"
+POCKET_IC_SERVER_VERSION="10.0.0"
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
