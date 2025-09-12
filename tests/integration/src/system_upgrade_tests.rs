@@ -511,7 +511,7 @@ fn failed_system_restore() {
 
         match status {
             RequestStatusDTO::Failed { reason } => {
-                assert!(reason.unwrap().contains("IC0408: Payload deserialization error: InvalidLength(\"Invalid snapshot ID length: provided 1, minumum length expected 37.\""));
+                assert!(reason.unwrap().contains("Invalid length of SnapshotId: Invalid snapshot ID length: provided 1, minumum length expected 37."));
             }
             _ => panic!("Unexpected request status: {:?}", status),
         };
