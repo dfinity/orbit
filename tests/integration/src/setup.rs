@@ -185,26 +185,18 @@ fn install_canisters(
     let minting_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
 
     let many_e8s = 1_000_000 * ICP_E8S;
-    send_icp_to_account(
-        env,
-        Principal::anonymous(),
-        controller_account,
-        many_e8s,
-        42,
-        None,
-        Some(10_000),
-    )
-    .unwrap();
-    send_icp_to_account(
-        env,
-        Principal::anonymous(),
-        minting_account,
-        many_e8s,
-        42,
-        None,
-        Some(10_000),
-    )
-    .unwrap();
+    for account in [controller_account, minting_account] {
+        send_icp_to_account(
+            env,
+            Principal::anonymous(),
+            account,
+            many_e8s,
+            42,
+            None,
+            Some(10_000),
+        )
+        .unwrap();
+    }
 
     let control_panel = create_canister_with_cycles(
         env,
