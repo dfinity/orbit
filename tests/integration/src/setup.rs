@@ -121,7 +121,7 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         // The default initial timestamp which is larger than
         // the minimum timestamp 10 May 2021 10:00:01 AM CEST for the Cycles Minting Canister.
         // In particular, this (deterministic) timestamp was used to generate `upgrader-memory-v1.bin`.
-        1620684000_000000000
+        1_620_684_000_000_000_000
     };
     let mut env = builder
         .with_nns_subnet()
