@@ -182,10 +182,10 @@ fn install_canisters(
     );
 
     let controller_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
-    let minting_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
+    let rich_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
 
     let many_e8s = 1_000_000 * ICP_E8S;
-    for account in [controller_account, minting_account] {
+    for account in [controller_account, rich_account] {
         send_icp_to_account(
             env,
             Principal::anonymous(),

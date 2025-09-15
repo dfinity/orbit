@@ -96,7 +96,7 @@ pub fn mint_icp(
 
 #[derive(CandidType)]
 pub struct Icrc1LedgerInitArgs {
-    pub minting_account: icrc_ledger_types::icrc1::account::Account,
+    pub rich_account: icrc_ledger_types::icrc1::account::Account,
     pub fee_collector_account: Option<icrc_ledger_types::icrc1::account::Account>,
     pub initial_balances: Vec<(icrc_ledger_types::icrc1::account::Account, candid::Nat)>,
     pub transfer_fee: candid::Nat,
