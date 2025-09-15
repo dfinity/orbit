@@ -17,7 +17,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
@@ -112,23 +112,29 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         cycles_minting: Some(IcpFeaturesConfig::DefaultConfig),
         ..Default::default()
     };
+    let initial_time = if config.set_time_to_now {
+        // If we set the time to SystemTime::now, and then progress pocketIC a couple ticks
+        // and then enter live mode, we would crash the deterministic state machine, as the
+        // live mode would set the time back to the current time.
+        // Therefore, if we want to use live mode, we need to start the tests with the time
+        // set to the past.
+        let system_time = SystemTime::now() - Duration::from_secs(24 * 60 * 60);
+        system_time.duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64
+    } else {
+        // The default initial timestamp which is larger than
+        // the minimum timestamp 10 May 2021 10:00:01 AM CEST for the Cycles Minting Canister.
+        // In particular, this (deterministic) timestamp was used to generate `upgrader-memory-v1.bin`.
+        1620684000_000000000
+    };
     let mut env = builder
         .with_nns_subnet()
         .with_ii_subnet()
         .with_fiduciary_subnet()
         .with_application_subnet()
         .with_icp_features(icp_features)
+        .with_initial_timestamp(initial_time)
         .build();
 
-    // If we set the time to SystemTime::now, and then progress pocketIC a couple ticks
-    // and then enter live mode, we would crash the deterministic state machine, as the
-    // live mode would set the time back to the current time.
-    // Therefore, if we want to use live mode, we need to start the tests with the time
-    // set to the past.
-    let system_time = SystemTime::now() - Duration::from_secs(24 * 60 * 60);
-    if config.set_time_to_now {
-        env.set_time(system_time.into());
-    }
     let controller = controller_test_id();
     let minter = minter_test_id();
     let canister_ids = install_canisters(&mut env, config, controller, minter);
