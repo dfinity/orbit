@@ -85,18 +85,18 @@ pub fn send_icp(
     send_icp_to_account(env, sender_id, to, e8s, memo, None, None)
 }
 
-pub fn mint_icp(
+pub fn get_icp(
     env: &PocketIc,
-    minter_id: Principal,
+    rich_id: Principal,
     to: &AccountIdentifier,
     e8s: u64,
 ) -> Result<u64, TransferError> {
-    send_icp_to_account(env, minter_id, *to, e8s, 0, None, None)
+    send_icp_to_account(env, rich_id, *to, e8s, 0, None, None)
 }
 
 #[derive(CandidType)]
 pub struct Icrc1LedgerInitArgs {
-    pub rich_account: icrc_ledger_types::icrc1::account::Account,
+    pub minting_account: icrc_ledger_types::icrc1::account::Account,
     pub fee_collector_account: Option<icrc_ledger_types::icrc1::account::Account>,
     pub initial_balances: Vec<(icrc_ledger_types::icrc1::account::Account, candid::Nat)>,
     pub transfer_fee: candid::Nat,

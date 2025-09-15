@@ -179,7 +179,7 @@ fn successful_monitors_stations_and_tops_up() {
 }
 
 #[test]
-fn can_mint_cycles_to_top_up_self() {
+fn can_get_cycles_to_top_up_self() {
     let TestEnv {
         env,
         canister_ids,

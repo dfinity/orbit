@@ -1,7 +1,7 @@
 use crate::interfaces::send_icp_to_account;
 use crate::utils::{
-    await_station_healthy, controller_test_id, minter_test_id, set_controllers,
-    upload_canister_modules, NNS_ROOT_CANISTER_ID,
+    await_station_healthy, controller_test_id, set_controllers, upload_canister_modules,
+    NNS_ROOT_CANISTER_ID,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
@@ -49,7 +49,6 @@ struct CachedTestEnv {
     pub state: PocketIcState,
     pub canister_ids: CanisterIds,
     pub controller: Principal,
-    pub minter: Principal,
 }
 
 static CACHED_TEST_ENV: OnceLock<CachedTestEnv> = OnceLock::new();
@@ -70,7 +69,6 @@ pub fn setup_new_env() -> TestEnv {
             state,
             canister_ids: test_env.canister_ids,
             controller: test_env.controller,
-            minter: test_env.minter,
         }
     });
 
@@ -81,7 +79,6 @@ pub fn setup_new_env() -> TestEnv {
         env,
         canister_ids: cached_test_env.canister_ids,
         controller: cached_test_env.controller,
-        minter: cached_test_env.minter,
     }
 }
 
@@ -136,14 +133,12 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         .build();
 
     let controller = controller_test_id();
-    let minter = minter_test_id();
-    let canister_ids = install_canisters(&mut env, config, controller, minter);
+    let canister_ids = install_canisters(&mut env, config, controller);
 
     TestEnv {
         env,
         canister_ids,
         controller,
-        minter,
     }
 }
 
@@ -165,7 +160,6 @@ fn install_canisters(
     env: &mut PocketIc,
     config: SetupConfig,
     controller: Principal,
-    minter: Principal,
 ) -> CanisterIds {
     let specified_nns_exchange_rate_canister_id =
         Principal::from_text("uf6dk-hyaaa-aaaaq-qaaaq-cai").unwrap();
@@ -182,21 +176,18 @@ fn install_canisters(
     );
 
     let controller_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
-    let rich_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
 
     let many_e8s = 1_000_000 * ICP_E8S;
-    for account in [controller_account, rich_account] {
-        send_icp_to_account(
-            env,
-            Principal::anonymous(),
-            account,
-            many_e8s,
-            42,
-            None,
-            Some(10_000),
-        )
-        .unwrap();
-    }
+    send_icp_to_account(
+        env,
+        Principal::anonymous(),
+        controller_account,
+        many_e8s,
+        42,
+        None,
+        Some(10_000),
+    )
+    .unwrap();
 
     let control_panel = create_canister_with_cycles(
         env,
