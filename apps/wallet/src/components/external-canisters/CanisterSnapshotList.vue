@@ -18,6 +18,19 @@
                 </tr>
               </thead>
               <tbody>
+                <CanisterSnapshotRestoreDialog
+                  v-model:open="dialogs.restoreSnapshot"
+                  :canister-id="props.canisterId"
+                  :snapshot="snapshot"
+                  :title="$t('external_canisters.snapshots.restore_snapshot_title')"
+                />
+
+                <CanisterSnapshotRemoveDialog
+                  v-model:open="dialogs.removeSnapshot"
+                  :canister-id="props.canisterId"
+                  :snapshot="snapshot"
+                  :title="$t('external_canisters.snapshots.remove_snapshot_title')"
+                />
                 <tr v-for="snapshot in snapshots" :key="snapshot.snapshotId">
                   <td>{{ snapshot.snapshotId }}</td>
                   <td>{{ (snapshot.totalSize / 1_000_000).toFixed(2) }}</td>
@@ -27,20 +40,6 @@
                     }}
                   </td>
                   <td v-if="!readonly" class="text-right">
-                    <CanisterSnapshotRestoreDialog
-                      v-model:open="dialogs.restoreSnapshot"
-                      :canister-id="props.canisterId"
-                      :snapshot="snapshot"
-                      :title="$t('external_canisters.snapshots.restore_snapshot_title')"
-                    />
-
-                    <CanisterSnapshotRemoveDialog
-                      v-model:open="dialogs.removeSnapshot"
-                      :canister-id="props.canisterId"
-                      :snapshot="snapshot"
-                      :title="$t('external_canisters.snapshots.remove_snapshot_title')"
-                    />
-
                     <VMenu>
                       <template #activator="{ props: activatorProps }">
                         <VBtn
