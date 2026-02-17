@@ -49,5 +49,10 @@
     "vite": "5.4.19",
     "vitest": "1.6.1",
     "vue-tsc": "2.1.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "form-data": "^4.0.4"
+    }
   }
 }
