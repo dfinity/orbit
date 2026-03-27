@@ -57,7 +57,7 @@ impl Execute for AddNamedRuleRequestExecute<'_, '_> {
             .named_rule_service
             .create(self.operation.input.clone())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to create named rule: {}", e),
+                reason: format!("Failed to create named rule: {e}"),
             })?;
 
         let mut operation = self.request.operation.clone();

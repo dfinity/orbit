@@ -28,15 +28,15 @@ pub type RequestRejectedNotification = RequestNotification;
 impl Display for NotificationType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            NotificationType::SystemMessage => write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE),
+            NotificationType::SystemMessage => write!(f, "{SYSTEM_MESSAGE_NOTIFICATION_TYPE}"),
             NotificationType::RequestCreated(_) => {
-                write!(f, "{}", REQUEST_CREATED_NOTIFICATION_TYPE)
+                write!(f, "{REQUEST_CREATED_NOTIFICATION_TYPE}")
             }
             NotificationType::RequestFailed(_) => {
-                write!(f, "{}", REQUEST_FAILED_NOTIFICATION_TYPE)
+                write!(f, "{REQUEST_FAILED_NOTIFICATION_TYPE}")
             }
             NotificationType::RequestRejected(_) => {
-                write!(f, "{}", REQUEST_REJECTED_NOTIFICATION_TYPE)
+                write!(f, "{REQUEST_REJECTED_NOTIFICATION_TYPE}")
             }
         }
     }

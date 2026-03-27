@@ -50,7 +50,7 @@ impl Execute for AddUserRequestExecute<'_, '_> {
         let user = USER_SERVICE
             .add_user(self.operation.input.clone())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to create user: {}", e),
+                reason: format!("Failed to create user: {e}"),
             })?;
 
         let mut operation = self.request.operation.clone();

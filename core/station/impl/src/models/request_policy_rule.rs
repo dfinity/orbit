@@ -505,8 +505,7 @@ impl
                     match account {
                         Err(e) => {
                             print(format!(
-                                "Rule rejected due to account not being found: {:?}",
-                                e
+                                "Rule rejected due to account not being found: {e:?}"
                             ));
 
                             return Ok(RequestPolicyRuleResult {

@@ -117,18 +117,18 @@ impl DfxOrbit {
             )?
         }
         if let Some(checksum) = &op.arg_checksum {
-            writeln!(output, "Argument checksum: {}", checksum)?
+            writeln!(output, "Argument checksum: {checksum}")?
         }
         if let Some(args) = &op.arg_rendering {
-            writeln!(output, "Argument: {}", args)?
+            writeln!(output, "Argument: {args}")?
         }
         if let Some(cycles) = &op.execution_method_cycles {
-            writeln!(output, "Execution method cycles: {}", cycles)?
+            writeln!(output, "Execution method cycles: {cycles}")?
         }
         if let Some(reply) = &op.execution_method_reply {
             match candid_parser::IDLArgs::from_bytes(reply) {
                 // TODO: Check if we can get the type information from somewhere to annotate this with types
-                Ok(response) => writeln!(output, "Execution response: {}", response),
+                Ok(response) => writeln!(output, "Execution response: {response}"),
                 Err(_) => writeln!(output, "FAILED TO PARSE EXECUTION RESPONSE"),
             }?;
         }

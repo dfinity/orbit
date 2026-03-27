@@ -222,7 +222,7 @@ mod tests {
                     UserGroup {
                         id,
                         last_modification_timestamp: 0,
-                        name: format!("group_{}", i),
+                        name: format!("group_{i}"),
                     },
                 );
                 id
@@ -303,7 +303,7 @@ pub mod user_test_utils {
             id,
             identities: vec![identity],
             groups: vec![],
-            name: format!("user_{}", uuid),
+            name: format!("user_{uuid}"),
             status: UserStatus::Active,
             last_modification_timestamp: 0,
         }

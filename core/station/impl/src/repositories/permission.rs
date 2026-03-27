@@ -279,7 +279,7 @@ mod tests {
                             execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
                                 CanisterMethod {
                                     canister_id,
-                                    method_name: format!("method_{}", method_nr),
+                                    method_name: format!("method_{method_nr}"),
                                 },
                             ),
                             validation_method: ValidationMethodResourceTarget::No,
@@ -294,13 +294,13 @@ mod tests {
                             execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
                                 CanisterMethod {
                                     canister_id,
-                                    method_name: format!("method_{}", method_nr),
+                                    method_name: format!("method_{method_nr}"),
                                 },
                             ),
                             validation_method: ValidationMethodResourceTarget::ValidationMethod(
                                 CanisterMethod {
                                     canister_id,
-                                    method_name: format!("method_{}", method_nr),
+                                    method_name: format!("method_{method_nr}"),
                                 },
                             ),
                         },

@@ -340,7 +340,7 @@ mod tests {
                         execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
                             CanisterMethod {
                                 canister_id: Principal::from_slice(&[i % 2; 29]),
-                                method_name: format!("method_{}", i),
+                                method_name: format!("method_{i}"),
                             },
                         ),
                         validation_method: ValidationMethodResourceTarget::No,
@@ -368,7 +368,7 @@ mod tests {
                         execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
                             CanisterMethod {
                                 canister_id: Principal::management_canister(),
-                                method_name: format!("method_{}", i),
+                                method_name: format!("method_{i}"),
                             },
                         ),
                         validation_method: if i % 2 == 0 {
@@ -376,7 +376,7 @@ mod tests {
                         } else {
                             ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
                                 canister_id: Principal::management_canister(),
-                                method_name: format!("validation_method_{}", i),
+                                method_name: format!("validation_method_{i}"),
                             })
                         },
                     },
@@ -394,7 +394,7 @@ mod tests {
         for i in 0..20 {
             let policies = repository.find_external_canister_call_policies_by_execution_method(
                 &Principal::management_canister(),
-                &format!("method_{}", i),
+                &format!("method_{i}"),
             );
 
             let expected_method_id = expected_method_ids.pop().unwrap();
@@ -407,7 +407,7 @@ mod tests {
             } else {
                 ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
                     canister_id: Principal::management_canister(),
-                    method_name: format!("validation_method_{}", i),
+                    method_name: format!("validation_method_{i}"),
                 })
             };
 
@@ -415,7 +415,7 @@ mod tests {
             let policies = repository
                 .find_external_canister_call_policies_by_execution_and_validation_method(
                     &Principal::management_canister(),
-                    &format!("method_{}", i),
+                    &format!("method_{i}"),
                     &validation_method,
                 );
 

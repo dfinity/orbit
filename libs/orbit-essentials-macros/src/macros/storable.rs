@@ -258,7 +258,7 @@ impl std::str::FromStr for SerializerFormat {
         match s {
             "candid" => Ok(Self::Candid),
             "cbor" => Ok(Self::Cbor),
-            _ => Err(format!("Unknown serializer format \"{}\"", s)),
+            _ => Err(format!("Unknown serializer format \"{s}\"")),
         }
     }
 }

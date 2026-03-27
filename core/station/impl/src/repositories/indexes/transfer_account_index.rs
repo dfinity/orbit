@@ -63,7 +63,7 @@ impl IndexRepository<TransferAccountIndex, TransferId> for TransferAccountIndexR
             };
 
             if from_dt > to_dt {
-                print(format!("Invalid TransferAccountIndexRepository::FindByCriteria: from_dt {} is greater than to_dt {}", from_dt, to_dt));
+                print(format!("Invalid TransferAccountIndexRepository::FindByCriteria: from_dt {from_dt} is greater than to_dt {to_dt}"));
                 return HashSet::new();
             }
 

@@ -65,7 +65,7 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
                         }
                     })?;
                 Some(rendering.map_err(|err| RequestError::ValidationError {
-                    info: format!("failed to validate call external canister request: {}", err),
+                    info: format!("failed to validate call external canister request: {err}"),
                 })?)
             }
             None => None,

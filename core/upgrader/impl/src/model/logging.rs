@@ -57,7 +57,7 @@ impl std::fmt::Display for RequestDisasterRecoveryPruneLog {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             RequestDisasterRecoveryPruneLog::Snapshot(snapshot_id) => {
-                write!(f, "snapshot_id {}", snapshot_id)
+                write!(f, "snapshot_id {snapshot_id}")
             }
             RequestDisasterRecoveryPruneLog::ChunkStore => {
                 write!(f, "chunk store")
@@ -99,7 +99,7 @@ impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
                 write!(f, "Restore snapshot_id {}", snapshot.snapshot_id,)
             }
             RequestDisasterRecoveryOperationLog::Prune(prune) => {
-                write!(f, "Prune {}", prune)
+                write!(f, "Prune {prune}")
             }
             RequestDisasterRecoveryOperationLog::Start => {
                 write!(f, "Start")
@@ -202,7 +202,7 @@ impl LogEntryType {
             },
             LogEntryType::UpgradeResult(data) => match data {
                 UpgradeResultLog::Success => "Upgrade succeeded".to_owned(),
-                UpgradeResultLog::Failure(ref reason) => format!("Upgrade failed: {}", reason),
+                UpgradeResultLog::Failure(ref reason) => format!("Upgrade failed: {reason}"),
             },
             LogEntryType::DisasterRecoveryInProgress(data) => {
                 format!(
@@ -238,7 +238,7 @@ impl LogEntryType {
             LogEntryType::DisasterRecoveryInProgressExpired(data) => serde_json::to_string(data),
             LogEntryType::SetAccountsAndAssets(data) => serde_json::to_string(data),
         }
-        .map_err(|err| format!("Failed to serialize log entry: {}", err))
+        .map_err(|err| format!("Failed to serialize log entry: {err}"))
     }
 }
 

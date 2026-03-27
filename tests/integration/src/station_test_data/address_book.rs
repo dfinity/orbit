@@ -19,7 +19,7 @@ pub fn add_address_book_entry(
                 blockchain: "icp".to_string(),
                 address_format: "icp_account_identifier".to_string(),
                 labels: vec!["icp_native".to_string()],
-                address_owner: format!("user-{}", next_id),
+                address_owner: format!("user-{next_id}"),
                 metadata: Vec::new(),
                 address: format!("{}{}", "0x", sha256_hex(&next_id.to_le_bytes())),
             },

@@ -92,8 +92,7 @@ async fn fetch_extra_chunks(
     let res_len: candid::Nat = res.len().into();
     match res_len.cmp(&asset.total_length) {
         std::cmp::Ordering::Less => Err(format!(
-            "The total number of wasm chunks must not exceed {}",
-            MAX_WASM_CHUNK_CNT
+            "The total number of wasm chunks must not exceed {MAX_WASM_CHUNK_CNT}"
         )),
         std::cmp::Ordering::Equal => Ok(res),
         std::cmp::Ordering::Greater => Err(format!(

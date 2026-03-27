@@ -72,7 +72,7 @@ impl Execute for RemoveRequestPolicyRequestExecute<'_, '_> {
         self.policy_service
             .remove_request_policy(&self.operation.input.policy_id)
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to remove request policy: {}", e),
+                reason: format!("Failed to remove request policy: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(
@@ -168,7 +168,7 @@ mod tests {
 
             match stage {
                 RequestExecuteStage::Completed(_) => (),
-                _ => panic!("Expected RequestExecuteStage::Completed, got {:?}", stage),
+                _ => panic!("Expected RequestExecuteStage::Completed, got {stage:?}"),
             }
         } else {
             panic!(

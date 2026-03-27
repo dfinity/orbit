@@ -100,7 +100,7 @@ mod tests {
         let repository = RegistryIndexRepository::default();
         for i in 0..10 {
             repository.insert(RegistryIndex {
-                index: RegistryIndexKind::Namespace(format!("ns-{}", i)),
+                index: RegistryIndexKind::Namespace(format!("ns-{i}")),
                 registry_entry_id: [i; 16],
             });
         }

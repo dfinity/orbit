@@ -50,7 +50,7 @@ impl Execute for EditAccountRequestExecute<'_, '_> {
             .edit_account(self.operation.input.to_owned())
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to update account: {}", e),
+                reason: format!("Failed to update account: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

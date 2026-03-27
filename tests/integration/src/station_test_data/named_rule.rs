@@ -45,8 +45,8 @@ pub fn add_named_rule(
         station_canister_id,
         requester,
         station_api::AddNamedRuleOperationInput {
-            name: format!("rule-{}", next_id),
-            description: Some(format!("Description for rule-{}", next_id)),
+            name: format!("rule-{next_id}"),
+            description: Some(format!("Description for rule-{next_id}")),
             rule: RequestPolicyRuleDTO::AutoApproved,
         },
     )

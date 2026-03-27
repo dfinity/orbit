@@ -18,7 +18,7 @@ pub fn add_account(
         requester,
         station_canister_id,
         station_api::RequestOperationInput::AddAccount(station_api::AddAccountOperationInput {
-            name: format!("account-{}", next_id),
+            name: format!("account-{next_id}"),
             assets: vec![icp_asset.id],
             metadata: Vec::new(),
             configs_permission: station_api::AllowDTO {

@@ -55,7 +55,7 @@ impl<T: Clone + Ord + Debug> CallerGuard<T> {
                         return None;
                     } else {
                         // Lock has expired, fall through to update the lock.
-                        crate::cdk::api::print(format!("Lock has expired for {:?}", lock));
+                        crate::cdk::api::print(format!("Lock has expired for {lock:?}"));
                         pending_requests.remove(&lock);
                     }
                 } else {

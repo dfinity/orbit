@@ -293,7 +293,7 @@ impl<'a> UpgraderDataGenerator<'a> {
             Some(RecoveryResult::Failure(err)) => {
                 assert!(err.reason.contains("Canister's Wasm module is not valid"))
             }
-            _ => panic!("Unexpected recovery result: {:?}", result),
+            _ => panic!("Unexpected recovery result: {result:?}"),
         };
 
         let committee =

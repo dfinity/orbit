@@ -13,9 +13,9 @@ pub enum ValidationError {
 impl Display for ValidationError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ValidationError::RecordValidationError(err) => write!(f, "{}", err),
-            ValidationError::ExternalCanisterValidationError(err) => write!(f, "{}", err),
-            ValidationError::SystemInfoValidationError(err) => write!(f, "{}", err),
+            ValidationError::RecordValidationError(err) => write!(f, "{err}"),
+            ValidationError::ExternalCanisterValidationError(err) => write!(f, "{err}"),
+            ValidationError::SystemInfoValidationError(err) => write!(f, "{err}"),
         }
     }
 }

@@ -196,7 +196,7 @@ pub(super) async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
         name: String::from("Test"),
         station_id,
         network: String::from("test"),
-        url: format!("http://localhost:{}", port),
+        url: format!("http://localhost:{port}"),
     };
     DfxOrbit::new(orbit_agent, config, None, logger)
         .await

@@ -145,8 +145,7 @@ mod tests {
         assert_eq!(
             response.body,
             format!(
-                r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics","dapp":"orbit"}}}}]"#,
-                station_host
+                r#"[{{"targets": ["{station_host}"],"labels": {{"__metrics_path__":"/metrics","dapp":"orbit"}}}}]"#
             )
             .as_bytes()
             .to_owned()

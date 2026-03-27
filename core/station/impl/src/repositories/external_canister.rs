@@ -274,7 +274,7 @@ mod tests {
         let repository = ExternalCanisterRepository::default();
         for i in 0..10 {
             let mut entry = mock_external_canister();
-            entry.name = format!("test-{}", i);
+            entry.name = format!("test-{i}");
 
             repository.insert(entry.key(), entry);
         }

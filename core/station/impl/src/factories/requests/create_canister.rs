@@ -63,7 +63,7 @@ impl Execute for CreateExternalCanisterRequestExecute<'_, '_> {
             .add_external_canister(self.operation.input.clone())
             .await
             .map_err(|err| RequestExecuteError::Failed {
-                reason: format!("failed to add external canister: {}", err),
+                reason: format!("failed to add external canister: {err}"),
             })?;
 
         let mut create_operation = self.operation.clone();

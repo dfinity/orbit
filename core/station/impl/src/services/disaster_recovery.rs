@@ -99,10 +99,10 @@ impl DisasterRecoveryService {
 
     pub async fn sync_all(&self) {
         if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
-            crate::core::ic_cdk::api::print(format!("Failed to sync committee: {}", error,));
+            crate::core::ic_cdk::api::print(format!("Failed to sync committee: {error}",));
         }
         if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts_and_assets().await {
-            crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {}", error,));
+            crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {error}",));
         }
     }
 }
@@ -136,8 +136,7 @@ pub fn disaster_recovery_observes_insert_user(observer: &mut Observer<(User, Opt
                 crate::core::ic_cdk::spawn(async {
                     if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
                         crate::core::ic_cdk::api::print(format!(
-                            "Failed to sync committee: {}",
-                            error,
+                            "Failed to sync committee: {error}",
                         ));
                     }
                 });
@@ -166,8 +165,7 @@ pub fn disaster_recovery_observes_remove_user(observer: &mut Observer<User>) {
                 crate::core::ic_cdk::spawn(async {
                     if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
                         crate::core::ic_cdk::api::print(format!(
-                            "Failed to sync committee: {}",
-                            error,
+                            "Failed to sync committee: {error}",
                         ));
                     }
                 });
@@ -196,8 +194,7 @@ pub fn disaster_recovery_sync_accounts_and_assets_on_remove(observer: &mut Obser
         crate::core::ic_cdk::spawn(async {
             if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts_and_assets().await {
                 crate::core::ic_cdk::api::print(format!(
-                    "Failed to sync accounts and assets: {}",
-                    error,
+                    "Failed to sync accounts and assets: {error}",
                 ));
             }
         });
@@ -260,8 +257,7 @@ where
         crate::core::ic_cdk::spawn(async {
             if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts_and_assets().await {
                 crate::core::ic_cdk::api::print(format!(
-                    "Failed to sync accounts and assets: {}",
-                    error,
+                    "Failed to sync accounts and assets: {error}",
                 ));
             }
         });

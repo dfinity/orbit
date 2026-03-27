@@ -51,7 +51,7 @@ impl Execute for AddAddressBookEntryRequestExecute<'_, '_> {
             .create_entry(self.operation.input.to_owned())
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to create address book entry: {}", e),
+                reason: format!("Failed to create address book entry: {e}"),
             })?;
 
         let mut operation = self.request.operation.clone();

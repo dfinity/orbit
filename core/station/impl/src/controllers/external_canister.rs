@@ -23,7 +23,7 @@ async fn canister_status(input: CanisterStatusInput) -> CanisterStatusResponse {
     CONTROLLER
         .canister_status(input)
         .await
-        .unwrap_or_else(|e| trap(&format!("{:?}", e)))
+        .unwrap_or_else(|e| trap(&format!("{e:?}")))
 }
 
 #[update(name = "canister_snapshots")]

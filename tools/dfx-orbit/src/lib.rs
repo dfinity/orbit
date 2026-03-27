@@ -75,10 +75,7 @@ impl DfxOrbit {
 
         let canister_id = Principal::from_text(canister_name).or_else(|_| {
             canister_id_store.get(canister_name).with_context(|| {
-                format!(
-                    "Failed to look up principal id for canister named \"{}\"",
-                    canister_name
-                )
+                format!("Failed to look up principal id for canister named \"{canister_name}\"")
             })
         })?;
 

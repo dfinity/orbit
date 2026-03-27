@@ -253,21 +253,21 @@ impl InternetComputer {
         .map_err(|err| BlockchainApiError::TransactionSubmitFailed {
             info: match err {
                 ic_ledger_types::TransferError::BadFee { expected_fee } => {
-                    format!("Bad fee, expected: {}", expected_fee)
+                    format!("Bad fee, expected: {expected_fee}")
                 }
                 ic_ledger_types::TransferError::InsufficientFunds { balance } => {
-                    format!("Insufficient balance, balance: {}", balance)
+                    format!("Insufficient balance, balance: {balance}")
                 }
                 ic_ledger_types::TransferError::TxTooOld {
                     allowed_window_nanos,
                 } => {
-                    format!("Tx too old, allowed_window_nanos: {}", allowed_window_nanos)
+                    format!("Tx too old, allowed_window_nanos: {allowed_window_nanos}")
                 }
                 ic_ledger_types::TransferError::TxCreatedInFuture => {
                     "Tx created in future".to_string()
                 }
                 ic_ledger_types::TransferError::TxDuplicate { duplicate_of } => {
-                    format!("Tx duplicate, duplicate_of: {}", duplicate_of)
+                    format!("Tx duplicate, duplicate_of: {duplicate_of}")
                 }
             },
         })?;
@@ -291,8 +291,7 @@ impl InternetComputer {
                 },
                 None => {
                     print(format!(
-                        "Error: no ICP ledger block found at height {}",
-                        block_height
+                        "Error: no ICP ledger block found at height {block_height}"
                     ));
                     None
                 }
@@ -368,12 +367,12 @@ impl InternetComputer {
         .map_err(|err| BlockchainApiError::TransactionSubmitFailed {
             info: match err {
                 icrc_ledger_types::icrc1::transfer::TransferError::BadFee { expected_fee } => {
-                    format!("Bad fee, expected: {}", expected_fee)
+                    format!("Bad fee, expected: {expected_fee}")
                 }
                 icrc_ledger_types::icrc1::transfer::TransferError::InsufficientFunds {
                     balance,
                 } => {
-                    format!("Insufficient balance, balance: {}", balance)
+                    format!("Insufficient balance, balance: {balance}")
                 }
                 icrc_ledger_types::icrc1::transfer::TransferError::TooOld => {
                     "Tx too old".to_string()
@@ -382,10 +381,10 @@ impl InternetComputer {
                     "Tx created in future".to_string()
                 }
                 icrc_ledger_types::icrc1::transfer::TransferError::Duplicate { duplicate_of } => {
-                    format!("Tx duplicate, duplicate_of: {}", duplicate_of)
+                    format!("Tx duplicate, duplicate_of: {duplicate_of}")
                 }
                 icrc_ledger_types::icrc1::transfer::TransferError::BadBurn { min_burn_amount } => {
-                    format!("Bad burn, min_burn_amount: {}", min_burn_amount)
+                    format!("Bad burn, min_burn_amount: {min_burn_amount}")
                 }
                 icrc_ledger_types::icrc1::transfer::TransferError::TemporarilyUnavailable => {
                     "Ledger temporarily unavailable".to_string()
@@ -394,7 +393,7 @@ impl InternetComputer {
                     error_code,
                     message,
                 } => {
-                    format!("Error occurred. Code: {}, message: {}", error_code, message)
+                    format!("Error occurred. Code: {error_code}, message: {message}")
                 }
             },
         })?;

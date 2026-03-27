@@ -1245,7 +1245,7 @@ impl ExternalCanisterService {
             .is_unique_name(name, skip_id)
         {
             Err(ExternalCanisterError::ValidationError {
-                info: format!("The name '{}' is already in use.", name),
+                info: format!("The name '{name}' is already in use."),
             })?;
         }
 
@@ -1265,7 +1265,7 @@ impl ExternalCanisterService {
             .is_unique_canister_id(canister_id, skip_id)
         {
             Err(ExternalCanisterError::ValidationError {
-                info: format!("The canister id '{}' is already in use.", canister_id),
+                info: format!("The canister id '{canister_id}' is already in use."),
             })?;
         }
 
@@ -1685,7 +1685,7 @@ mod tests {
         for i in 0..2 {
             let result = EXTERNAL_CANISTER_SERVICE
                 .add_external_canister(CreateExternalCanisterOperationInput {
-                    name: format!("test{}", i),
+                    name: format!("test{i}"),
                     description: None,
                     labels: None,
                     metadata: None,
@@ -2133,7 +2133,7 @@ mod tests {
         for i in 0..2 {
             let _ = EXTERNAL_CANISTER_SERVICE
                 .add_external_canister(CreateExternalCanisterOperationInput {
-                    name: format!("test{}", i),
+                    name: format!("test{i}"),
                     description: None,
                     labels: None,
                     metadata: None,
@@ -2186,7 +2186,7 @@ mod tests {
         for i in 0..2 {
             let _ = EXTERNAL_CANISTER_SERVICE
                 .add_external_canister(CreateExternalCanisterOperationInput {
-                    name: format!("test{}", i),
+                    name: format!("test{i}"),
                     description: None,
                     labels: None,
                     metadata: None,
@@ -2298,7 +2298,7 @@ mod tests {
             external_canisters.push(
                 EXTERNAL_CANISTER_SERVICE
                     .add_external_canister(CreateExternalCanisterOperationInput {
-                        name: format!("test{}", i),
+                        name: format!("test{i}"),
                         description: None,
                         labels: None,
                         metadata: None,

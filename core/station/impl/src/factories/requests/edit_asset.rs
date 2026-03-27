@@ -54,7 +54,7 @@ impl Execute for EditAssetRequestExecute<'_, '_> {
         self.asset_service
             .edit(self.operation.input.clone())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to edit asset: {}", e),
+                reason: format!("Failed to edit asset: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

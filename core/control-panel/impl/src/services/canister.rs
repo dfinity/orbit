@@ -139,7 +139,7 @@ impl CanisterService {
 
                 USER_REPOSITORY.insert(user.to_key(), user.clone());
             }),
-            Some(version) => print(format!("No migration for version: {}", version)),
+            Some(version) => print(format!("No migration for version: {version}")),
         };
     }
 }

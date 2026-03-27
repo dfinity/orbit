@@ -380,8 +380,7 @@ impl Request {
             Ok(has_approval_right) => has_approval_right,
             Err(_) => {
                 print(format!(
-                    "Failed to evaluate voting rights for request: {:?}",
-                    self
+                    "Failed to evaluate voting rights for request: {self:?}"
                 ));
 
                 false
@@ -736,7 +735,7 @@ mod tests {
     fn fail_request_tags_too_many() {
         let mut request = mock_request();
         for i in 0..Request::MAX_TAGS_LEN as usize + 1 {
-            request.tags.push(format!("tag{}", i));
+            request.tags.push(format!("tag{i}"));
         }
 
         let result = validate_tags(&request.tags);

@@ -195,8 +195,7 @@ async fn set_max_backup_snapshots(max_backup_snapshots: u64) -> Result<(), Strin
     let id = get_target_canister();
     if ic_cdk::caller() != id {
         return Err(format!(
-            "Only the target canister {} is authorized to call `set_max_backup_snapshots`.",
-            id
+            "Only the target canister {id} is authorized to call `set_max_backup_snapshots`."
         ));
     }
 

@@ -1813,7 +1813,7 @@ mod test {
                 assert_eq!(provided, max_backup_snapshots);
                 assert_eq!(limit, ICP_MAX_CANISTER_SNAPSHOTS);
             }
-            _ => panic!("Unexpected error: {:?}", err),
+            _ => panic!("Unexpected error: {err:?}"),
         };
 
         let err = RequestOperation::ManageSystemInfo(crate::models::ManageSystemInfoOperation {

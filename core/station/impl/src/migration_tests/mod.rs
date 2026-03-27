@@ -37,10 +37,7 @@ mod test {
         });
 
         fs::write(
-            format!(
-                "src/migration_tests/snapshots/{}_v{}.bin",
-                label, STABLE_MEMORY_VERSION
-            ),
+            format!("src/migration_tests/snapshots/{label}_v{STABLE_MEMORY_VERSION}.bin"),
             snapshot,
         )
         .unwrap();

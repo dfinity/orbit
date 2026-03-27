@@ -72,7 +72,7 @@ impl Execute for EditRequestPolicyRequestExecute<'_, '_> {
         self.policy_service
             .edit_request_policy(self.operation.input.to_owned())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to update request policy: {}", e),
+                reason: format!("Failed to update request policy: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(
@@ -166,7 +166,7 @@ mod tests {
 
             match stage {
                 RequestExecuteStage::Completed(_) => (),
-                _ => panic!("Expected RequestExecuteStage::Completed, got {:?}", stage),
+                _ => panic!("Expected RequestExecuteStage::Completed, got {stage:?}"),
             }
         } else {
             panic!(

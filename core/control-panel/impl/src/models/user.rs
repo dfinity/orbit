@@ -145,7 +145,7 @@ fn validate_email(email: &str) -> ModelValidatorResult<UserError> {
     }
     if let Err(e) = EmailAddress::from_str(email) {
         return Err(UserError::ValidationError {
-            info: format!("Email validation failed: {}", e,),
+            info: format!("Email validation failed: {e}",),
         });
     }
 
@@ -166,7 +166,7 @@ fn validate_stations(stations: &[UserStation]) -> ModelValidatorResult<UserError
     for station in stations.iter() {
         if let Err(e) = station.validate() {
             return Err(UserError::ValidationError {
-                info: format!("Station validation failed: {:?}", e,),
+                info: format!("Station validation failed: {e:?}",),
             });
         }
     }

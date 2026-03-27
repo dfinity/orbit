@@ -38,7 +38,7 @@ fn notification_authorization() {
     .unwrap();
     match request_status {
         RequestStatusDTO::Failed { .. } => (),
-        _ => panic!("Unexpected request status: {:?}", request_status),
+        _ => panic!("Unexpected request status: {request_status:?}"),
     };
 
     // admin user can list and update notifications

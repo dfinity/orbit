@@ -159,7 +159,7 @@ impl StationArgs {
                         .with_context(|| "Failed to serialize station")?;
                     println!("{json}");
                 } else {
-                    println!("{}", station);
+                    println!("{station}");
                 }
             }
             StationArgs::Remove(remove_args) => {

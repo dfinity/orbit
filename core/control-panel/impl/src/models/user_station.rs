@@ -56,7 +56,7 @@ fn validate_labels(labels: &[String]) -> ModelValidatorResult<UserError> {
     for label in labels {
         if label.len() > MAX_LABEL_LEN {
             return Err(UserError::ValidationError {
-                info: format!("Station label length cannot exceed {}", MAX_LABEL_LEN),
+                info: format!("Station label length cannot exceed {MAX_LABEL_LEN}"),
             });
         }
 

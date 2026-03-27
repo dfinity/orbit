@@ -54,10 +54,10 @@ impl Display for NotificationTypeInput {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             NotificationTypeInput::SystemMessage => {
-                write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE)
+                write!(f, "{SYSTEM_MESSAGE_NOTIFICATION_TYPE}")
             }
             NotificationTypeInput::RequestCreated => {
-                write!(f, "{}", REQUEST_CREATED_NOTIFICATION_TYPE)
+                write!(f, "{REQUEST_CREATED_NOTIFICATION_TYPE}")
             }
         }
     }

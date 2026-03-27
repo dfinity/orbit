@@ -178,7 +178,7 @@ fn validate_policy_id(policy_id: &UUID, field_name: &str) -> ModelValidatorResul
     REQUEST_POLICY_REPOSITORY
         .get(policy_id)
         .ok_or(AccountError::ValidationError {
-            info: format!("The {} does not exist", field_name),
+            info: format!("The {field_name} does not exist"),
         })?;
     Ok(())
 }

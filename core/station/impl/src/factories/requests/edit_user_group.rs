@@ -48,7 +48,7 @@ impl Execute for EditUserGroupRequestExecute<'_, '_> {
             .edit(self.operation.input.clone())
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to edit user group: {}", e),
+                reason: format!("Failed to edit user group: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

@@ -1410,8 +1410,7 @@ impl From<station_api::SnapshotExternalCanisterOperationInput>
             replace_snapshot: input.replace_snapshot.map(|snapshot_id| {
                 hex::decode(&snapshot_id).unwrap_or_else(|err| {
                     ic_cdk::trap(&format!(
-                        "Failed to decode snapshot id {} to hex: {}",
-                        snapshot_id, err
+                        "Failed to decode snapshot id {snapshot_id} to hex: {err}"
                     ))
                 })
             }),
@@ -1489,8 +1488,7 @@ impl From<PruneExternalCanisterResourceDTO> for PruneExternalCanisterResource {
                 PruneExternalCanisterResource::Snapshot(hex::decode(&snapshot_id).unwrap_or_else(
                     |err| {
                         ic_cdk::trap(&format!(
-                            "Failed to convert snapshot id {} to hex: {}",
-                            snapshot_id, err
+                            "Failed to convert snapshot id {snapshot_id} to hex: {err}"
                         ))
                     },
                 ))

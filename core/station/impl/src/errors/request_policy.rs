@@ -55,7 +55,7 @@ impl From<RecordValidationError> for RequestPolicyError {
         match err {
             RecordValidationError::NotFound { id, model_name } => {
                 RequestPolicyError::ValidationError {
-                    info: format!("Invalid UUID: {} {} not found", model_name, id),
+                    info: format!("Invalid UUID: {model_name} {id} not found"),
                 }
             }
         }
@@ -67,7 +67,7 @@ impl From<ExternalCanisterValidationError> for RequestPolicyError {
         match err {
             ExternalCanisterValidationError::InvalidExternalCanister { principal } => {
                 RequestPolicyError::ValidationError {
-                    info: format!("Invalid external canister {}", principal),
+                    info: format!("Invalid external canister {principal}"),
                 }
             }
             ExternalCanisterValidationError::ValidationError { info } => {

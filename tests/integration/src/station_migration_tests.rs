@@ -143,7 +143,7 @@ fn test_canister_migration_path_with_previous_stable_memory_version(stable_memor
     } = setup_new_env();
 
     let station_wasm = get_canister_wasm("station").to_vec();
-    let stable_memory_file = format!("station-memory-v{}.bin", stable_memory_version);
+    let stable_memory_file = format!("station-memory-v{stable_memory_version}.bin");
     let stable_memory =
         read_file(&stable_memory_file).expect("Unexpected missing older stable memory");
 

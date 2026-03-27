@@ -204,7 +204,7 @@ impl MetricsRegistry {
                 body: metrics,
             },
             Err(err) => {
-                print(format!("Error exporting metrics: {:?}", err));
+                print(format!("Error exporting metrics: {err:?}"));
 
                 HttpResponse {
                     status_code: 500,

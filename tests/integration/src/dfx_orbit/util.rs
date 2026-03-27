@@ -37,7 +37,7 @@ pub(super) async fn poll_request_completion(
             RequestStatusDTO::Rejected
             | RequestStatusDTO::Cancelled { .. }
             | RequestStatusDTO::Failed { .. } => {
-                panic!("Expected request {} to succeed", request_id)
+                panic!("Expected request {request_id} to succeed")
             }
             RequestStatusDTO::Approved
             | RequestStatusDTO::Created
@@ -46,7 +46,7 @@ pub(super) async fn poll_request_completion(
         }
 
         if Instant::now() > timeout {
-            panic!("Waiting for request {} to succeed timed out", request_id);
+            panic!("Waiting for request {request_id} to succeed timed out");
         }
 
         tokio::time::sleep(Duration::from_secs(1)).await
@@ -59,10 +59,7 @@ pub(super) async fn poll_request_completion(
 /// resource being fetched.
 pub(super) async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
     let port = PORT.with(|port| *port.borrow());
-    let local_url = format!(
-        "http://localhost:{}/{}?canisterId={}",
-        port, path, canister_id
-    );
+    let local_url = format!("http://localhost:{port}/{path}?canisterId={canister_id}");
 
     reqwest::Client::new()
         .get(local_url)

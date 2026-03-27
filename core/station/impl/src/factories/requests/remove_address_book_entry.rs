@@ -26,7 +26,7 @@ impl Create<station_api::RemoveAddressBookEntryOperationInput>
     ) -> Result<Request, RequestError> {
         let address_book_entry_id = HelperMapper::to_uuid(operation_input.address_book_entry_id)
             .map_err(|e| RequestError::ValidationError {
-                info: format!("Invalid address book entry id: {}", e),
+                info: format!("Invalid address book entry id: {e}"),
             })?;
 
         let request = Request::from_request_creation_input(
@@ -63,7 +63,7 @@ impl Execute for RemoveAddressBookEntryRequestExecute<'_, '_> {
             .remove_entry(self.operation.input.to_owned())
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to remove address book entry: {}", e),
+                reason: format!("Failed to remove address book entry: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

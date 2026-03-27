@@ -520,7 +520,7 @@ impl RequestService {
                     return Err(RequestExecuteError::ValidationError { info });
                 }
                 _ => {
-                    let reason = format!("Unexpected validation result: {:?}", err);
+                    let reason = format!("Unexpected validation result: {err:?}");
                     return Err(RequestExecuteError::InternalError { reason });
                 }
             }
