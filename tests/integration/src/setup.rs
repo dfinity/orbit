@@ -4,7 +4,8 @@ use crate::utils::{
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
-use pocket_ic::{IcpFeatures, IcpFeaturesConfig, PocketIc, PocketIcBuilder, PocketIcState};
+use pocket_ic::common::rest::{IcpFeatures, IcpFeaturesConfig};
+use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
 use station_api::{
     InitUserInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg,
     UserIdentityInput,
