@@ -163,12 +163,9 @@ fn install_canisters(
 ) -> CanisterIds {
     // System canisters (ICP ledger, ICP index, CMC) are already deployed by PocketIC
     // via `with_icp_features` — use their well-known canister IDs.
-    let nns_ledger_canister_id =
-        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
-    let nns_index_canister_id =
-        Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
-    let cmc_canister_id =
-        Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
+    let nns_ledger_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let nns_index_canister_id = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
+    let cmc_canister_id = Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
 
     let control_panel = create_canister_with_cycles(
         env,
