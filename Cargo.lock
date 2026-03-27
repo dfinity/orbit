@@ -2414,6 +2414,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-management-canister-types"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3149217e24186df3f13dc45eee14cdb3e5cad07d0b2b67bd53555c1c55462957"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "ic-representation-independent-hash"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2485,9 +2496,9 @@ dependencies = [
 
 [[package]]
 name = "ic-transport-types"
-version = "0.40.1"
+version = "0.45.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2e7706e55836e8104c98149ec0796d20d5213fef972ac01b544657d410f1883"
+checksum = "4a775244756a5d97ff19b08071a946a4b4896904e35deb036bf215e80f2e703d"
 dependencies = [
  "candid",
  "hex",
@@ -2761,7 +2772,7 @@ dependencies = [
  "ic-cdk 0.17.2",
  "ic-certified-assets",
  "ic-ledger-types",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.3.3",
  "icrc-ledger-types",
  "itertools 0.13.0",
  "lazy_static",
@@ -3720,9 +3731,9 @@ dependencies = [
 
 [[package]]
 name = "pocket-ic"
-version = "10.0.0"
+version = "13.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c9b78f339182efb981ceca2ac360aa280609f8d8c785e5a7eeda488f53497a8"
+checksum = "e30621a12b204880522340df8327930d1b7fdefd784c9fc6093b311440fa0506"
 dependencies = [
  "backoff",
  "base64 0.13.1",
@@ -3730,12 +3741,12 @@ dependencies = [
  "flate2",
  "hex",
  "ic-certification 3.0.3",
- "ic-management-canister-types",
- "ic-transport-types 0.40.1",
+ "ic-management-canister-types 0.5.0",
+ "ic-transport-types 0.45.0",
  "reqwest",
  "schemars",
+ "semver",
  "serde",
- "serde_bytes",
  "serde_cbor",
  "serde_json",
  "sha2 0.10.9",
@@ -5903,7 +5914,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
