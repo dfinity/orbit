@@ -59,7 +59,7 @@ ic-cdk = "0.17.1"
 ic-cdk-macros = "0.17.1"
 ic-cdk-timers = "0.11.0"
 ic-ledger-types = "0.14.0"
-ic-management-canister-types = "0.3.0"
+ic-management-canister-types = "0.4.1"
 ic-stable-structures = "0.6.6"
 icrc-ledger-types = "0.1.6"
 ic-utils = "0.38"
@@ -70,7 +70,7 @@ num-bigint = "0.4"
 # `pocket-ic` should be pinned to an exact version so that the PocketIC server binary version
 # `POCKET_IC_SERVER_VERSION` defined in `scripts/run-integration-tests.sh` is compatible:
 # https://docs.google.com/document/d/1VYmHUTjrgbzRHtsAyRrI5cj-gWGs7ktTnutPvUMJioU/edit
-pocket-ic = "=9.0.2"
+pocket-ic = "=10.0.0"
 proc-macro2 = "1.0"
 prometheus = "0.13.3"
 quote = "1.0"

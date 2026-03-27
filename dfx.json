@@ -1,16 +1,6 @@
 {
   "__ref_dfx": "dfx.json reference: https://internetcomputer.org/docs/current/references/dfx-json-reference/",
   "canisters": {
-    "cmc": {
-      "type": "custom",
-      "candid": "https://raw.githubusercontent.com/dfinity/ic/ee52ab3056cf5f39b09b08de70bdd20485c8b2dc/rs/nns/cmc/cmc.did",
-      "wasm": "https://download.dfinity.systems/ic/ee52ab3056cf5f39b09b08de70bdd20485c8b2dc/canisters/cycles-minting-canister.wasm.gz",
-      "remote": {
-        "id": {
-          "ic": "rkp4c-7iaaa-aaaaa-aaaca-cai"
-        }
-      }
-    },
     "icp_ledger": {
       "type": "custom",
       "candid": "https://raw.githubusercontent.com/dfinity/ic/d87954601e4b22972899e9957e800406a0a6b929/rs/rosetta-api/icp_ledger/ledger.did",
