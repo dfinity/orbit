@@ -44,7 +44,10 @@ RUN eval "$(fnm env)" && \
     fnm alias default production
 # Install the monorepo dependencies
 COPY . .
-RUN eval "$(fnm env)" && \
+# Pre-create node_modules/.bin to work around pnpm mkdir race condition
+# in Docker overlay filesystems (https://github.com/pnpm/pnpm/issues/5803)
+RUN mkdir -p node_modules/.bin && \
+    eval "$(fnm env)" && \
     fnm use && \
     pnpm install --frozen-lockfile
 

@@ -4,7 +4,7 @@ set -eEuo pipefail
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
-cd $SCRIPT_DIR/..
+cd "$SCRIPT_DIR/.."
 
 # Pin to a specific commit to ensure compatibility with PocketIC server version.
 # The asset canister Wasm must not import system APIs unsupported by the PocketIC version
