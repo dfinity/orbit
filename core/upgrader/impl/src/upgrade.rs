@@ -180,7 +180,7 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
                     .map(|r| r.0);
                     // Log an error if the notification can't be made.
                     if let Err(e) = notify_res {
-                        print(format!("notify_failed_station_upgrade failed: {:?}", e));
+                        print(format!("notify_failed_station_upgrade failed: {e:?}"));
                     }
                 }
             }

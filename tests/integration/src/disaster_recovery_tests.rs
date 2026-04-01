@@ -50,10 +50,7 @@ fn await_disaster_recovery_success(env: &PocketIc, station_id: Principal, upgrad
             return;
         }
     }
-    panic!(
-        "Disaster recovery did not succeed within {} rounds.",
-        max_rounds
-    );
+    panic!("Disaster recovery did not succeed within {max_rounds} rounds.");
 }
 
 fn await_disaster_recovery_failure(env: &PocketIc, station_id: Principal, upgrader_id: Principal) {
@@ -73,10 +70,7 @@ fn await_disaster_recovery_failure(env: &PocketIc, station_id: Principal, upgrad
             return;
         }
     }
-    panic!(
-        "Disaster recovery did not fail within {} rounds.",
-        max_rounds
-    );
+    panic!("Disaster recovery did not fail within {max_rounds} rounds.");
 }
 
 #[test]
@@ -422,7 +416,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
     let mut initial_accounts = BTreeMap::new();
     for account_nr in 0..3 {
         let create_account_args = AddAccountOperationInput {
-            name: format!("account-{}", account_nr),
+            name: format!("account-{account_nr}"),
             assets: vec![icp_asset.id.clone()],
             read_permission: AllowDTO {
                 auth_scope: station_api::AuthScopeDTO::Restricted,
@@ -1052,7 +1046,7 @@ fn test_disaster_recovery_committee_change_with_open_requests() {
     let users: Vec<_> = (0..5)
         .map(|i: u64| AdminUser {
             id: Uuid::from_u128(i.into()).hyphenated().to_string(),
-            name: format!("user_{}", i),
+            name: format!("user_{i}"),
             identities: vec![Principal::from_slice(&i.to_le_bytes())],
         })
         .collect();

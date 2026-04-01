@@ -56,7 +56,7 @@ impl Execute for AddAssetRequestExecute<'_, '_> {
             .asset_service
             .create(self.operation.input.clone(), None)
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to create asset: {}", e),
+                reason: format!("Failed to create asset: {e}"),
             })?;
 
         let mut operation = self.request.operation.clone();

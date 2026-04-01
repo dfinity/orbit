@@ -91,7 +91,7 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                     )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
-                        reason: format!("failed to upgrade station: {}", err),
+                        reason: format!("failed to upgrade station: {err}"),
                     });
 
                 if out.is_err() {

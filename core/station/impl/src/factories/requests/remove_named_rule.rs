@@ -54,7 +54,7 @@ impl Execute for RemoveNamedRuleRequestExecute<'_, '_> {
         self.named_rule_service
             .remove(self.operation.input.clone())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to remove named rule: {}", e),
+                reason: format!("Failed to remove named rule: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

@@ -577,7 +577,7 @@ mod tests {
         for i in 0..5 {
             let mut entry = create_registry_entry();
             entry.namespace = "orbit".to_string();
-            entry.name = format!("entry-{}", i);
+            entry.name = format!("entry-{i}");
             entry.validate().unwrap();
 
             repository.insert(entry.id, entry);
@@ -607,7 +607,7 @@ mod tests {
         for i in 0..5 {
             let mut entry = create_registry_entry();
             entry.namespace = "orbit".to_string();
-            entry.name = format!("entry-{}", i);
+            entry.name = format!("entry-{i}");
             entry.validate().unwrap();
 
             repository.insert(entry.id, entry);
@@ -636,7 +636,7 @@ mod tests {
         for i in 0..5 {
             let mut entry = create_registry_entry();
             entry.namespace = RegistryEntry::DEFAULT_NAMESPACE.to_string();
-            entry.name = format!("entry-{}", i);
+            entry.name = format!("entry-{i}");
             entry.validate().unwrap();
 
             repository.insert(entry.id, entry);
@@ -661,7 +661,7 @@ mod tests {
         let repository = RegistryRepository::default();
         for i in 0..5 {
             let mut entry = create_registry_entry();
-            entry.categories.push(format!("category-{}", i));
+            entry.categories.push(format!("category-{i}"));
             entry.validate().unwrap();
 
             repository.insert(entry.id, entry);
@@ -693,7 +693,7 @@ mod tests {
         let repository = RegistryRepository::default();
         for i in 0..5 {
             let mut entry = create_registry_entry();
-            entry.tags.push(format!("tag-{}", i));
+            entry.tags.push(format!("tag-{i}"));
             entry.validate().unwrap();
 
             repository.insert(entry.id, entry);
@@ -749,7 +749,7 @@ mod tests {
             entry.name = "station".to_string();
             entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
-                version: format!("1.0.{}", i),
+                version: format!("1.0.{i}"),
                 dependencies: Vec::new(),
                 module_extra_chunks: None,
             });

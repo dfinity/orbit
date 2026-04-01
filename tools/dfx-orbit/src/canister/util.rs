@@ -7,9 +7,9 @@ impl DfxOrbit {
     pub(super) fn try_reverse_lookup(&self, canister_id: &Principal) -> String {
         match self.canister_name(canister_id).ok() {
             Some(canister_name) => {
-                format!("{} ({})", canister_name, canister_id)
+                format!("{canister_name} ({canister_id})")
             }
-            None => format!("{}", canister_id),
+            None => format!("{canister_id}"),
         }
     }
 }

@@ -31,7 +31,7 @@ fn init_timers_fn() {
     async fn initialize_rng_timer() {
         use orbit_essentials::utils::initialize_rng;
         if let Err(e) = initialize_rng().await {
-            ic_cdk::print(format!("initializing rng failed: {}", e));
+            ic_cdk::print(format!("initializing rng failed: {e}"));
             ic_cdk_timers::set_timer(std::time::Duration::from_secs(60), move || {
                 spawn(initialize_rng_timer())
             });

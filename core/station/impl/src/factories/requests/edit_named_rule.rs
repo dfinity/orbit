@@ -55,7 +55,7 @@ impl Execute for EditNamedRuleRequestExecute<'_, '_> {
         self.named_rule_service
             .edit(self.operation.input.clone())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to edit named rule: {}", e),
+                reason: format!("Failed to edit named rule: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

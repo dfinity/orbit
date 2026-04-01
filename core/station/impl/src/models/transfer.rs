@@ -187,19 +187,19 @@ impl ModelValidator<TransferError> for Transfer {
 
         EnsureUser::id_exists(&self.initiator_user).map_err(|err| match err {
             RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
-                info: format!("The initiator_user {} does not exist", id),
+                info: format!("The initiator_user {id} does not exist"),
             },
         })?;
 
         EnsureAccount::id_exists(&self.from_account).map_err(|err| match err {
             RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
-                info: format!("The from_account {} does not exist", id),
+                info: format!("The from_account {id} does not exist"),
             },
         })?;
 
         EnsureRequest::id_exists(&self.request_id).map_err(|err| match err {
             RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
-                info: format!("The request_id {} does not exist", id),
+                info: format!("The request_id {id} does not exist"),
             },
         })?;
 

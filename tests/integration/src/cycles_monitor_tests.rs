@@ -156,10 +156,7 @@ fn successful_monitors_stations_and_tops_up() {
 
     let cycles_balance = env.cycle_balance(newly_created_user_station);
     if cycles_balance <= 125_000_000_000 {
-        panic!(
-            "Cycles balance is too low to run the test, cycles_balance: {}",
-            cycles_balance
-        );
+        panic!("Cycles balance is too low to run the test, cycles_balance: {cycles_balance}");
     }
 
     advance_time_to_burn_cycles(

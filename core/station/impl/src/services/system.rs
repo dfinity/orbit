@@ -305,7 +305,7 @@ impl SystemService {
         async fn initialize_rng_timer() {
             use orbit_essentials::utils::initialize_rng;
             if let Err(e) = initialize_rng().await {
-                ic_cdk::print(format!("initializing rng failed: {}", e));
+                ic_cdk::print(format!("initializing rng failed: {e}"));
                 crate::core::ic_timers::set_timer(std::time::Duration::from_secs(60), move || {
                     use crate::core::ic_cdk::spawn;
                     spawn(initialize_rng_timer())
@@ -463,7 +463,7 @@ impl SystemService {
             if let Err(e) =
                 install_canister_post_process_work(init.clone(), system_info.clone()).await
             {
-                ic_cdk::print(format!("canister initialization failed: {}", e));
+                ic_cdk::print(format!("canister initialization failed: {e}"));
                 crate::core::ic_timers::set_timer(
                     std::time::Duration::from_secs(3600),
                     move || {
@@ -488,7 +488,7 @@ impl SystemService {
                         // synchronously via a system API.
                         let station_cycles = canister_balance128();
                         if station_cycles < upgrader_initial_cycles {
-                            ic_cdk::trap(&format!("Station cycles balance {} is insufficient for transferring {} cycles when deploying the upgrader.", station_cycles, upgrader_initial_cycles));
+                            ic_cdk::trap(&format!("Station cycles balance {station_cycles} is insufficient for transferring {upgrader_initial_cycles} cycles when deploying the upgrader."));
                         }
                     }
                 };
@@ -1152,13 +1152,13 @@ mod init_canister_sync_handlers {
                 Ok((input, account_id))
             })
             .collect::<Result<Vec<(AddAccountOperationInput, Option<UUID>)>, ApiError>>()
-            .map_err(|e| format!("Invalid input: {:?}", e))?;
+            .map_err(|e| format!("Invalid input: {e:?}"))?;
 
         for (new_account, with_account_id) in add_accounts {
             ACCOUNT_SERVICE
                 .create_account(new_account, with_account_id)
                 .await
-                .map_err(|e| format!("Failed to add account: {:?}", e))?;
+                .map_err(|e| format!("Failed to add account: {e:?}"))?;
 
             print("account created");
         }
@@ -1195,7 +1195,7 @@ mod install_canister_handlers {
                     },
                 })
                 .await
-                .map_err(|e| format!("Failed to set upgrader controller: {:?}", e))?;
+                .map_err(|e| format!("Failed to set upgrader controller: {e:?}"))?;
 
                 Ok(upgrader_id)
             }
@@ -1229,7 +1229,7 @@ mod install_canister_handlers {
             initial_upgrader_cycles,
         )
         .await
-        .map_err(|e| format!("Failed to create upgrader canister: {:?}", e))?;
+        .map_err(|e| format!("Failed to create upgrader canister: {e:?}"))?;
 
         mgmt::install_code(mgmt::InstallCodeArgument {
             mode: mgmt::CanisterInstallMode::Install,
@@ -1241,7 +1241,7 @@ mod install_canister_handlers {
             .expect("Failed to encode upgrader init arg"),
         })
         .await
-        .map_err(|e| format!("Failed to install upgrader canister: {:?}", e))?;
+        .map_err(|e| format!("Failed to install upgrader canister: {e:?}"))?;
 
         Ok(upgrader_canister.canister_id)
     }
@@ -1256,7 +1256,7 @@ mod install_canister_handlers {
             },
         })
         .await
-        .map_err(|e| format!("Failed to set station controller: {:?}", e))
+        .map_err(|e| format!("Failed to set station controller: {e:?}"))
     }
 
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.

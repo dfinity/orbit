@@ -49,7 +49,7 @@ impl OrbitExtensionAgent {
 
     /// Gets the basename of the extension config file.
     fn config_file_name(&self) -> String {
-        format!("{}.json", ORBIT_EXTENSION_NAME)
+        format!("{ORBIT_EXTENSION_NAME}.json")
     }
 
     /// Gets the extension config file for this extension.  If the file does not exist, it will be created.
@@ -66,8 +66,7 @@ impl OrbitExtensionAgent {
             .open_with(filename, open_options)
             .with_context(|| {
                 format!(
-                    "Could not create extension config file for extension: {}",
-                    ORBIT_EXTENSION_NAME
+                    "Could not create extension config file for extension: {ORBIT_EXTENSION_NAME}"
                 )
             })
     }
@@ -79,17 +78,13 @@ impl OrbitExtensionAgent {
             .create_dir_all(ORBIT_EXTENSION_NAME)
             .with_context(|| {
                 format!(
-                    "Could not create extension directory for extension: {}",
-                    ORBIT_EXTENSION_NAME
+                    "Could not create extension directory for extension: {ORBIT_EXTENSION_NAME}"
                 )
             })?;
         extensions_dir
             .open_dir(ORBIT_EXTENSION_NAME)
             .with_context(|| {
-                format!(
-                    "Could not open extension directory for extension: {}",
-                    ORBIT_EXTENSION_NAME
-                )
+                format!("Could not open extension directory for extension: {ORBIT_EXTENSION_NAME}")
             })
     }
 

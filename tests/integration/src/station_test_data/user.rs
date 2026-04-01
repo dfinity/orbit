@@ -12,7 +12,7 @@ pub fn add_user(
     group_ids: Vec<String>,
 ) -> station_api::UserDTO {
     let next_id = next_unique_id();
-    let user_name = format!("user-{}", next_id);
+    let user_name = format!("user-{next_id}");
     let next_id = next_id.to_be_bytes();
     let identity = Principal::from_slice(next_id.as_ref());
     let add_user =

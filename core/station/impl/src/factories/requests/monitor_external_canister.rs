@@ -66,14 +66,14 @@ impl Execute for MonitorExternalCanisterRequestExecute<'_, '_> {
                         input.cycle_obtain_strategy,
                     )
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to monitor canister: {}", e),
+                        reason: format!("Failed to monitor canister: {e}"),
                     })?;
             }
             MonitorExternalCanisterOperationKind::Stop => {
                 self.external_canister_service
                     .canister_monitor_stop(self.operation.canister_id)
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to stop monitoring canister: {}", e),
+                        reason: format!("Failed to stop monitoring canister: {e}"),
                     })?;
             }
         }

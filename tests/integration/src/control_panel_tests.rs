@@ -565,7 +565,7 @@ fn insufficient_control_panel_cycles() {
 
         // deploy station
         let deploy_station_args = DeployStationInput {
-            name: format!("station_{}", i),
+            name: format!("station_{i}"),
             admins: vec![DeployStationAdminUserInput {
                 identity: user_id,
                 username: "admin".to_string(),
@@ -681,8 +681,7 @@ fn deploy_station_with_insufficient_cycles() {
         )
         .unwrap_err();
     assert!(err.reject_message.contains(&format!(
-        "insufficient for transferring {} cycles when deploying the upgrader",
-        upgrader_initial_cycles
+        "insufficient for transferring {upgrader_initial_cycles} cycles when deploying the upgrader"
     )));
     let cycles_after_failed_install = env.cycle_balance(station);
     assert!(cycles_before_install <= cycles_after_failed_install + 50_000_000_000);
@@ -833,7 +832,7 @@ fn deploy_station(
     i: usize,
 ) -> ApiResult<DeployStationResponse> {
     let deploy_station_args = DeployStationInput {
-        name: format!("station_{}_{}_{}", user_id, day, i),
+        name: format!("station_{user_id}_{day}_{i}"),
         admins: vec![DeployStationAdminUserInput {
             identity: user_id,
             username: "admin".to_string(),

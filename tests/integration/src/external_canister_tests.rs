@@ -545,8 +545,7 @@ fn create_external_canister_and_check_status() {
     )
     .unwrap_err();
     assert!(err.reject_message.contains(&format!(
-        "Unauthorized access to resources: ExternalCanister(Read(Canister({})))",
-        canister_id
+        "Unauthorized access to resources: ExternalCanister(Read(Canister({canister_id})))"
     )));
 }
 
@@ -1182,10 +1181,7 @@ fn create_external_canister_with_too_many_cycles() {
         RequestStatusDTO::Failed { reason } => {
             assert_eq!(reason.unwrap(), format!("Request execution failed due to `failed to add external canister: FAILED: The external canister operation failed due to Canister {} has insufficient cycles balance to transfer {} cycles.`.", canister_ids.station, 2 * station_cycles));
         }
-        _ => panic!(
-            "Unexpected request status: {:?}",
-            rich_canister_request_status
-        ),
+        _ => panic!("Unexpected request status: {rich_canister_request_status:?}"),
     };
     // the station should still be healthy
     let health_status =
@@ -1425,10 +1421,9 @@ fn snapshot_external_canister_test() {
     .unwrap();
     match failed_request_status {
         RequestStatusDTO::Failed { reason } => assert!(reason.unwrap().contains(&format!(
-            "Canister {} has reached the maximum number of snapshots allowed: {}.",
-            external_canister_id, MAX_CANISTER_SNAPSHOTS
+            "Canister {external_canister_id} has reached the maximum number of snapshots allowed: {MAX_CANISTER_SNAPSHOTS}."
         ))),
-        _ => panic!("Unexpected request status: {:?}", failed_request_status),
+        _ => panic!("Unexpected request status: {failed_request_status:?}"),
     };
 
     // restore the canister from the snapshot
@@ -1672,7 +1667,7 @@ fn snapshot_unstoppable_external_canister_test() {
         RequestStatusDTO::Failed { reason } => {
             assert!(reason.unwrap().contains("Stop canister request timed out"))
         }
-        _ => panic!("Unexpected request status: {:?}", failed_request_status),
+        _ => panic!("Unexpected request status: {failed_request_status:?}"),
     };
 
     // restart the canister

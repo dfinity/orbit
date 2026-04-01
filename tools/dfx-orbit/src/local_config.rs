@@ -91,7 +91,7 @@ impl OrbitExtensionAgent {
             .filter(|station_name| self.station(station_name).is_ok())
             // Add a little tick next to the station name if it is the default station
             .map(|name| match &default_station {
-                Some(default_name) if default_name == &name => format!("{} (*)", name),
+                Some(default_name) if default_name == &name => format!("{name} (*)"),
                 _ => name,
             })
             .collect();
@@ -155,7 +155,7 @@ impl OrbitExtensionAgent {
         let dir = self.stations_dir()?;
         let path = Self::station_file_name(name);
         dir.remove_file(path)
-            .with_context(|| format!("Failed to remove dfx config file for station {}", name))?;
+            .with_context(|| format!("Failed to remove dfx config file for station {name}"))?;
 
         if self.default_station_name()? == Some(name.to_string()) {
             self.set_default_station(None)?;
@@ -252,6 +252,6 @@ impl OrbitExtensionAgent {
 
     /// The name of the file in which the config for a given station is stored.
     fn station_file_name(name: &str) -> String {
-        format!("{}.json", name)
+        format!("{name}.json")
     }
 }

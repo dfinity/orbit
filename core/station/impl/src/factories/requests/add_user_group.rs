@@ -48,7 +48,7 @@ impl Execute for AddUserGroupRequestExecute<'_, '_> {
             .create(self.operation.input.clone())
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to create user group: {}", e),
+                reason: format!("Failed to create user group: {e}"),
             })?;
 
         let mut operation = self.request.operation.clone();

@@ -89,7 +89,7 @@ impl Metadata {
     pub(crate) fn mock() -> Self {
         (0..Self::MAX_METADATA)
             .map(|i| MetadataDTO {
-                key: format!("{:0>24}", i),
+                key: format!("{i:0>24}"),
                 value: "b".repeat(Self::MAX_METADATA_VALUE_LEN as usize),
             })
             .collect::<Vec<_>>()
@@ -140,7 +140,7 @@ mod tests {
     fn fail_metadata_validation_too_many() {
         let metadata: Metadata = (0..Metadata::MAX_METADATA as usize + 1)
             .map(|i| MetadataDTO {
-                key: format!("{:0>24}", i),
+                key: format!("{i:0>24}"),
                 value: "b".repeat(Metadata::MAX_METADATA_VALUE_LEN as usize),
             })
             .collect::<Vec<_>>()
@@ -163,7 +163,7 @@ mod tests {
     fn fail_metadata_validation_key_too_long() {
         let metadata: Metadata = (0..Metadata::MAX_METADATA)
             .map(|i| MetadataDTO {
-                key: format!("{:0>25}", i),
+                key: format!("{i:0>25}"),
                 value: "b".repeat(Metadata::MAX_METADATA_VALUE_LEN as usize),
             })
             .collect::<Vec<_>>()
@@ -186,7 +186,7 @@ mod tests {
     fn fail_metadata_validation_value_too_long() {
         let metadata: Metadata = (0..Metadata::MAX_METADATA)
             .map(|i| MetadataDTO {
-                key: format!("{:0>24}", i),
+                key: format!("{i:0>24}"),
                 value: "b".repeat(Metadata::MAX_METADATA_VALUE_LEN as usize + 1),
             })
             .collect::<Vec<_>>()

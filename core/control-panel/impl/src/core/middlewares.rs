@@ -27,7 +27,7 @@ where
             ic_cdk::api::print(
                 serde_json::to_string(&LogMessage {
                     function: target_fn.to_string(),
-                    message: format!("completed execution with result {:?}", result),
+                    message: format!("completed execution with result {result:?}"),
                     timestamp: ic_cdk::api::time(),
                     caller: context.caller().to_text(),
                 })

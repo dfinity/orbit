@@ -232,7 +232,7 @@ fn validate_wasm_module_version(version: &str) -> ModelValidatorResult<RegistryE
 
     if let Err(e) = semver::Version::parse(version) {
         return Err(RegistryError::ValidationError {
-            info: format!("Invalid semver: {}", e),
+            info: format!("Invalid semver: {e}"),
         });
     }
 
@@ -381,16 +381,13 @@ fn validate_chars(field: &str, content: &str) -> ModelValidatorResult<RegistryEr
         .all(|c| c.is_ascii_lowercase() || c.is_numeric() || c == '-')
     {
         return Err(RegistryError::ValidationError {
-            info: format!(
-                "{} can only contain lowercase letters, numbers, and hyphens",
-                field
-            ),
+            info: format!("{field} can only contain lowercase letters, numbers, and hyphens"),
         });
     }
 
     if content.starts_with('-') || content.ends_with('-') {
         return Err(RegistryError::ValidationError {
-            info: format!("{} cannot start or end with a hyphen", field),
+            info: format!("{field} cannot start or end with a hyphen"),
         });
     }
 
@@ -730,7 +727,7 @@ mod tests {
     }
 
     #[rstest]
-    #[case::too_many_categories((0..RegistryEntry::MAX_CATEGORIES + 1).map(|i| format!("test-{}", i).to_string()).collect())]
+    #[case::too_many_categories((0..RegistryEntry::MAX_CATEGORIES + 1).map(|i| format!("test-{i}").to_string()).collect())]
     #[case::category_too_small(vec!["a".to_string()])]
     #[case::category_too_big(vec!["a".repeat(RegistryEntry::MAX_CATEGORY_LENGTH + 1)])]
     #[case::duplicate_categories(vec!["test".to_string(), "test".to_string()])]
@@ -870,7 +867,7 @@ mod tests {
         let dependencies = (0..WasmModuleRegistryValue::MAX_DEPENDENCIES + 1)
             .map(|i| WasmModuleRegistryEntryDependency {
                 name: i.to_string(),
-                version: format!("1.0.{}", i),
+                version: format!("1.0.{i}"),
             })
             .collect();
 

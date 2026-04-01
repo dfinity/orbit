@@ -103,8 +103,7 @@ impl RequestPolicyService {
                         self.remove_request_policy(existing_policy_id)
                     {
                         print(format!(
-                            "Cannot handle policy change: policy {} not found",
-                            id
+                            "Cannot handle policy change: policy {id} not found"
                         ));
                     }
 

@@ -51,7 +51,7 @@ impl LoggerService {
     /// Logs an entry to the storage. If it cannot log the entry, it prints to the canister's logs.
     pub fn log(&self, entry_type: LogEntryType) {
         if let Err(err) = self.try_log(entry_type) {
-            crate::upgrader_ic_cdk::api::print(format!("Failed to log entry: {}", err));
+            crate::upgrader_ic_cdk::api::print(format!("Failed to log entry: {err}"));
         }
     }
 

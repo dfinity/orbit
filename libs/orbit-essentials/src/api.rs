@@ -74,7 +74,7 @@ impl<E: std::error::Error + DetailableError> From<E> for ApiError {
 }
 
 pub fn extract_error_enum_variant_name<E: std::error::Error>(err: &E) -> String {
-    let full_code = to_snake_case(format!("{:?}", err)).to_uppercase();
+    let full_code = to_snake_case(format!("{err:?}")).to_uppercase();
     full_code
         .split(['{', '('])
         .next()

@@ -57,7 +57,7 @@ impl Execute for AddAccountRequestExecute<'_, '_> {
             .create_account(self.operation.input.to_owned(), None)
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to create account: {}", e),
+                reason: format!("Failed to create account: {e}"),
             })?;
 
         let mut operation = self.request.operation.clone();

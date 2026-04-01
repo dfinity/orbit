@@ -29,7 +29,7 @@ impl DfxOrbit {
                 .me
                 .identities
                 .iter()
-                .map(|p| format!("\n\t{}", p))
+                .map(|p| format!("\n\t{p}"))
                 .join("")
         )?;
         writeln!(

@@ -10,6 +10,6 @@ fn main() {
     ];
 
     for (key, value) in env_vars {
-        println!("cargo:rustc-env={}={}", key, value);
+        println!("cargo:rustc-env={key}={value}");
     }
 }

@@ -15,8 +15,7 @@ pub async fn check_balance_before_transfer(transfer_amount: u128) -> Result<(), 
         status.idle_cycles_burned_per_day * status.settings.freezing_threshold * 2_u64 / 86_400u64;
     if canister_balance() < min_balance + transfer_amount {
         let err = format!(
-            "Canister {} has insufficient cycles balance to transfer {} cycles.",
-            self_id, transfer_amount
+            "Canister {self_id} has insufficient cycles balance to transfer {transfer_amount} cycles."
         );
         return Err(err);
     }

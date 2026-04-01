@@ -117,7 +117,7 @@ fn do_failed_system_upgrade(
     // check that the station upgrade request is failed
     match request_status {
         RequestStatusDTO::Failed { reason } => assert!(reason.unwrap().contains(expected_reason)),
-        _ => panic!("Unexpected request status: {:?}", request_status),
+        _ => panic!("Unexpected request status: {request_status:?}"),
     };
 
     // check the station status after the failed upgrade
@@ -513,7 +513,7 @@ fn failed_system_restore() {
             RequestStatusDTO::Failed { reason } => {
                 assert!(reason.unwrap().contains("IC0408: Payload deserialization error: InvalidLength(\"Invalid snapshot ID length: provided 1, minumum length expected 37.\""));
             }
-            _ => panic!("Unexpected request status: {:?}", status),
+            _ => panic!("Unexpected request status: {status:?}"),
         };
     }
 }
@@ -681,7 +681,7 @@ fn backup_snapshot() {
             RequestStatusDTO::Failed { reason } => {
                 assert!(reason.unwrap().contains("Canister's Wasm module is not valid: Failed to decode wasm module: unsupported canister module format."));
             }
-            _ => panic!("Unexpected request status: {:?}", status),
+            _ => panic!("Unexpected request status: {status:?}"),
         };
 
         // a new backup snapshot should have been taken, replacing the previous backup snapshot

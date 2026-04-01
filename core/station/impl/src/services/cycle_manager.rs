@@ -65,8 +65,7 @@ impl CycleManager {
         });
 
         ic_cdk::print(format!(
-            "Cycle manager: canister {} added to cycle monitoring.",
-            canister_id
+            "Cycle manager: canister {canister_id} added to cycle monitoring."
         ));
     }
 
@@ -80,8 +79,7 @@ impl CycleManager {
         });
 
         ic_cdk::print(format!(
-            "Cycle manager: canister {} removed from cycle monitoring.",
-            canister_id
+            "Cycle manager: canister {canister_id} removed from cycle monitoring."
         ));
     }
 
@@ -102,8 +100,7 @@ impl CycleManager {
         });
 
         ic_cdk::print(format!(
-            "Cycle manager: obtain cycles strategy changed to {:?}.",
-            strategy
+            "Cycle manager: obtain cycles strategy changed to {strategy:?}."
         ));
     }
 }

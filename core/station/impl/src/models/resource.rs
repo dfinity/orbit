@@ -736,20 +736,20 @@ impl Resource {
 impl Display for Resource {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Resource::Permission(action) => write!(f, "Permission({})", action),
-            Resource::Account(action) => write!(f, "Account({})", action),
-            Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
+            Resource::Permission(action) => write!(f, "Permission({action})"),
+            Resource::Account(action) => write!(f, "Account({action})"),
+            Resource::AddressBook(action) => write!(f, "AddressBook({action})"),
             Resource::ExternalCanister(action) => {
-                write!(f, "ExternalCanister({})", action)
+                write!(f, "ExternalCanister({action})")
             }
-            Resource::Notification(action) => write!(f, "Notification({})", action),
-            Resource::Request(action) => write!(f, "Request({})", action),
-            Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
-            Resource::System(action) => write!(f, "System({})", action),
-            Resource::User(action) => write!(f, "User({})", action),
-            Resource::UserGroup(action) => write!(f, "UserGroup({})", action),
-            Resource::Asset(action) => write!(f, "Asset({})", action),
-            Resource::NamedRule(action) => write!(f, "NamedRule({})", action),
+            Resource::Notification(action) => write!(f, "Notification({action})"),
+            Resource::Request(action) => write!(f, "Request({action})"),
+            Resource::RequestPolicy(action) => write!(f, "RequestPolicy({action})"),
+            Resource::System(action) => write!(f, "System({action})"),
+            Resource::User(action) => write!(f, "User({action})"),
+            Resource::UserGroup(action) => write!(f, "UserGroup({action})"),
+            Resource::Asset(action) => write!(f, "Asset({action})"),
+            Resource::NamedRule(action) => write!(f, "NamedRule({action})"),
         }
     }
 }
@@ -759,9 +759,9 @@ impl Display for ResourceAction {
         match self {
             ResourceAction::List => write!(f, "List"),
             ResourceAction::Create => write!(f, "Create"),
-            ResourceAction::Read(id) => write!(f, "Read({})", id),
-            ResourceAction::Update(id) => write!(f, "Update({})", id),
-            ResourceAction::Delete(id) => write!(f, "Delete({})", id),
+            ResourceAction::Read(id) => write!(f, "Read({id})"),
+            ResourceAction::Update(id) => write!(f, "Update({id})"),
+            ResourceAction::Delete(id) => write!(f, "Delete({id})"),
         }
     }
 }
@@ -780,9 +780,9 @@ impl Display for AccountResourceAction {
         match self {
             AccountResourceAction::List => write!(f, "List"),
             AccountResourceAction::Create => write!(f, "Create"),
-            AccountResourceAction::Transfer(id) => write!(f, "Transfer({})", id),
-            AccountResourceAction::Read(id) => write!(f, "Read({})", id),
-            AccountResourceAction::Update(id) => write!(f, "Update({})", id),
+            AccountResourceAction::Transfer(id) => write!(f, "Transfer({id})"),
+            AccountResourceAction::Read(id) => write!(f, "Read({id})"),
+            AccountResourceAction::Update(id) => write!(f, "Update({id})"),
         }
     }
 }
@@ -792,7 +792,7 @@ impl Display for ExternalCanisterId {
         match self {
             ExternalCanisterId::Any => write!(f, "Any"),
             ExternalCanisterId::Canister(canister_id) => {
-                write!(f, "Canister({})", canister_id)
+                write!(f, "Canister({canister_id})")
             }
         }
     }
@@ -804,16 +804,16 @@ impl Display for ExternalCanisterResourceAction {
             ExternalCanisterResourceAction::List => write!(f, "List"),
             ExternalCanisterResourceAction::Create => write!(f, "Create"),
             ExternalCanisterResourceAction::Change(target) => {
-                write!(f, "Change({})", target)
+                write!(f, "Change({target})")
             }
             ExternalCanisterResourceAction::Fund(target) => {
-                write!(f, "Fund({})", target)
+                write!(f, "Fund({target})")
             }
             ExternalCanisterResourceAction::Call(target) => {
-                write!(f, "Call({})", target)
+                write!(f, "Call({target})")
             }
             ExternalCanisterResourceAction::Read(target) => {
-                write!(f, "Read({})", target)
+                write!(f, "Read({target})")
             }
         }
     }
@@ -824,7 +824,7 @@ impl Display for NotificationResourceAction {
         match self {
             NotificationResourceAction::List => write!(f, "List"),
             NotificationResourceAction::Update(id) => {
-                write!(f, "Update({})", id)
+                write!(f, "Update({id})")
             }
         }
     }
@@ -845,7 +845,7 @@ impl Display for ValidationMethodResourceTarget {
         match self {
             ValidationMethodResourceTarget::No => write!(f, "NoValidationMethod"),
             ValidationMethodResourceTarget::ValidationMethod(canister_method) => {
-                write!(f, "ValidationMethod({})", canister_method)
+                write!(f, "ValidationMethod({canister_method})")
             }
         }
     }
@@ -856,7 +856,7 @@ impl Display for ExecutionMethodResourceTarget {
         match self {
             ExecutionMethodResourceTarget::Any => write!(f, "AnyExecutionMethod"),
             ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
-                write!(f, "ExecutionMethod({})", canister_method)
+                write!(f, "ExecutionMethod({canister_method})")
             }
         }
     }
@@ -876,7 +876,7 @@ impl Display for RequestResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             RequestResourceAction::List => write!(f, "List"),
-            RequestResourceAction::Read(id) => write!(f, "Read({})", id),
+            RequestResourceAction::Read(id) => write!(f, "Read({id})"),
         }
     }
 }
@@ -897,8 +897,8 @@ impl Display for UserResourceAction {
         match self {
             UserResourceAction::List => write!(f, "List"),
             UserResourceAction::Create => write!(f, "Create"),
-            UserResourceAction::Read(id) => write!(f, "Read({})", id),
-            UserResourceAction::Update(id) => write!(f, "Update({})", id),
+            UserResourceAction::Read(id) => write!(f, "Read({id})"),
+            UserResourceAction::Update(id) => write!(f, "Update({id})"),
         }
     }
 }

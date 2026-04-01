@@ -54,7 +54,7 @@ impl Execute for RemoveAssetRequestExecute<'_, '_> {
         self.asset_service
             .remove(self.operation.input.clone())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to remove asset: {}", e),
+                reason: format!("Failed to remove asset: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

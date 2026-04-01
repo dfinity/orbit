@@ -62,7 +62,7 @@ impl Execute for FundExternalCanisterRequestExecute<'_, '_> {
                     .top_up_canister(self.operation.canister_id, input.cycles as u128)
                     .await
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to fund canister: {}", e),
+                        reason: format!("Failed to fund canister: {e}"),
                     })?;
             }
         }

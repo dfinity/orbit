@@ -48,7 +48,7 @@ impl Execute for RemoveUserGroupRequestExecute<'_, '_> {
             .remove(&self.operation.input.user_group_id)
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to remove user group: {}", e),
+                reason: format!("Failed to remove user group: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

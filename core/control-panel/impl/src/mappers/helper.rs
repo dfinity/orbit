@@ -39,8 +39,7 @@ impl HelperMapper {
         }
 
         print(format!(
-            "Failed to parse semver {}, fallback to 0.0.0",
-            version_text
+            "Failed to parse semver {version_text}, fallback to 0.0.0"
         ));
 
         semver::Version::new(0, 0, 0)

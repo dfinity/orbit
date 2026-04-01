@@ -59,7 +59,7 @@ impl<'p, 'o> ConfigureExternalCanisterRequestExecute<'p, 'o> {
             .external_canister_service
             .get_external_canister_by_canister_id(&self.operation.canister_id)
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("External canister not found: {}", e),
+                reason: format!("External canister not found: {e}"),
             })?;
 
         Ok(external_canister)
@@ -78,7 +78,7 @@ impl Execute for ConfigureExternalCanisterRequestExecute<'_, '_> {
                     .hard_delete_external_canister(&external_canister.id)
                     .await
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to delete canister: {}", e),
+                        reason: format!("Failed to delete canister: {e}"),
                     })?;
             }
             ConfigureExternalCanisterOperationKind::SoftDelete => {
@@ -87,7 +87,7 @@ impl Execute for ConfigureExternalCanisterRequestExecute<'_, '_> {
                 self.external_canister_service
                     .soft_delete_external_canister(&external_canister.id)
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to soft delete canister: {}", e),
+                        reason: format!("Failed to soft delete canister: {e}"),
                     })?;
             }
             ConfigureExternalCanisterOperationKind::Settings(settings) => {
@@ -96,7 +96,7 @@ impl Execute for ConfigureExternalCanisterRequestExecute<'_, '_> {
                 self.external_canister_service
                     .edit_external_canister(&external_canister.id, settings.clone())
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to configure settings: {}", e),
+                        reason: format!("Failed to configure settings: {e}"),
                     })?;
             }
             // these operations do not require an external canister entry
@@ -105,7 +105,7 @@ impl Execute for ConfigureExternalCanisterRequestExecute<'_, '_> {
                     .change_canister_ic_settings(self.operation.canister_id, settings.clone())
                     .await
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to configure native settings: {}", e),
+                        reason: format!("Failed to configure native settings: {e}"),
                     })?;
             }
         }

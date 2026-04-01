@@ -65,7 +65,7 @@ impl NotificationController {
                         NotificationMapperError::InvalidRequestStatus {
                             expected, found
                         } => {
-                            print(format!("Invalid request status when mapping to NotificationDTO: expected \"{}\", found \"{}\"", expected, found));
+                            print(format!("Invalid request status when mapping to NotificationDTO: expected \"{expected}\", found \"{found}\""));
                         }
                     },
                 }

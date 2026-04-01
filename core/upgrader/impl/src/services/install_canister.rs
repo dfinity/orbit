@@ -91,7 +91,7 @@ impl InstallCanister for StationDisasterRecoveryInstall {
             arg,
         )
         .await
-        .map_err(|err| format!("failed to {} canister: \"{}\"", mode, err,))
+        .map_err(|err| format!("failed to {mode} canister: \"{err}\"",))
     }
 
     async fn start(&self, canister_id: Principal) -> Result<(), String> {

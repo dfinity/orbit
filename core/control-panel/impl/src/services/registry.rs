@@ -343,7 +343,7 @@ mod tests {
         for i in 0..10 {
             let mut entry = create_registry_entry();
             entry.namespace = "orbit".to_string();
-            entry.name = format!("module-{}", i);
+            entry.name = format!("module-{i}");
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
         }
@@ -387,7 +387,7 @@ mod tests {
         for i in 0..10 {
             let mut entry = create_registry_entry();
             entry.namespace = "test".to_string();
-            entry.name = format!("module-{}", i);
+            entry.name = format!("module-{i}");
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
         }
@@ -415,7 +415,7 @@ mod tests {
             entry.name = "module".to_string();
             entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
-                version: format!("1.0.{}", i),
+                version: format!("1.0.{i}"),
                 dependencies: Vec::new(),
                 module_extra_chunks: None,
             });
@@ -583,7 +583,7 @@ mod tests {
             entry.name = "module".to_string();
             entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
-                version: format!("1.0.{}", i),
+                version: format!("1.0.{i}"),
                 dependencies: Vec::new(),
                 module_extra_chunks: None,
             });
@@ -611,7 +611,7 @@ mod tests {
             entry.name = "module".to_string();
             entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
-                version: format!("1.0.{}", i),
+                version: format!("1.0.{i}"),
                 dependencies: Vec::new(),
                 module_extra_chunks: None,
             });

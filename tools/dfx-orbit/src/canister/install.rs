@@ -211,11 +211,11 @@ impl DfxOrbit {
             CanisterInstallMode::Reinstall => "Reinstall",
             CanisterInstallMode::Upgrade => "Upgrade",
         };
-        writeln!(output, "Mode: {}", mode)?;
+        writeln!(output, "Mode: {mode}")?;
 
         writeln!(output, "Module checksum: {}", &op.module_checksum)?;
         if let Some(arg_checksum) = &op.arg_checksum {
-            writeln!(output, "Argument checksum: {}", arg_checksum)?;
+            writeln!(output, "Argument checksum: {arg_checksum}")?;
         }
         Ok(())
     }

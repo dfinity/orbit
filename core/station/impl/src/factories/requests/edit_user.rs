@@ -50,7 +50,7 @@ impl Execute for EditUserRequestExecute<'_, '_> {
             .edit_user(self.operation.input.clone())
             .await
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to edit user: {}", e),
+                reason: format!("Failed to edit user: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(

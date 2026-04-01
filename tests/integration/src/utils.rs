@@ -1117,10 +1117,7 @@ pub(crate) fn await_station_healthy(env: &PocketIc, station_id: Principal, user_
             return;
         }
     }
-    panic!(
-        "Station did not become healthy within {} rounds.",
-        max_rounds
-    );
+    panic!("Station did not become healthy within {max_rounds} rounds.");
 }
 
 pub(crate) fn add_external_canister_call_any_method_permission_and_approval(

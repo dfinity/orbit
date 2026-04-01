@@ -216,7 +216,7 @@ impl Job {
             (
                 transfer.clone(),
                 TransferError::ExecutionError {
-                    reason: format!("Failed to build blockchain api: {}", e),
+                    reason: format!("Failed to build blockchain api: {e}"),
                 },
             )
         })?;

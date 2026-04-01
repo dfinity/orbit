@@ -33,13 +33,13 @@ impl Create<station_api::TransferOperationInput> for TransferRequestCreate {
         let from_account_id =
             HelperMapper::to_uuid(operation_input.from_account_id).map_err(|e| {
                 RequestError::ValidationError {
-                    info: format!("Invalid from_account_id: {}", e),
+                    info: format!("Invalid from_account_id: {e}"),
                 }
             })?;
 
         let from_asset_id = HelperMapper::to_uuid(operation_input.from_asset_id.clone())
             .map_err(|e| RequestError::ValidationError {
-                info: format!("Invalid from_asset_id: {}", e),
+                info: format!("Invalid from_asset_id: {e}"),
             })?
             .as_bytes()
             .to_owned();
@@ -116,7 +116,7 @@ impl Execute for TransferRequestExecute<'_, '_> {
 
         let blockchain_api = BlockchainApiFactory::build(&asset.blockchain).map_err(|e| {
             RequestExecuteError::Failed {
-                reason: format!("Failed to build blockchain api: {}", e),
+                reason: format!("Failed to build blockchain api: {e}"),
             }
         })?;
         let fee = match &self.operation.input.fee {
@@ -126,7 +126,7 @@ impl Execute for TransferRequestExecute<'_, '_> {
                     .transaction_fee(&asset, self.operation.input.with_standard.clone())
                     .await
                     .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to fetch transaction fee: {}", e),
+                        reason: format!("Failed to fetch transaction fee: {e}"),
                     })?;
 
                 candid::Nat(transaction_fee.fee)
@@ -148,7 +148,7 @@ impl Execute for TransferRequestExecute<'_, '_> {
                 self.operation.input.network.clone(),
             ))
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to validate transfer: {}", e),
+                reason: format!("Failed to validate transfer: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Processing(

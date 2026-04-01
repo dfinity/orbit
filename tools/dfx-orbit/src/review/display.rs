@@ -31,7 +31,7 @@ impl DfxOrbit {
         )?;
         writeln!(output, "Title: {}", base_info.title)?;
         if let Some(ref summary) = base_info.summary {
-            writeln!(output, "Summary: {}", summary)?
+            writeln!(output, "Summary: {summary}")?
         }
         writeln!(output, "Requested by: {}", add_info.requester_name)?;
 
@@ -44,7 +44,7 @@ impl DfxOrbit {
             display_request_status(&base_info.status)
         )?;
         if let Some(additional_status) = display_additional_stats_info(&base_info.status) {
-            writeln!(output, "{}", additional_status)?;
+            writeln!(output, "{additional_status}")?;
         }
 
         match base_info.operation {
@@ -207,9 +207,9 @@ fn display_request_approvals<W: Write>(
         let name = usernames
             .get(&user.approver_id)
             .unwrap_or(&user.approver_id);
-        write!(writer, "\n\t{}", name)?;
+        write!(writer, "\n\t{name}")?;
         if let Some(reason) = &user.status_reason {
-            write!(writer, " (Reason: \"{}\")", reason)?;
+            write!(writer, " (Reason: \"{reason}\")")?;
         }
     }
     writeln!(writer)?;
@@ -271,10 +271,10 @@ pub(super) fn display_request_status(status: &RequestStatusDTO) -> &'static str 
 fn display_additional_stats_info(status: &RequestStatusDTO) -> Option<String> {
     match status {
         RequestStatusDTO::Cancelled { reason } => {
-            reason.clone().map(|reason| format!("Reason: {}", reason))
+            reason.clone().map(|reason| format!("Reason: {reason}"))
         }
         RequestStatusDTO::Failed { reason } => {
-            reason.clone().map(|reason| format!("Reason: {}", reason))
+            reason.clone().map(|reason| format!("Reason: {reason}"))
         }
         _ => None,
     }

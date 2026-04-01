@@ -59,7 +59,7 @@ impl Execute for EditPermissionRequestExecute<'_, '_> {
         self.policy_service
             .edit_permission(self.operation.input.to_owned())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to update permission: {}", e),
+                reason: format!("Failed to update permission: {e}"),
             })?;
 
         Ok(RequestExecuteStage::Completed(
@@ -140,7 +140,7 @@ mod tests {
 
             match stage {
                 RequestExecuteStage::Completed(_) => (),
-                _ => panic!("Expected RequestExecuteStage::Completed, got {:?}", stage),
+                _ => panic!("Expected RequestExecuteStage::Completed, got {stage:?}"),
             }
         } else {
             panic!(

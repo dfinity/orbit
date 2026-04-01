@@ -71,6 +71,6 @@ mod tests {
     fn test_observer_debug() {
         let observer = Observer::<i32>::default();
 
-        assert_eq!(format!("{:?}", observer), "Observer { listeners: 0 }");
+        assert_eq!(format!("{observer:?}"), "Observer { listeners: 0 }");
     }
 }
