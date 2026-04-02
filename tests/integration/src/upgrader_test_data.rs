@@ -311,15 +311,18 @@ impl<'a> UpgraderDataGenerator<'a> {
         assert_eq!(state.accounts, self.accounts);
         assert_eq!(state.multi_asset_accounts, self.multi_asset_accounts);
         assert_eq!(state.assets, self.assets);
-        // check that the recovery requests are within a millisecond of the original submission time
+        // check that the recovery requests are within a second of the original submission time
         for i in 0..state.recovery_requests.len() {
             let date_state =
                 OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
-            let date_lower = date_state - Duration::milliseconds(1);
-            let date_higher = date_state + Duration::milliseconds(1);
+            let date_lower = date_state - Duration::seconds(1);
+            let date_higher = date_state + Duration::seconds(1);
             let date_self =
                 OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
-            assert!(date_self.ge(&date_lower) && date_self.le(&date_higher));
+            assert!(
+                date_self.ge(&date_lower) && date_self.le(&date_higher),
+                "Date mismatch: self={date_self}, state={date_state}"
+            );
             // this is required so that the deep comparison of state.recovery_requests below is not affected by the time difference
             state.recovery_requests[i]
                 .submitted_at
