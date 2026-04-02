@@ -4,7 +4,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::time::SystemTime;
 use time::format_description::well_known::Rfc3339;
-use time::{Duration, OffsetDateTime};
+use time::OffsetDateTime;
 use upgrader_api::{
     Account, AdminUser, Asset, DisasterRecoveryCommittee, LogEntry, MetadataDTO, MultiAssetAccount,
     RecoveryResult, RecoveryStatus, StationRecoveryRequest,
@@ -311,19 +311,20 @@ impl<'a> UpgraderDataGenerator<'a> {
         assert_eq!(state.accounts, self.accounts);
         assert_eq!(state.multi_asset_accounts, self.multi_asset_accounts);
         assert_eq!(state.assets, self.assets);
-        // check that the recovery requests are within a second of the original submission time
+        // Normalize timestamps so the deep comparison below is not affected by
+        // time differences (e.g. after upgrading from a pre-built stable-memory
+        // binary whose timestamps were recorded under a different PocketIC genesis).
+        assert_eq!(
+            state.recovery_requests.len(),
+            self.recovery_requests.len(),
+            "recovery request count mismatch"
+        );
         for i in 0..state.recovery_requests.len() {
-            let date_state =
-                OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
-            let date_lower = date_state - Duration::seconds(1);
-            let date_higher = date_state + Duration::seconds(1);
-            let date_self =
-                OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
-            assert!(
-                date_self.ge(&date_lower) && date_self.le(&date_higher),
-                "Date mismatch: self={date_self}, state={date_state}"
-            );
-            // this is required so that the deep comparison of state.recovery_requests below is not affected by the time difference
+            // Verify both timestamps are valid RFC 3339
+            OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339)
+                .expect("state recovery request has invalid timestamp");
+            OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339)
+                .expect("self recovery request has invalid timestamp");
             state.recovery_requests[i]
                 .submitted_at
                 .clone_from(&self.recovery_requests[i].submitted_at)
