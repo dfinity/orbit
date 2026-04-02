@@ -11,7 +11,11 @@ export NVM_DIR="$HOME/.nvm"
 MINTER_IDENTITY_NAME="minter"
 WHOAMI=$(dfx identity whoami)
 MY_PRINCIPAL=$(dfx identity get-principal)
+CANISTER_ID_CMC="rkp4c-7iaaa-aaaaa-aaaca-cai"
 CANISTER_ID_CONTROL_PANEL="wdqqk-naaaa-aaaaa-774aq-cai"
+CANISTER_ID_ICP_INDEX="qhbym-qaaaa-aaaaa-aaafq-cai"
+CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
+CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_UI="werw6-ayaaa-aaaaa-774aa-cai"
 CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
 CANISTER_ID_DOCS="bp6mw-eqaaa-aaaac-ahroq-cai"
@@ -47,13 +51,14 @@ Usage:
 Options:
   --init configures all the dependencies for the development environment
   --init-control-panel fresh installs the control panel canister
+  --init-cmc fresh installs the cycles minting canister and sets the default subnets for canister deployment
+  --init-icp-index fresh installs the icp index canister, used to query the ledger transactions
+  --init-icp-ledger fresh installs the icp ledger canister, the current identity will be credited with ICP tokens
+  --init-internet-identity fresh installs the internet identity canister
   --init-app-wallet fresh installs the Orbit Wallet application
   --candid-generate generates the code for the candid specifications that the Orbit applications are using
   --approve-waiting-list approves the given principal to the waiting list
   --deploy-icrc1-token deploys an ICRC1 token canister for local development
-
-Note: System canisters (ICP ledger, ICP index, CMC, Internet Identity) are
-      bootstrapped automatically by \`dfx start --system-canisters\`.
 EOF
 }
 
@@ -93,6 +98,114 @@ function build_wasm() {
 #############################################
 # SETUP                                     #
 #############################################
+
+function uninstall_cmc() {
+  dfx canister stop cmc >/dev/null 2>&1 || true
+  dfx canister delete cmc --no-withdrawal -y >/dev/null 2>&1 || true
+}
+
+# sets the user principal as the governance canister
+# so that the user principal can make privileged calls on CMC
+function install_cmc() {
+  dfx deploy --specified-id $CANISTER_ID_CMC cmc --argument "
+  (opt record {
+    ledger_canister_id=opt principal\"$CANISTER_ID_ICP_LEDGER\";
+    governance_canister_id=opt principal\"$MY_PRINCIPAL\";
+  })
+"
+}
+
+function textual_encode() {
+  ( echo "$1" | xxd -r -p | crc32 /dev/stdin; echo -n "$1" ) |
+  xxd -r -p | base32 | tr A-Z a-z |
+  tr -d = | fold -w5 | paste -sd'-' -
+}
+
+function setup_cmc() {
+  uninstall_cmc
+  install_cmc
+  TOPO="$(curl http://localhost:4943/_/topology 2>/dev/null)"
+  if [[ "$?" != "0" || "$TOPO" == "Endpoint not found." ]]
+  then
+    SUBNET_ID_HEX="$(curl http://localhost:4943/api/v2/status 2>/dev/null | python3 -c "import cbor2; import hashlib; import sys; status=cbor2.loads(sys.stdin.buffer.read()); hash=hashlib.sha224(status['root_key']).digest(); principal=hash+b'\x02'; print(principal.hex())")"
+    SUBNET_IDS="principal\"$(textual_encode $SUBNET_ID_HEX)\";"
+  else
+    SUBNET_IDS="$(echo $TOPO | jq -r '.subnet_configs | to_entries | map(select(.value.subnet_kind == "Application"))[] | .key' | sed "s/\(.*\)/principal\\\"\1\\\";/")"
+  fi
+  dfx canister call cmc set_authorized_subnetwork_list "(record {
+    who=null;
+    subnets=vec {$SUBNET_IDS};
+  })
+"
+}
+
+function uninstall_icp_ledger() {
+  dfx canister delete icp_ledger -y >/dev/null 2>&1 || true
+}
+
+function install_icp_ledger() {
+  if [ "$MINTER_IDENTITY_NAME" == "$WHOAMI" ]; then
+    echo "You can't run this script as the minter identity. Please run it as a different identity."
+    exit 1
+  fi
+
+  if ! dfx identity list | grep -q $MINTER_IDENTITY_NAME; then
+    dfx identity new $MINTER_IDENTITY_NAME --storage-mode plaintext
+  fi
+
+  dfx deploy --specified-id $CANISTER_ID_ICP_LEDGER icp_ledger --argument "
+  (variant {
+    Init = record {
+      minting_account = \"$(dfx ledger account-id --identity $MINTER_IDENTITY_NAME)\";
+      initial_values = vec {
+        record {
+          \"$(dfx ledger account-id)\";
+          record {
+            e8s = 1_000_000_000_000 : nat64;
+          };
+        };
+      };
+      send_whitelist = vec {};
+      transfer_fee = opt record {
+        e8s = 10_000 : nat64;
+      };
+      token_symbol = opt \"ICP\";
+      token_name = opt \"Internet Computer\";
+    }
+  })
+"
+}
+
+function setup_icp_ledger() {
+  uninstall_icp_ledger
+  install_icp_ledger
+}
+
+function uninstall_icp_index() {
+  dfx canister delete icp_index -y >/dev/null 2>&1 || true
+}
+
+function install_icp_index() {
+  dfx deploy icp_index --specified-id $CANISTER_ID_ICP_INDEX --argument "(record {ledger_id = principal \"$CANISTER_ID_ICP_LEDGER\"})"
+}
+
+function setup_icp_index() {
+  uninstall_icp_index
+  install_icp_index
+}
+
+function uninstall_internet_identity() {
+  dfx canister delete internet_identity -y >/dev/null 2>&1 || true
+}
+
+function install_internet_identity() {
+  dfx deploy --specified-id $CANISTER_ID_INTERNET_IDENTITY internet_identity
+}
+
+function setup_internet_identity() {
+  uninstall_internet_identity
+  install_internet_identity
+}
 
 function uninstall_control_panel() {
   dfx canister stop control_panel >/dev/null 2>&1 || true
@@ -266,9 +379,9 @@ function install_test_icrc1_canisters() {
 "
 
   dfx deploy --specified-id $CANISTER_ID_TEST_ICRC1_INDEX icrc1_index_canister --argument "
-  (opt variant {
+  (opt variant { 
     Init = record {
-      ledger_id = principal \"$CANISTER_ID_TEST_ICRC1_LEDGER\"
+      ledger_id = principal \"$CANISTER_ID_TEST_ICRC1_LEDGER\" 
     }
   })
 "
@@ -310,9 +423,31 @@ while [[ $# -gt 0 ]]; do
   --init)
     shift
     exec_function setup_devenv
+    exec_function setup_cmc
+    exec_function setup_icp_ledger
+    exec_function setup_icp_index
+    exec_function setup_internet_identity
     exec_function setup_control_panel
     exec_function setup_app_wallet
     exec_function setup_docs_portal
+    echo
+    ;;
+  --init-cmc)
+    shift
+    exec_function setup_devenv
+    exec_function setup_cmc
+    echo
+    ;;
+  --init-icp-ledger)
+    shift
+    exec_function setup_devenv
+    exec_function setup_icp_ledger
+    echo
+    ;;
+  --init-icp-index)
+    shift
+    exec_function setup_devenv
+    exec_function setup_icp_index
     echo
     ;;
   --init-control-panel)

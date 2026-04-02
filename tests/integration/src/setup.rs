@@ -168,6 +168,19 @@ fn install_canisters(
     let nns_index_canister_id = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
     let cmc_canister_id = Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
 
+    // Mint ICP to the controller so that tests can transfer ICP.
+    // The minting account for PocketIC's default ICP ledger is the governance canister.
+    use crate::interfaces::mint_icp;
+    use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
+    let controller_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
+    mint_icp(
+        env,
+        NNS_GOVERNANCE_CANISTER_ID,
+        &controller_account,
+        1_000_000_000_000,
+    )
+    .unwrap();
+
     let control_panel = create_canister_with_cycles(
         env,
         controller,
