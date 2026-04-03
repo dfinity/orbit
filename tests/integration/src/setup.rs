@@ -122,25 +122,14 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         .with_application_subnet()
         .build();
 
-    // `with_icp_features` with `cycles_minting` sets the default PocketIC time to the
-    // CMC's default ICP/XDR conversion-rate timestamp + 1s (2021-05-10 08:00:01 UTC),
-    // which differs from the IC genesis time (2021-05-06 19:17:10 UTC) that PocketIC
-    // used without `with_icp_features`. Tests that load pre-built stable-memory binaries
-    // (e.g. upgrader-memory-v1.bin) rely on the IC genesis time, so we set it explicitly.
-    //
-    // See: https://github.com/dfinity/ic/blob/master/rs/pocket_ic_server/src/pocket_ic.rs
-    //      (the `default_timestamp` function)
-    const IC_GENESIS_NANOS: u64 = 1_620_328_630_000_000_000; // 2021-05-06T19:17:10 UTC
+    // If we set the time to SystemTime::now, and then progress pocketIC a couple ticks
+    // and then enter live mode, we would crash the deterministic state machine, as the
+    // live mode would set the time back to the current time.
+    // Therefore, if we want to use live mode, we need to start the tests with the time
+    // set to the past.
+    let system_time = SystemTime::now() - Duration::from_secs(24 * 60 * 60);
     if config.set_time_to_now {
-        // If we set the time to SystemTime::now, and then progress PocketIC a couple ticks
-        // and then enter live mode, we would crash the deterministic state machine, as the
-        // live mode would set the time back to the current time.
-        // Therefore, if we want to use live mode, we need to start the tests with the time
-        // set to the past.
-        let system_time = SystemTime::now() - Duration::from_secs(24 * 60 * 60);
         env.set_time(system_time.into());
-    } else {
-        env.set_time((SystemTime::UNIX_EPOCH + Duration::from_nanos(IC_GENESIS_NANOS)).into());
     }
     let controller = controller_test_id();
     let minter = NNS_GOVERNANCE_CANISTER_ID;

@@ -288,7 +288,14 @@ impl<'a> UpgraderDataGenerator<'a> {
         assert!(self.logs.len() > 1);
     }
 
-    pub fn test_api(&self) {
+    /// Asserts that the upgrader canister API returns the expected state.
+    ///
+    /// When `check_timestamps` is true, recovery-request and log timestamps are
+    /// checked to be within 1 ms of the expected values.  Set it to false after
+    /// loading a pre-built stable-memory binary whose timestamps were recorded
+    /// under a different PocketIC genesis time (see `default_timestamp` in
+    /// `rs/pocket_ic_server/src/pocket_ic.rs`).
+    pub fn test_api(&self, check_timestamps: bool) {
         let check_recovery_failure = |result: &Option<RecoveryResult>| match result {
             Some(RecoveryResult::Failure(err)) => {
                 assert!(err.reason.contains("Canister's Wasm module is not valid"))
@@ -313,13 +320,17 @@ impl<'a> UpgraderDataGenerator<'a> {
         assert_eq!(state.assets, self.assets);
         // check that the recovery requests are within a millisecond of the original submission time
         for i in 0..state.recovery_requests.len() {
-            let date_state =
-                OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
-            let date_lower = date_state - Duration::milliseconds(1);
-            let date_higher = date_state + Duration::milliseconds(1);
-            let date_self =
-                OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
-            assert!(date_self.ge(&date_lower) && date_self.le(&date_higher));
+            if check_timestamps {
+                let date_state =
+                    OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339)
+                        .unwrap();
+                let date_lower = date_state - Duration::milliseconds(1);
+                let date_higher = date_state + Duration::milliseconds(1);
+                let date_self =
+                    OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339)
+                        .unwrap();
+                assert!(date_self.ge(&date_lower) && date_self.le(&date_higher));
+            }
             // this is required so that the deep comparison of state.recovery_requests below is not affected by the time difference
             state.recovery_requests[i]
                 .submitted_at
@@ -340,12 +351,14 @@ impl<'a> UpgraderDataGenerator<'a> {
             get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
         assert_eq!(logs.len(), self.logs.len());
         for (i, log) in logs.iter().enumerate() {
-            let log_time = OffsetDateTime::parse(&log.time, &Rfc3339).unwrap();
-            let self_log_time = OffsetDateTime::parse(&self.logs[i].time, &Rfc3339).unwrap();
-            assert!(
-                log_time + Duration::milliseconds(1) >= self_log_time
-                    && log_time - Duration::milliseconds(1) <= self_log_time
-            );
+            if check_timestamps {
+                let log_time = OffsetDateTime::parse(&log.time, &Rfc3339).unwrap();
+                let self_log_time = OffsetDateTime::parse(&self.logs[i].time, &Rfc3339).unwrap();
+                assert!(
+                    log_time + Duration::milliseconds(1) >= self_log_time
+                        && log_time - Duration::milliseconds(1) <= self_log_time
+                );
+            }
             assert_eq!(log.entry_type, self.logs[i].entry_type);
             // we made a breaking change to the log message format
             let anchors = [
