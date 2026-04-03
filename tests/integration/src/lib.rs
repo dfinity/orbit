@@ -33,14 +33,10 @@ pub struct TestEnv {
     pub env: PocketIc,
     pub canister_ids: CanisterIds,
     pub controller: Principal,
-    pub minter: Principal,
 }
 
 #[derive(Clone, Copy, Debug)]
 pub struct CanisterIds {
-    pub icp_ledger: Principal,
-    pub icp_index: Principal,
-    pub cycles_minting_canister: Principal,
     pub control_panel: Principal,
     pub station: Principal,
 }

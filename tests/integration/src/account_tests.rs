@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::interfaces::mint_icp;
+use crate::interfaces::get_icp;
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{create_account, expect_await_call_result, get_icp_asset};
 use crate::TestEnv;
@@ -18,8 +18,7 @@ fn test_fetch_balances() {
     let TestEnv {
         env,
         canister_ids,
-        // controller,
-        minter,
+        controller,
         ..
     } = setup_new_env();
 
@@ -62,8 +61,8 @@ fn test_fetch_balances() {
     )
     .expect("cannot parse ICP account identifier");
 
-    mint_icp(&env, minter, &icp_account_identifier, 10 * 100_000_000)
-        .expect("failed to mint ICP to account");
+    get_icp(&env, controller, &icp_account_identifier, 10 * 100_000_000)
+        .expect("failed to get ICP to account");
 
     let messages_ids = [
         env.submit_call(

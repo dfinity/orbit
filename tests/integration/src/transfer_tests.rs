@@ -1,5 +1,5 @@
 use crate::interfaces::{
-    default_account, deploy_icrc1_token, get_icp_balance, get_icrc1_balance_of, mint_icp,
+    default_account, deploy_icrc1_token, get_icp, get_icp_balance, get_icrc1_balance_of,
     mint_icrc1_tokens, send_icp, send_icp_to_account, ArchiveOptions, Icrc1LedgerInitArgs, ICP,
     ICP_FEE,
 };
@@ -484,8 +484,7 @@ fn make_icrc1_icp_transfer() {
     let TestEnv {
         env,
         canister_ids,
-        // controller,
-        minter,
+        controller,
         ..
     } = setup_new_env();
 
@@ -540,13 +539,13 @@ fn make_icrc1_icp_transfer() {
     )
     .expect("invalid account address");
 
-    mint_icp(&env, minter, &icp_account_identifier, 10 * 100_000_000)
+    get_icp(&env, controller, &icp_account_identifier, 10 * 100_000_000)
         .expect("failed to mint ICP to account");
 
     mint_icrc1_tokens(
         &env,
         Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        minter,
+        controller,
         icp_icrc1_account,
         20 * 100_000_000,
     )
