@@ -4,7 +4,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::time::SystemTime;
 use time::format_description::well_known::Rfc3339;
-use time::OffsetDateTime;
+use time::{Duration, OffsetDateTime};
 use upgrader_api::{
     Account, AdminUser, Asset, DisasterRecoveryCommittee, LogEntry, MetadataDTO, MultiAssetAccount,
     RecoveryResult, RecoveryStatus, StationRecoveryRequest,
@@ -311,20 +311,16 @@ impl<'a> UpgraderDataGenerator<'a> {
         assert_eq!(state.accounts, self.accounts);
         assert_eq!(state.multi_asset_accounts, self.multi_asset_accounts);
         assert_eq!(state.assets, self.assets);
-        // Normalize timestamps so the deep comparison below is not affected by
-        // time differences (e.g. after upgrading from a pre-built stable-memory
-        // binary whose timestamps were recorded under a different PocketIC genesis).
-        assert_eq!(
-            state.recovery_requests.len(),
-            self.recovery_requests.len(),
-            "recovery request count mismatch"
-        );
+        // check that the recovery requests are within a millisecond of the original submission time
         for i in 0..state.recovery_requests.len() {
-            // Verify both timestamps are valid RFC 3339
-            OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339)
-                .expect("state recovery request has invalid timestamp");
-            OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339)
-                .expect("self recovery request has invalid timestamp");
+            let date_state =
+                OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
+            let date_lower = date_state - Duration::milliseconds(1);
+            let date_higher = date_state + Duration::milliseconds(1);
+            let date_self =
+                OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
+            assert!(date_self.ge(&date_lower) && date_self.le(&date_higher));
+            // this is required so that the deep comparison of state.recovery_requests below is not affected by the time difference
             state.recovery_requests[i]
                 .submitted_at
                 .clone_from(&self.recovery_requests[i].submitted_at)
@@ -344,11 +340,12 @@ impl<'a> UpgraderDataGenerator<'a> {
             get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
         assert_eq!(logs.len(), self.logs.len());
         for (i, log) in logs.iter().enumerate() {
-            // Verify both timestamps are valid RFC 3339 (exact match not required
-            // since pre-built stable-memory binaries may have different genesis times)
-            OffsetDateTime::parse(&log.time, &Rfc3339).expect("log has invalid timestamp");
-            OffsetDateTime::parse(&self.logs[i].time, &Rfc3339)
-                .expect("self log has invalid timestamp");
+            let log_time = OffsetDateTime::parse(&log.time, &Rfc3339).unwrap();
+            let self_log_time = OffsetDateTime::parse(&self.logs[i].time, &Rfc3339).unwrap();
+            assert!(
+                log_time + Duration::milliseconds(1) >= self_log_time
+                    && log_time - Duration::milliseconds(1) <= self_log_time
+            );
             assert_eq!(log.entry_type, self.logs[i].entry_type);
             // we made a breaking change to the log message format
             let anchors = [
