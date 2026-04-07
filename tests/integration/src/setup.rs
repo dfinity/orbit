@@ -1,20 +1,15 @@
-use crate::interfaces::{
-    NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
-};
 use crate::utils::{
-    await_station_healthy, controller_test_id, minter_test_id, set_controllers,
-    upload_canister_modules, NNS_ROOT_CANISTER_ID,
+    await_station_healthy, controller_test_id, set_controllers, upload_canister_modules,
+    NNS_ROOT_CANISTER_ID,
 };
 use crate::{CanisterIds, TestEnv};
-use candid::{CandidType, Encode, Principal};
-use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
-use pocket_ic::{update_candid_as, PocketIc, PocketIcBuilder, PocketIcState};
-use serde::Serialize;
+use candid::{Encode, Principal};
+use pocket_ic::common::rest::{IcpFeatures, IcpFeaturesConfig};
+use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
 use station_api::{
     InitUserInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg,
     UserIdentityInput,
 };
-use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::Read;
@@ -25,45 +20,11 @@ use std::time::{Duration, SystemTime};
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
 
-#[derive(CandidType, Serialize)]
-pub struct SetAuthorizedSubnetworkListArgs {
-    pub who: Option<Principal>,
-    pub subnets: Vec<Principal>,
-}
-
-#[derive(CandidType, Serialize)]
-enum UpdateSubnetTypeArgs {
-    Add(String),
-    //Remove(String),
-}
-
-#[derive(CandidType, Serialize)]
-struct SubnetListWithType {
-    pub subnets: Vec<Principal>,
-    pub subnet_type: String,
-}
-
-#[derive(CandidType, Serialize)]
-enum ChangeSubnetTypeAssignmentArgs {
-    Add(SubnetListWithType),
-    //Remove(SubnetListWithType),
-}
-
-#[derive(Serialize, CandidType, Clone, Debug, PartialEq, Eq)]
-pub enum ExchangeRateCanister {
-    /// Enables the exchange rate canister with the given canister ID.
-    Set(Principal),
-}
-
-#[derive(Serialize, CandidType, Clone, Debug, PartialEq, Eq)]
-pub struct CyclesCanisterInitPayload {
-    pub ledger_canister_id: Option<Principal>,
-    pub governance_canister_id: Option<Principal>,
-    pub minting_account_id: Option<AccountIdentifier>,
-    pub exchange_rate_canister: Option<ExchangeRateCanister>,
-    pub cycles_ledger_canister_id: Option<Principal>,
-    pub last_purged_notification: Option<u64>,
-}
+/// The governance canister is the minting account for the ICP ledger
+/// when bootstrapped via PocketIC's `icp_token` feature.
+/// Textual representation: rrkah-fqaaa-aaaaa-aaaaq-cai
+pub static NNS_GOVERNANCE_CANISTER_ID: Principal =
+    Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
 #[derive(Clone)]
 pub struct SetupConfig {
@@ -72,6 +33,12 @@ pub struct SetupConfig {
     pub start_cycles: Option<u128>,
     pub set_time_to_now: bool,
     pub capture_state: bool,
+    /// Whether to bootstrap the Cycles Minting Canister via PocketIC's `cycles_minting`
+    /// feature.  When enabled, the minimum PocketIC time is the CMC's default ICP/XDR
+    /// conversion-rate timestamp (2021-05-10 08:00:01 UTC) rather than the IC genesis
+    /// time (2021-05-06 19:17:10 UTC).  Disable for tests that load pre-built
+    /// stable-memory binaries recorded under the IC genesis time.
+    pub cycles_minting: bool,
 }
 
 impl Default for SetupConfig {
@@ -82,6 +49,7 @@ impl Default for SetupConfig {
             start_cycles: None,
             set_time_to_now: true,
             capture_state: false,
+            cycles_minting: true,
         }
     }
 }
@@ -148,8 +116,20 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     if config.capture_state {
         builder = builder.with_state(PocketIcState::new());
     }
+    // ICP ledger, ICP index, and (optionally) CMC are bootstrapped via `with_icp_features`.
+    // `icp_token` implies `with_nns_subnet()` and deploys ICP ledger + index.
+    // `cycles_minting` deploys the CMC and keeps subnet lists in sync with PocketIC topology.
+    let cycles_minting = if config.cycles_minting {
+        Some(IcpFeaturesConfig::DefaultConfig)
+    } else {
+        None
+    };
     let mut env = builder
-        .with_nns_subnet()
+        .with_icp_features(IcpFeatures {
+            icp_token: Some(IcpFeaturesConfig::DefaultConfig),
+            cycles_minting,
+            ..Default::default()
+        })
         .with_ii_subnet()
         .with_fiduciary_subnet()
         .with_application_subnet()
@@ -165,8 +145,8 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         env.set_time(system_time.into());
     }
     let controller = controller_test_id();
-    let minter = minter_test_id();
-    let canister_ids = install_canisters(&mut env, config, controller, minter);
+    let minter = NNS_GOVERNANCE_CANISTER_ID;
+    let canister_ids = install_canisters(&mut env, config, controller);
 
     TestEnv {
         env,
@@ -194,130 +174,23 @@ fn install_canisters(
     env: &mut PocketIc,
     config: SetupConfig,
     controller: Principal,
-    minter: Principal,
 ) -> CanisterIds {
-    let specified_nns_ledger_canister_id =
-        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
-    let nns_ledger_canister_id = env
-        .create_canister_with_id(Some(controller), None, specified_nns_ledger_canister_id)
-        .unwrap();
-    assert_eq!(nns_ledger_canister_id, specified_nns_ledger_canister_id);
-    let specified_nns_index_canister_id =
-        Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
-    let nns_index_canister_id = env
-        .create_canister_with_id(Some(controller), None, specified_nns_index_canister_id)
-        .unwrap();
-    assert_eq!(nns_index_canister_id, specified_nns_index_canister_id);
+    // System canisters (ICP ledger, ICP index, and optionally CMC) are deployed by
+    // PocketIC via `with_icp_features` — use their well-known canister IDs.
+    let nns_ledger_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let nns_index_canister_id = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
+    let cmc_canister_id = Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
 
-    let specified_cmc_canister_id = Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
-    let cmc_canister_id = env
-        .create_canister_with_id(Some(controller), None, specified_cmc_canister_id)
-        .unwrap();
-    assert_eq!(cmc_canister_id, specified_cmc_canister_id);
-
-    let specified_nns_exchange_rate_canister_id =
-        Principal::from_text("uf6dk-hyaaa-aaaaq-qaaaq-cai").unwrap();
-    let nns_exchange_rate_canister_id = env
-        .create_canister_with_id(
-            Some(controller),
-            None,
-            specified_nns_exchange_rate_canister_id,
-        )
-        .unwrap();
-    assert_eq!(
-        nns_exchange_rate_canister_id,
-        specified_nns_exchange_rate_canister_id
-    );
-
-    let nns_governance_canister_id = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
-    let nns_cycles_ledger_canister_id =
-        Principal::from_text("um5iw-rqaaa-aaaaq-qaaba-cai").unwrap();
-
+    // Mint ICP to the controller so that tests can transfer ICP.
+    // The minting account for PocketIC's default ICP ledger is the governance canister.
+    use crate::interfaces::mint_icp;
+    use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
     let controller_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
-    let minting_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
-
-    let icp_ledger_canister_wasm = get_canister_wasm("icp_ledger").to_vec();
-    let icp_ledger_init_args = NnsLedgerCanisterPayload::Init(NnsLedgerCanisterInitPayload {
-        minting_account: minting_account.to_string(),
-        initial_values: HashMap::from([(
-            controller_account.to_string(),
-            Tokens::from_e8s(1_000_000_000_000),
-        )]),
-        send_whitelist: HashSet::new(),
-        transfer_fee: Some(Tokens::from_e8s(10_000)),
-        token_symbol: Some("ICP".to_string()),
-        token_name: Some("Internet Computer".to_string()),
-    });
-    env.install_canister(
-        nns_ledger_canister_id,
-        icp_ledger_canister_wasm,
-        Encode!(&icp_ledger_init_args).unwrap(),
-        Some(controller),
-    );
-
-    let icp_index_canister_wasm = get_canister_wasm("icp_index").to_vec();
-    let icp_index_init_args = NnsIndexCanisterInitPayload {
-        ledger_id: nns_ledger_canister_id,
-    };
-    env.install_canister(
-        nns_index_canister_id,
-        icp_index_canister_wasm,
-        Encode!(&icp_index_init_args).unwrap(),
-        Some(controller),
-    );
-
-    let cmc_canister_wasm = get_canister_wasm("cmc").to_vec();
-    let cmc_init_args: Option<CyclesCanisterInitPayload> = Some(CyclesCanisterInitPayload {
-        ledger_canister_id: Some(nns_ledger_canister_id),
-        governance_canister_id: Some(nns_governance_canister_id),
-        minting_account_id: None,
-        exchange_rate_canister: Some(ExchangeRateCanister::Set(nns_exchange_rate_canister_id)),
-        cycles_ledger_canister_id: Some(nns_cycles_ledger_canister_id),
-        last_purged_notification: Some(0),
-    });
-    env.install_canister(
-        cmc_canister_id,
-        cmc_canister_wasm,
-        Encode!(&cmc_init_args).unwrap(),
-        Some(controller),
-    );
-    // set default (application) subnets on CMC
-    // by setting authorized subnets associated with no principal (CMC API)
-    let application_subnet_id = env.topology().get_app_subnets()[0];
-    let set_authorized_subnetwork_list_args = SetAuthorizedSubnetworkListArgs {
-        who: None,
-        subnets: vec![application_subnet_id],
-    };
-    update_candid_as::<_, ((),)>(
+    mint_icp(
         env,
-        cmc_canister_id,
-        nns_governance_canister_id,
-        "set_authorized_subnetwork_list",
-        (set_authorized_subnetwork_list_args,),
-    )
-    .unwrap();
-    // add fiduciary subnet to CMC
-    let update_subnet_type_args = UpdateSubnetTypeArgs::Add("fiduciary".to_string());
-    update_candid_as::<_, ((),)>(
-        env,
-        cmc_canister_id,
-        nns_governance_canister_id,
-        "update_subnet_type",
-        (update_subnet_type_args,),
-    )
-    .unwrap();
-    let fiduciary_subnet_id = env.topology().get_fiduciary().unwrap();
-    let change_subnet_type_assignment_args =
-        ChangeSubnetTypeAssignmentArgs::Add(SubnetListWithType {
-            subnets: vec![fiduciary_subnet_id],
-            subnet_type: "fiduciary".to_string(),
-        });
-    update_candid_as::<_, ((),)>(
-        env,
-        cmc_canister_id,
-        nns_governance_canister_id,
-        "change_subnet_type_assignment",
-        (change_subnet_type_assignment_args,),
+        NNS_GOVERNANCE_CANISTER_ID,
+        &controller_account,
+        1_000_000_000_000,
     )
     .unwrap();
 
@@ -383,7 +256,7 @@ fn install_canisters(
 
     CanisterIds {
         icp_ledger: nns_ledger_canister_id,
-        icp_index: cmc_canister_id,
+        icp_index: nns_index_canister_id,
         control_panel,
         station,
         cycles_minting_canister: cmc_canister_id,

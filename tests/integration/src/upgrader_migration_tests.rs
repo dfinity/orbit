@@ -111,6 +111,7 @@ where
 {
     let config = SetupConfig {
         set_time_to_now: false,
+        cycles_minting: false,
         ..Default::default()
     };
     let TestEnv {
