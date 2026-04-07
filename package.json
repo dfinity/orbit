@@ -46,7 +46,9 @@
       "brace-expansion@^1": "1.1.13",
       "brace-expansion@^2": "2.0.3",
       "lodash@<4.18.0": "^4.18.1",
-      "axios@<1.8.2": "^1.8.2"
+      "axios@<1.8.2": "^1.8.2",
+      "defu@<6.1.5": "^6.1.5",
+      "vite@>=6.0.0 <6.4.2": "^6.4.2"
     }
   },
   "devDependencies": {
@@ -56,7 +58,7 @@
     "@nx/devkit": "19.8.3",
     "@nx/js": "19.8.3",
     "@nx/workspace": "19.8.3",
-    "@playwright/test": "^1.51.1",
+    "@playwright/test": "^1.55.1",
     "@types/node": "22.7.4",
     "@typescript-eslint/eslint-plugin": "8.23.0",
     "@typescript-eslint/parser": "8.23.0",
@@ -70,7 +72,7 @@
     "nx": "19.8.3",
     "prettier": "3.3.3",
     "typescript": "5.6.2",
-    "vite": "5.4.19",
+    "vite": "5.4.21",
     "vitest": "1.6.1",
     "vue-tsc": "2.1.6"
   }
