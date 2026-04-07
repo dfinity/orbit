@@ -111,6 +111,7 @@ where
 {
     let config = SetupConfig {
         set_time_to_now: false,
+        cycles_minting: false,
         ..Default::default()
     };
     let TestEnv {
@@ -125,7 +126,7 @@ where
     test_data_generator.generate();
 
     // Assert that the canister api is still working after adding the test data
-    test_data_generator.test_api(true);
+    test_data_generator.test_api();
 
     env.stop_canister(upgrader_id, Some(canister_ids.station))
         .expect("Unexpected failure stopping canister");
@@ -140,19 +141,14 @@ where
     env.start_canister(upgrader_id, Some(canister_ids.station))
         .expect("Unexpected failure starting canister.");
 
-    // Assert that the canister api is still working after the upgrade.
-    // Timestamps are not checked because pre-built stable-memory binaries (v0/v1) were
-    // recorded under a different PocketIC genesis time; `with_icp_features` with
-    // `cycles_minting` uses 2021-05-10T08:00:01 UTC while the binaries used the IC
-    // genesis 2021-05-06T19:17:10 UTC. For `upgrade_from_latest` the timestamps would
-    // match, but we use a single code path for all migration variants.
-    test_data_generator.test_api(false);
+    // Assert that the canister api is still working after the upgrade
+    test_data_generator.test_api();
 
     // Adds more test data to the canister
     test_data_generator.generate();
 
     // Assert that the canister api is still working after adding more test data
-    test_data_generator.test_api(false);
+    test_data_generator.test_api();
 
     // Submit a few more large disaster recovery requests to test that
     // stable memory can grow with the latest stable memory layout.

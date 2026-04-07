@@ -32,6 +32,12 @@ pub struct SetupConfig {
     pub start_cycles: Option<u128>,
     pub set_time_to_now: bool,
     pub capture_state: bool,
+    /// Whether to bootstrap the Cycles Minting Canister via PocketIC's `cycles_minting`
+    /// feature.  When enabled, the minimum PocketIC time is the CMC's default ICP/XDR
+    /// conversion-rate timestamp (2021-05-10 08:00:01 UTC) rather than the IC genesis
+    /// time (2021-05-06 19:17:10 UTC).  Disable for tests that load pre-built
+    /// stable-memory binaries recorded under the IC genesis time.
+    pub cycles_minting: bool,
 }
 
 impl Default for SetupConfig {
@@ -42,6 +48,7 @@ impl Default for SetupConfig {
             start_cycles: None,
             set_time_to_now: true,
             capture_state: false,
+            cycles_minting: true,
         }
     }
 }
@@ -108,13 +115,18 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     if config.capture_state {
         builder = builder.with_state(PocketIcState::new());
     }
-    // ICP ledger, ICP index, and CMC are bootstrapped automatically via `with_icp_features`.
+    // ICP ledger, ICP index, and (optionally) CMC are bootstrapped via `with_icp_features`.
     // `icp_token` implies `with_nns_subnet()` and deploys ICP ledger + index.
     // `cycles_minting` deploys the CMC and keeps subnet lists in sync with PocketIC topology.
+    let cycles_minting = if config.cycles_minting {
+        Some(IcpFeaturesConfig::DefaultConfig)
+    } else {
+        None
+    };
     let mut env = builder
         .with_icp_features(IcpFeatures {
             icp_token: Some(IcpFeaturesConfig::DefaultConfig),
-            cycles_minting: Some(IcpFeaturesConfig::DefaultConfig),
+            cycles_minting,
             ..Default::default()
         })
         .with_ii_subnet()
@@ -162,8 +174,8 @@ fn install_canisters(
     config: SetupConfig,
     controller: Principal,
 ) -> CanisterIds {
-    // System canisters (ICP ledger, ICP index, CMC) are already deployed by PocketIC
-    // via `with_icp_features` — use their well-known canister IDs.
+    // System canisters (ICP ledger, ICP index, and optionally CMC) are deployed by
+    // PocketIC via `with_icp_features` — use their well-known canister IDs.
     let nns_ledger_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     let nns_index_canister_id = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
     let cmc_canister_id = Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
