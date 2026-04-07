@@ -149,9 +149,7 @@ function install_icp_ledger() {
     exit 1
   fi
 
-  if ! dfx identity list | grep -q $MINTER_IDENTITY_NAME; then
-    dfx identity new $MINTER_IDENTITY_NAME --storage-mode plaintext
-  fi
+  dfx identity new $MINTER_IDENTITY_NAME --storage-mode plaintext || true
 
   dfx deploy --specified-id $CANISTER_ID_ICP_LEDGER icp_ledger --argument "
   (variant {

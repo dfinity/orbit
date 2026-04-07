@@ -31,6 +31,7 @@ This version is potentially more useful, if you want to make patches or use a sp
 
 ```
 git clone https://github.com/dfinity/orbit.git
+cd orbit
 cargo install -f --path tools/dfx-orbit/
 ```
 
