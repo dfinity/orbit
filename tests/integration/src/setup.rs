@@ -22,8 +22,9 @@ pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
 
 /// The governance canister is the minting account for the ICP ledger
 /// when bootstrapped via PocketIC's `icp_token` feature.
+/// Textual representation: rrkah-fqaaa-aaaaa-aaaaq-cai
 pub static NNS_GOVERNANCE_CANISTER_ID: Principal =
-    Principal::from_text_unchecked("rrkah-fqaaa-aaaaa-aaaaq-cai");
+    Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
 #[derive(Clone)]
 pub struct SetupConfig {
