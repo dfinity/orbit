@@ -106,12 +106,14 @@ function setup_system_canisters_post() {
     --memo 0
 
   # Configure CMC authorized subnet list for canister creation.
+  # The CMC only allows the governance canister to set authorized subnets,
+  # so we use --sender to impersonate it (supported on PocketIC).
   TOPO="$(curl -s http://localhost:4943/_/topology)"
   SUBNET_IDS="$(echo $TOPO | jq -r '.subnet_configs | to_entries | map(select(.value.subnet_kind == "Application"))[] | .key' | sed "s/\(.*\)/principal\\\"\1\\\";/")"
   dfx canister call rkp4c-7iaaa-aaaaa-aaaca-cai set_authorized_subnetwork_list "(record {
     who=null;
     subnets=vec {$SUBNET_IDS};
-  })"
+  })" --sender rrkah-fqaaa-aaaaa-aaaaq-cai
 }
 
 function uninstall_control_panel() {
