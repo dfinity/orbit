@@ -36,9 +36,9 @@ jobs:
             artifact: wallet-dapp.tar.gz
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: 'Set up Docker'
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 # v4.7.0
         timeout-minutes: 12
       - name: 'Deterministic build'
         run: |
