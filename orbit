@@ -129,7 +129,7 @@ function setup_system_canisters_post() {
   II_WASM_URL="$(jq -r '.canisters.internet_identity.wasm' dfx.json)"
   curl -sL -o /tmp/internet_identity_dev.wasm.gz "$II_WASM_URL"
   dfx canister install rdmx6-jaaaa-aaaaa-aaadq-cai \
-    --mode upgrade --wasm /tmp/internet_identity_dev.wasm.gz --yes
+    --mode reinstall --wasm /tmp/internet_identity_dev.wasm.gz --yes
 }
 
 function uninstall_control_panel() {
