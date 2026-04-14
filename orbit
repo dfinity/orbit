@@ -114,6 +114,22 @@ function setup_system_canisters_post() {
     who=null;
     subnets=vec {$SUBNET_IDS};
   })" --impersonate rrkah-fqaaa-aaaaa-aaaaq-cai
+
+  # Upgrade Internet Identity to the project's pinned version (defined in
+  # dfx.json) over the generic one bootstrapped by --system-canisters,
+  # so the e2e tests interact with the expected UI.
+  # The system II canister is controlled by the NNS root canister, so we
+  # impersonate it to take ownership, then install our version.
+  dfx canister call aaaaa-aa update_settings "(record {
+    canister_id = principal \"rdmx6-jaaaa-aaaaa-aaadq-cai\";
+    settings = record {
+      controllers = opt vec { principal \"$MY_PRINCIPAL\" };
+    };
+  })" --impersonate r7inp-6aaaa-aaaaa-aaabq-cai
+  II_WASM_URL="$(jq -r '.canisters.internet_identity.wasm' dfx.json)"
+  curl -sL -o /tmp/internet_identity_dev.wasm.gz "$II_WASM_URL"
+  dfx canister install rdmx6-jaaaa-aaaaa-aaadq-cai \
+    --mode upgrade --wasm /tmp/internet_identity_dev.wasm.gz --yes
 }
 
 function uninstall_control_panel() {
