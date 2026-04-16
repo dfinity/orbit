@@ -95,7 +95,7 @@ Start PocketIC with system canisters (ICP ledger, ICP index, CMC, Internet Ident
 dfx start --clean --system-canisters --host 127.0.0.1:4943
 ```
 
-Note that the local replica should be stopped using `dfx stop` rather than by CTRL^C.
+Note that PocketIC should be stopped using `dfx stop` rather than by CTRL^C.
 
 Then the following steps can be used to setup the Orbit canister ecosystem for local development.
 

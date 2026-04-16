@@ -100,7 +100,7 @@ function setup_system_canisters_post() {
   # Transfer ICP from anonymous to current user.
   # --system-canisters gives the anonymous identity 1 Billion ICP;
   # the current identity needs ICP for canister operations.
-  dfx ledger transfer --identity anonymous \
+  dfx ledger transfer --network local --identity anonymous \
     --amount 10000 \
     "$(dfx ledger account-id)" \
     --memo 0
@@ -108,19 +108,39 @@ function setup_system_canisters_post() {
   # Configure CMC authorized subnet list for canister creation.
   # The CMC only allows the governance canister to set authorized subnets,
   # so we use --impersonate to impersonate it (supported on PocketIC).
-  TOPO="$(curl -s http://localhost:4943/_/topology)"
-  SUBNET_IDS="$(echo $TOPO | jq -r '.subnet_configs | to_entries | map(select(.value.subnet_kind == "Application"))[] | .key' | sed "s/\(.*\)/principal\\\"\1\\\";/")"
+  REPLICA_URL="$(get_replica_url)"
+  TOPOLOGY_URL="${REPLICA_URL%/}/_/topology"
+  TOPO=""
+  for _ in {1..10}; do
+    if TOPO="$(curl -fsS "$TOPOLOGY_URL" 2>/dev/null)"; then
+      break
+    fi
+    sleep 1
+  done
+
+  if [ -z "$TOPO" ]; then
+    echo "Failed to fetch topology from $TOPOLOGY_URL" >&2
+    return 1
+  fi
+
+  SUBNET_IDS="$(printf '%s' "$TOPO" | jq -r '.subnet_configs | to_entries | map(select(.value.subnet_kind == "Application"))[] | .key' | sed "s/\(.*\)/principal\\\"\1\\\";/")"
+
+  if [ -z "$SUBNET_IDS" ]; then
+    echo "No application subnet IDs found in topology from $TOPOLOGY_URL" >&2
+    return 1
+  fi
+
   dfx canister call rkp4c-7iaaa-aaaaa-aaaca-cai set_authorized_subnetwork_list "(record {
     who=null;
     subnets=vec {$SUBNET_IDS};
-  })" --impersonate rrkah-fqaaa-aaaaa-aaaaq-cai
+  })" --network local --impersonate rrkah-fqaaa-aaaaa-aaaaq-cai
 
   # Upgrade Internet Identity to the project's pinned version (defined in
   # dfx.json) over the generic one bootstrapped by --system-canisters,
   # so the e2e tests interact with the expected UI.
   # The system II canister is controlled by the NNS root canister, so we
   # impersonate it to take ownership, then install our version.
-  dfx canister call aaaaa-aa update_settings "(record {
+  dfx canister call --network local aaaaa-aa update_settings "(record {
     canister_id = principal \"rdmx6-jaaaa-aaaaa-aaadq-cai\";
     settings = record {
       controllers = opt vec { principal \"$MY_PRINCIPAL\" };
@@ -128,7 +148,7 @@ function setup_system_canisters_post() {
   })" --impersonate r7inp-6aaaa-aaaaa-aaabq-cai
   II_WASM_URL="$(jq -r '.canisters.internet_identity.wasm' dfx.json)"
   curl -sL -o /tmp/internet_identity_dev.wasm.gz "$II_WASM_URL"
-  dfx canister install rdmx6-jaaaa-aaaaa-aaadq-cai \
+  dfx canister install --network local rdmx6-jaaaa-aaaaa-aaadq-cai \
     --mode reinstall --wasm /tmp/internet_identity_dev.wasm.gz --yes
 }
 
