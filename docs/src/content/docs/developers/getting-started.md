@@ -59,7 +59,7 @@ This script initializes the necessary settings for your environment.
 1. Start the Internet Computer replica in the background:
 
    ```bash
-   dfx start --clean --pocketic --host 127.0.0.1:4943
+   dfx start --clean --system-canisters --host 127.0.0.1:4943
    ```
 
 2. Deploy the canisters to the local replica:

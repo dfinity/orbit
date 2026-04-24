@@ -12,7 +12,7 @@
     "type-check": "pnpm run -r type-check",
     "postinstall": "pnpm run -r postinstall && pnpm run prepare-cli",
     "prepare-cli": "pnpm run --filter orbit-cli build && pnpm run --filter orbit-cli expose",
-    "test:e2e:deploy": "dfx start --background --clean  && ./orbit --init",
+    "test:e2e:deploy": "dfx start --background --clean --system-canisters && ./orbit --init",
     "test:e2e:run": "WALLET_URL=http://werw6-ayaaa-aaaaa-774aa-cai.localhost:`dfx info webserver-port` playwright test",
     "test:e2e:dev": "concurrently \"pnpm run dev:wallet\" \"WALLET_URL=http://localhost:5173?canisterId=werw6-ayaaa-aaaaa-774aa-cai playwright test --ui\"",
     "test:e2e:stop": "dfx stop",
