@@ -460,8 +460,29 @@ pub struct CanisterInstallModeArgs {}
 pub struct CanisterReinstallModeArgs {}
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CanisterUpgradeModeArgs {}
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CanisterUpgradeModeArgs {
+    #[serde(default)]
+    pub wasm_memory_persistence: Option<WasmMemoryPersistence>,
+    #[serde(default)]
+    pub skip_pre_upgrade: Option<bool>,
+}
+
+#[storable]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum WasmMemoryPersistence {
+    Keep,
+    Replace,
+}
+
+impl From<WasmMemoryPersistence> for mgmt::WasmPersistenceMode {
+    fn from(value: WasmMemoryPersistence) -> Self {
+        match value {
+            WasmMemoryPersistence::Keep => mgmt::WasmPersistenceMode::Keep,
+            WasmMemoryPersistence::Replace => mgmt::WasmPersistenceMode::Replace,
+        }
+    }
+}
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -476,7 +497,18 @@ impl From<CanisterInstallMode> for mgmt::CanisterInstallMode {
         match mode {
             CanisterInstallMode::Install(_) => mgmt::CanisterInstallMode::Install,
             CanisterInstallMode::Reinstall(_) => mgmt::CanisterInstallMode::Reinstall,
-            CanisterInstallMode::Upgrade(_) => mgmt::CanisterInstallMode::Upgrade(None),
+            CanisterInstallMode::Upgrade(args) => {
+                let flags =
+                    if args.wasm_memory_persistence.is_some() || args.skip_pre_upgrade.is_some() {
+                        Some(mgmt::UpgradeFlags {
+                            skip_pre_upgrade: args.skip_pre_upgrade,
+                            wasm_memory_persistence: args.wasm_memory_persistence.map(Into::into),
+                        })
+                    } else {
+                        None
+                    };
+                mgmt::CanisterInstallMode::Upgrade(flags)
+            }
         }
     }
 }
@@ -1591,7 +1623,7 @@ mod test {
                 input: crate::models::ChangeExternalCanisterOperationInput {
                     canister_id: upgrader_id,
                     mode: crate::models::CanisterInstallMode::Upgrade(
-                        crate::models::CanisterUpgradeModeArgs {},
+                        crate::models::CanisterUpgradeModeArgs::default(),
                     ),
                     module: vec![],
                     module_extra_chunks: None,

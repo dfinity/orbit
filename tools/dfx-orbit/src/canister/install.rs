@@ -103,6 +103,8 @@ impl RequestCanisterInstallArgs {
             module,
             module_extra_chunks,
             arg,
+            wasm_memory_persistence: None,
+            skip_pre_upgrade: None,
         };
         Ok(RequestOperationInput::ChangeExternalCanister(operation))
     }

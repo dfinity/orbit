@@ -681,6 +681,14 @@ export interface CanisterExecutionAndValidationMethodPair {
 export type CanisterInstallMode = { 'reinstall' : null } |
   { 'upgrade' : null } |
   { 'install' : null };
+/**
+ * WASM memory persistence setting passed to `install_code` when the install
+ * mode is `upgrade`. `keep` is required for Motoko canisters that use
+ * Enhanced Orthogonal Persistence; the IC defaults to `replace` (clearing
+ * main memory) otherwise.
+ */
+export type WasmMemoryPersistence = { 'keep' : null } |
+  { 'replace' : null };
 export interface CanisterMethod {
   /**
    * The canister to call.
@@ -836,6 +844,16 @@ export interface ChangeExternalCanisterOperation {
    * The checksum of the arg blob.
    */
   'arg_checksum' : [] | [Sha256Hash],
+  /**
+   * WASM memory persistence setting recorded for this upgrade, if any.
+   * Only meaningful when `mode` is `upgrade`.
+   */
+  'wasm_memory_persistence' : [] | [WasmMemoryPersistence],
+  /**
+   * Whether the `pre_upgrade` hook was skipped. Only meaningful when `mode`
+   * is `upgrade`.
+   */
+  'skip_pre_upgrade' : [] | [boolean],
 }
 export interface ChangeExternalCanisterOperationInput {
   /**
@@ -858,6 +876,18 @@ export interface ChangeExternalCanisterOperationInput {
    * The wasm module to install.
    */
   'module' : Uint8Array | number[],
+  /**
+   * WASM memory persistence setting. Only applicable when `mode` is
+   * `upgrade`. Required as `keep` for upgrading Motoko canisters that use
+   * Enhanced Orthogonal Persistence; otherwise the IC clears their main
+   * memory.
+   */
+  'wasm_memory_persistence' : [] | [WasmMemoryPersistence],
+  /**
+   * If `true`, the `pre_upgrade` hook is skipped. Only applicable when
+   * `mode` is `upgrade`.
+   */
+  'skip_pre_upgrade' : [] | [boolean],
 }
 /**
  * Type for instructions to update the address book entry's metadata.

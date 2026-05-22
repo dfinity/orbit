@@ -238,7 +238,7 @@ impl SystemService {
             .change_canister_service
             .install_canister(
                 upgrader_canister_id,
-                CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
+                CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs::default()),
                 module,
                 module_extra_chunks,
                 arg,

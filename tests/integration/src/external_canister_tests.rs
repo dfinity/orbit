@@ -77,6 +77,8 @@ fn successful_four_eyes_upgrade() {
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: None,
+            wasm_memory_persistence: None,
+            skip_pre_upgrade: None,
         });
 
     let change_canister_operation_request = submit_request(
@@ -222,6 +224,8 @@ fn upgrade_reinstall_list_test() {
             module: base_chunk.clone(),
             module_extra_chunks: Some(module_extra_chunks.clone()),
             arg: None,
+            wasm_memory_persistence: None,
+            skip_pre_upgrade: None,
         });
     execute_request(
         &env,
@@ -247,6 +251,8 @@ fn upgrade_reinstall_list_test() {
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: None,
+            wasm_memory_persistence: None,
+            skip_pre_upgrade: None,
         });
     execute_request(
         &env,

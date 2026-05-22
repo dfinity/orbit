@@ -40,6 +40,14 @@ pub enum CanisterInstallMode {
     Upgrade = 3,
 }
 
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WasmMemoryPersistence {
+    #[serde(rename = "keep")]
+    Keep,
+    #[serde(rename = "replace")]
+    Replace,
+}
+
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct Snapshot {
     pub snapshot_id: String,
