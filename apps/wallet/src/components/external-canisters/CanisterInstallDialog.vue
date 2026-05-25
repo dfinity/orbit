@@ -165,6 +165,8 @@ const submit = async (input: CanisterInstallModel) => {
         module: assertAndReturn(input.wasmModule, 'wasm module required'),
         arg: input.wasmInstallArg !== undefined ? [input.wasmInstallArg] : [],
         module_extra_chunks: [],
+        wasm_memory_persistence: [],
+        skip_pre_upgrade: [],
       },
       {
         comment:
