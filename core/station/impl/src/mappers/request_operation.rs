@@ -525,9 +525,9 @@ impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
             station_api::CanisterInstallMode::Reinstall => {
                 CanisterInstallMode::Reinstall(CanisterReinstallModeArgs {})
             }
-            station_api::CanisterInstallMode::Upgrade(opts) => CanisterInstallMode::Upgrade(
-                opts.map(CanisterUpgradeModeArgs::from).unwrap_or_default(),
-            ),
+            station_api::CanisterInstallMode::Upgrade(opts) => {
+                CanisterInstallMode::Upgrade(opts.map(Into::into))
+            }
         }
     }
 }
@@ -562,13 +562,7 @@ impl From<CanisterInstallMode> for station_api::CanisterInstallMode {
                 station_api::CanisterInstallMode::Reinstall
             }
             CanisterInstallMode::Upgrade(args) => {
-                let opts =
-                    if args.wasm_memory_persistence.is_some() || args.skip_pre_upgrade.is_some() {
-                        Some(args.into())
-                    } else {
-                        None
-                    };
-                station_api::CanisterInstallMode::Upgrade(opts)
+                station_api::CanisterInstallMode::Upgrade(args.map(Into::into))
             }
         }
     }
@@ -2480,8 +2474,8 @@ mod tests {
         }));
         let internal: ChangeExternalCanisterOperationInput = api_input.into();
 
-        let CanisterInstallMode::Upgrade(args) = &internal.mode else {
-            panic!("expected upgrade mode");
+        let CanisterInstallMode::Upgrade(Some(args)) = &internal.mode else {
+            panic!("expected upgrade mode with args");
         };
         assert_eq!(
             args.wasm_memory_persistence,
@@ -2506,6 +2500,8 @@ mod tests {
     fn unset_upgrade_flags_map_to_unit_upgrade() {
         let api_input = upgrade_input(None);
         let internal: ChangeExternalCanisterOperationInput = api_input.into();
+
+        assert!(matches!(internal.mode, CanisterInstallMode::Upgrade(None)));
 
         let mgmt_mode: mgmt::CanisterInstallMode = internal.mode.into();
         assert!(matches!(
@@ -2574,5 +2570,34 @@ mod tests {
         let args: CanisterUpgradeModeArgs =
             serde_cbor::from_slice(&empty_map_cbor).expect("legacy bytes must deserialize");
         assert_eq!(args, CanisterUpgradeModeArgs::default());
+    }
+
+    #[test]
+    fn legacy_upgrade_variant_deserializes_to_some_default() {
+        // Historical on-disk shape of the enum variant was
+        // `Upgrade(CanisterUpgradeModeArgs {})`. After widening the payload
+        // to `Option<CanisterUpgradeModeArgs>`, the legacy bytes (variant
+        // tag + empty map) should still deserialize, surfacing as
+        // `Upgrade(Some(default))` — semantically equivalent to "no flags".
+        let cbor = serde_cbor::to_vec(&CanisterInstallModeLegacy::Upgrade(
+            CanisterUpgradeModeArgs::default(),
+        ))
+        .unwrap();
+        let mode: CanisterInstallMode =
+            serde_cbor::from_slice(&cbor).expect("legacy upgrade variant must deserialize");
+        assert!(matches!(
+            mode,
+            CanisterInstallMode::Upgrade(Some(args)) if args == CanisterUpgradeModeArgs::default()
+        ));
+    }
+
+    // Mirror of the pre-refactor enum used only to encode a legacy fixture.
+    #[derive(serde::Serialize)]
+    enum CanisterInstallModeLegacy {
+        #[allow(dead_code)]
+        Install(CanisterInstallModeArgs),
+        #[allow(dead_code)]
+        Reinstall(CanisterReinstallModeArgs),
+        Upgrade(CanisterUpgradeModeArgs),
     }
 }

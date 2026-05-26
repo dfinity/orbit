@@ -489,7 +489,16 @@ impl From<WasmMemoryPersistence> for mgmt::WasmPersistenceMode {
 pub enum CanisterInstallMode {
     Install(CanisterInstallModeArgs),
     Reinstall(CanisterReinstallModeArgs),
-    Upgrade(CanisterUpgradeModeArgs),
+    Upgrade(Option<CanisterUpgradeModeArgs>),
+}
+
+impl From<CanisterUpgradeModeArgs> for mgmt::UpgradeFlags {
+    fn from(args: CanisterUpgradeModeArgs) -> Self {
+        mgmt::UpgradeFlags {
+            skip_pre_upgrade: args.skip_pre_upgrade,
+            wasm_memory_persistence: args.wasm_memory_persistence.map(Into::into),
+        }
+    }
 }
 
 impl From<CanisterInstallMode> for mgmt::CanisterInstallMode {
@@ -498,16 +507,7 @@ impl From<CanisterInstallMode> for mgmt::CanisterInstallMode {
             CanisterInstallMode::Install(_) => mgmt::CanisterInstallMode::Install,
             CanisterInstallMode::Reinstall(_) => mgmt::CanisterInstallMode::Reinstall,
             CanisterInstallMode::Upgrade(args) => {
-                let flags =
-                    if args.wasm_memory_persistence.is_some() || args.skip_pre_upgrade.is_some() {
-                        Some(mgmt::UpgradeFlags {
-                            skip_pre_upgrade: args.skip_pre_upgrade,
-                            wasm_memory_persistence: args.wasm_memory_persistence.map(Into::into),
-                        })
-                    } else {
-                        None
-                    };
-                mgmt::CanisterInstallMode::Upgrade(flags)
+                mgmt::CanisterInstallMode::Upgrade(args.map(Into::into))
             }
         }
     }
@@ -1622,9 +1622,7 @@ mod test {
             crate::models::ChangeExternalCanisterOperation {
                 input: crate::models::ChangeExternalCanisterOperationInput {
                     canister_id: upgrader_id,
-                    mode: crate::models::CanisterInstallMode::Upgrade(
-                        crate::models::CanisterUpgradeModeArgs::default(),
-                    ),
+                    mode: crate::models::CanisterInstallMode::Upgrade(None),
                     module: vec![],
                     module_extra_chunks: None,
                     arg: None,

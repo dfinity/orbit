@@ -10,10 +10,10 @@ use crate::{
     errors::SystemError,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
-        ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey, RequestOperation,
-        RequestStatus, SystemRestoreTarget, SystemUpgradeTarget, TokenStandard,
-        WasmModuleExtraChunks, ADMIN_GROUP_ID, OPERATOR_GROUP_ID,
+        Asset, Blockchain, CanisterInstallMode, ManageSystemInfoOperationInput, Metadata,
+        RequestId, RequestKey, RequestOperation, RequestStatus, SystemRestoreTarget,
+        SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks, ADMIN_GROUP_ID,
+        OPERATOR_GROUP_ID,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
@@ -238,7 +238,7 @@ impl SystemService {
             .change_canister_service
             .install_canister(
                 upgrader_canister_id,
-                CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs::default()),
+                CanisterInstallMode::Upgrade(None),
                 module,
                 module_extra_chunks,
                 arg,
