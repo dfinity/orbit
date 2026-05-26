@@ -451,7 +451,14 @@ export const idlFactory = ({ IDL }) => {
   const ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
   const CanisterInstallMode = IDL.Variant({
     'reinstall' : IDL.Null,
-    'upgrade' : IDL.Null,
+    'upgrade' : IDL.Opt(
+      IDL.Record({
+        'wasm_memory_persistence' : IDL.Opt(
+          IDL.Variant({ 'keep' : IDL.Null, 'replace' : IDL.Null })
+        ),
+        'skip_pre_upgrade' : IDL.Opt(IDL.Bool),
+      })
+    ),
     'install' : IDL.Null,
   });
   const Sha256Hash = IDL.Text;

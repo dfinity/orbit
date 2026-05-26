@@ -679,7 +679,24 @@ export interface CanisterExecutionAndValidationMethodPair {
   'validation_method' : ValidationMethodResourceTarget,
 }
 export type CanisterInstallMode = { 'reinstall' : null } |
-  { 'upgrade' : null } |
+  {
+    /**
+     * Upgrade an existing canister. The optional record mirrors the IC
+     * management canister's `CanisterUpgradeOptions`.
+     * `wasm_memory_persistence = keep` is required for Motoko canisters that
+     * use Enhanced Orthogonal Persistence; otherwise the IC clears their main
+     * memory.
+     */
+    'upgrade' : [] | [
+      {
+        'wasm_memory_persistence' : [] | [
+          { 'keep' : null } |
+            { 'replace' : null }
+        ],
+        'skip_pre_upgrade' : [] | [boolean],
+      }
+    ]
+  } |
   { 'install' : null };
 export interface CanisterMethod {
   /**

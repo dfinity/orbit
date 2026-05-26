@@ -130,7 +130,7 @@ const dialogTitle = computed(() => props.title || i18n.t('external_canisters.ins
 
 const initialModel = (): CanisterInstallModel => {
   const model: CanisterInstallModel = {};
-  model.mode = props.canisterModuleHash ? { upgrade: null } : { install: null };
+  model.mode = props.canisterModuleHash ? { upgrade: [] } : { install: null };
   model.canisterId = props.canisterId
     ? Principal.fromUint8Array(props.canisterId.toUint8Array())
     : undefined;

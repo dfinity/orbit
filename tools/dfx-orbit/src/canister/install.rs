@@ -178,7 +178,7 @@ impl From<CanisterInstallModeArgs> for CanisterInstallMode {
         match mode {
             CanisterInstallModeArgs::Install => Self::Install,
             CanisterInstallModeArgs::Reinstall => Self::Reinstall,
-            CanisterInstallModeArgs::Upgrade => Self::Upgrade,
+            CanisterInstallModeArgs::Upgrade => Self::Upgrade(None),
         }
     }
 }
@@ -188,7 +188,7 @@ impl From<CanisterInstallMode> for CanisterInstallModeArgs {
         match mode {
             CanisterInstallMode::Install => Self::Install,
             CanisterInstallMode::Reinstall => Self::Reinstall,
-            CanisterInstallMode::Upgrade => Self::Upgrade,
+            CanisterInstallMode::Upgrade(_) => Self::Upgrade,
         }
     }
 }
@@ -209,7 +209,7 @@ impl DfxOrbit {
         let mode = match op.mode {
             CanisterInstallMode::Install => "Install",
             CanisterInstallMode::Reinstall => "Reinstall",
-            CanisterInstallMode::Upgrade => "Upgrade",
+            CanisterInstallMode::Upgrade(_) => "Upgrade",
         };
         writeln!(output, "Mode: {mode}")?;
 
