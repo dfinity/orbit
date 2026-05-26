@@ -681,10 +681,21 @@ export interface CanisterExecutionAndValidationMethodPair {
 export type CanisterInstallMode = { 'reinstall' : null } |
   {
     /**
-     * Upgrade an existing canister. Carries optional flags that mirror the
-     * IC management canister's `CanisterUpgradeOptions`.
+     * Upgrade an existing canister. The optional record mirrors the IC
+     * management canister's `CanisterUpgradeOptions`.
+     * `wasm_memory_persistence = keep` is required for Motoko canisters that
+     * use Enhanced Orthogonal Persistence; otherwise the IC clears their main
+     * memory.
      */
-    'upgrade' : [] | [CanisterUpgradeOptionsInput]
+    'upgrade' : [] | [
+      {
+        'wasm_memory_persistence' : [] | [
+          { 'keep' : null } |
+            { 'replace' : null }
+        ],
+        'skip_pre_upgrade' : [] | [boolean],
+      }
+    ]
   } |
   { 'install' : null };
 export interface CanisterMethod {
@@ -724,21 +735,6 @@ export interface CanisterStatusResponse {
   'idle_cycles_burned_per_day' : bigint,
   'module_hash' : [] | [Uint8Array | number[]],
   'reserved_cycles' : bigint,
-}
-/**
- * Optional upgrade flags forwarded to the IC management canister's
- * `install_code` method when `mode` is `upgrade`.
- */
-export interface CanisterUpgradeOptionsInput {
-  /**
-   * Required as `keep` for upgrading Motoko canisters that use Enhanced
-   * Orthogonal Persistence; otherwise the IC clears their main memory.
-   */
-  'wasm_memory_persistence' : [] | [WasmMemoryPersistence],
-  /**
-   * If `true`, the `pre_upgrade` hook is skipped during the canister upgrade.
-   */
-  'skip_pre_upgrade' : [] | [boolean],
 }
 /**
  * A record type that is used to show the current capabilities of the station.
@@ -5681,14 +5677,6 @@ export type UserStatus = {
  */
 export type ValidationMethodResourceTarget = { 'No' : null } |
   { 'ValidationMethod' : CanisterMethod };
-/**
- * WASM memory persistence setting passed to `install_code` when the install
- * mode is `upgrade`. `keep` is required for Motoko canisters that use
- * Enhanced Orthogonal Persistence; the IC defaults to `replace` (clearing
- * main memory) otherwise.
- */
-export type WasmMemoryPersistence = { 'keep' : null } |
-  { 'replace' : null };
 export interface WasmModuleExtraChunks {
   /**
    * The hash of the assembled wasm module.

@@ -575,28 +575,18 @@ type RemoveUserGroupOperation = record {
 type CanisterInstallMode = variant {
   install;
   reinstall;
-  // Upgrade an existing canister. Carries optional flags that mirror the
-  // IC management canister's `CanisterUpgradeOptions`.
-  upgrade : opt CanisterUpgradeOptionsInput;
-};
-
-// Optional upgrade flags forwarded to the IC management canister's
-// `install_code` method when `mode` is `upgrade`.
-type CanisterUpgradeOptionsInput = record {
-  // Required as `keep` for upgrading Motoko canisters that use Enhanced
-  // Orthogonal Persistence; otherwise the IC clears their main memory.
-  wasm_memory_persistence : opt WasmMemoryPersistence;
-  // If `true`, the `pre_upgrade` hook is skipped during the canister upgrade.
-  skip_pre_upgrade : opt bool;
-};
-
-// WASM memory persistence setting passed to `install_code` when the install
-// mode is `upgrade`. `keep` is required for Motoko canisters that use
-// Enhanced Orthogonal Persistence; the IC defaults to `replace` (clearing
-// main memory) otherwise.
-type WasmMemoryPersistence = variant {
-  keep;
-  replace;
+  // Upgrade an existing canister. The optional record mirrors the IC
+  // management canister's `CanisterUpgradeOptions`.
+  // `wasm_memory_persistence = keep` is required for Motoko canisters that
+  // use Enhanced Orthogonal Persistence; otherwise the IC clears their main
+  // memory.
+  upgrade : opt record {
+    skip_pre_upgrade : opt bool;
+    wasm_memory_persistence : opt variant {
+      keep;
+      replace;
+    };
+  };
 };
 
 type SystemUpgradeTarget = variant {
