@@ -525,9 +525,18 @@ impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
             station_api::CanisterInstallMode::Reinstall => {
                 CanisterInstallMode::Reinstall(CanisterReinstallModeArgs {})
             }
-            station_api::CanisterInstallMode::Upgrade => {
-                CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs::default())
-            }
+            station_api::CanisterInstallMode::Upgrade(opts) => CanisterInstallMode::Upgrade(
+                opts.map(CanisterUpgradeModeArgs::from).unwrap_or_default(),
+            ),
+        }
+    }
+}
+
+impl From<station_api::CanisterUpgradeOptionsInput> for CanisterUpgradeModeArgs {
+    fn from(opts: station_api::CanisterUpgradeOptionsInput) -> Self {
+        CanisterUpgradeModeArgs {
+            wasm_memory_persistence: opts.wasm_memory_persistence.map(Into::into),
+            skip_pre_upgrade: opts.skip_pre_upgrade,
         }
     }
 }
@@ -552,7 +561,24 @@ impl From<CanisterInstallMode> for station_api::CanisterInstallMode {
             CanisterInstallMode::Reinstall(CanisterReinstallModeArgs {}) => {
                 station_api::CanisterInstallMode::Reinstall
             }
-            CanisterInstallMode::Upgrade(_) => station_api::CanisterInstallMode::Upgrade,
+            CanisterInstallMode::Upgrade(args) => {
+                let opts =
+                    if args.wasm_memory_persistence.is_some() || args.skip_pre_upgrade.is_some() {
+                        Some(args.into())
+                    } else {
+                        None
+                    };
+                station_api::CanisterInstallMode::Upgrade(opts)
+            }
+        }
+    }
+}
+
+impl From<CanisterUpgradeModeArgs> for station_api::CanisterUpgradeOptionsInput {
+    fn from(args: CanisterUpgradeModeArgs) -> Self {
+        station_api::CanisterUpgradeOptionsInput {
+            wasm_memory_persistence: args.wasm_memory_persistence.map(Into::into),
+            skip_pre_upgrade: args.skip_pre_upgrade,
         }
     }
 }
@@ -602,15 +628,12 @@ impl From<ChangeExternalCanisterOperationInput>
     fn from(
         input: ChangeExternalCanisterOperationInput,
     ) -> station_api::ChangeExternalCanisterOperationInput {
-        let (wasm_memory_persistence, skip_pre_upgrade) = upgrade_flags_to_api(&input.mode);
         station_api::ChangeExternalCanisterOperationInput {
             canister_id: input.canister_id,
             mode: input.mode.into(),
             module: input.module,
             module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
-            wasm_memory_persistence,
-            skip_pre_upgrade,
         }
     }
 }
@@ -621,14 +644,9 @@ impl From<station_api::ChangeExternalCanisterOperationInput>
     fn from(
         input: station_api::ChangeExternalCanisterOperationInput,
     ) -> ChangeExternalCanisterOperationInput {
-        let mut mode: CanisterInstallMode = input.mode.into();
-        if let CanisterInstallMode::Upgrade(ref mut args) = mode {
-            args.wasm_memory_persistence = input.wasm_memory_persistence.map(Into::into);
-            args.skip_pre_upgrade = input.skip_pre_upgrade;
-        }
         ChangeExternalCanisterOperationInput {
             canister_id: input.canister_id,
-            mode,
+            mode: input.mode.into(),
             module: input.module,
             module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
@@ -638,28 +656,12 @@ impl From<station_api::ChangeExternalCanisterOperationInput>
 
 impl From<ChangeExternalCanisterOperation> for ChangeExternalCanisterOperationDTO {
     fn from(operation: ChangeExternalCanisterOperation) -> ChangeExternalCanisterOperationDTO {
-        let (wasm_memory_persistence, skip_pre_upgrade) =
-            upgrade_flags_to_api(&operation.input.mode);
         ChangeExternalCanisterOperationDTO {
             canister_id: operation.input.canister_id,
             mode: operation.input.mode.into(),
             module_checksum: hex::encode(operation.module_checksum),
             arg_checksum: operation.arg_checksum.map(hex::encode),
-            wasm_memory_persistence,
-            skip_pre_upgrade,
         }
-    }
-}
-
-fn upgrade_flags_to_api(
-    mode: &CanisterInstallMode,
-) -> (Option<station_api::WasmMemoryPersistence>, Option<bool>) {
-    match mode {
-        CanisterInstallMode::Upgrade(args) => (
-            args.wasm_memory_persistence.map(Into::into),
-            args.skip_pre_upgrade,
-        ),
-        _ => (None, None),
     }
 }
 
@@ -2459,23 +2461,23 @@ mod tests {
     use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
 
     fn upgrade_input(
-        wasm_memory_persistence: Option<station_api::WasmMemoryPersistence>,
-        skip_pre_upgrade: Option<bool>,
+        opts: Option<station_api::CanisterUpgradeOptionsInput>,
     ) -> station_api::ChangeExternalCanisterOperationInput {
         station_api::ChangeExternalCanisterOperationInput {
             canister_id: Principal::management_canister(),
-            mode: station_api::CanisterInstallMode::Upgrade,
+            mode: station_api::CanisterInstallMode::Upgrade(opts),
             module: vec![1, 2, 3],
             module_extra_chunks: None,
             arg: None,
-            wasm_memory_persistence,
-            skip_pre_upgrade,
         }
     }
 
     #[test]
     fn upgrade_flags_roundtrip_through_mapper() {
-        let api_input = upgrade_input(Some(station_api::WasmMemoryPersistence::Keep), Some(true));
+        let api_input = upgrade_input(Some(station_api::CanisterUpgradeOptionsInput {
+            wasm_memory_persistence: Some(station_api::WasmMemoryPersistence::Keep),
+            skip_pre_upgrade: Some(true),
+        }));
         let internal: ChangeExternalCanisterOperationInput = api_input.into();
 
         let CanisterInstallMode::Upgrade(args) = &internal.mode else {
@@ -2488,16 +2490,21 @@ mod tests {
         assert_eq!(args.skip_pre_upgrade, Some(true));
 
         let api_back: station_api::ChangeExternalCanisterOperationInput = internal.into();
-        assert!(matches!(
-            api_back.wasm_memory_persistence,
-            Some(station_api::WasmMemoryPersistence::Keep)
-        ));
-        assert_eq!(api_back.skip_pre_upgrade, Some(true));
+        match api_back.mode {
+            station_api::CanisterInstallMode::Upgrade(Some(opts)) => {
+                assert!(matches!(
+                    opts.wasm_memory_persistence,
+                    Some(station_api::WasmMemoryPersistence::Keep)
+                ));
+                assert_eq!(opts.skip_pre_upgrade, Some(true));
+            }
+            other => panic!("expected upgrade with options, got {other:?}"),
+        }
     }
 
     #[test]
     fn unset_upgrade_flags_map_to_unit_upgrade() {
-        let api_input = upgrade_input(None, None);
+        let api_input = upgrade_input(None);
         let internal: ChangeExternalCanisterOperationInput = api_input.into();
 
         let mgmt_mode: mgmt::CanisterInstallMode = internal.mode.into();
@@ -2509,7 +2516,10 @@ mod tests {
 
     #[test]
     fn set_upgrade_flags_populate_mgmt_upgrade_options() {
-        let api_input = upgrade_input(Some(station_api::WasmMemoryPersistence::Keep), None);
+        let api_input = upgrade_input(Some(station_api::CanisterUpgradeOptionsInput {
+            wasm_memory_persistence: Some(station_api::WasmMemoryPersistence::Keep),
+            skip_pre_upgrade: None,
+        }));
         let internal: ChangeExternalCanisterOperationInput = api_input.into();
 
         let mgmt_mode: mgmt::CanisterInstallMode = internal.mode.into();
@@ -2526,24 +2536,31 @@ mod tests {
     }
 
     #[test]
-    fn install_and_reinstall_ignore_upgrade_flags() {
-        for mode in [
-            station_api::CanisterInstallMode::Install,
-            station_api::CanisterInstallMode::Reinstall,
+    fn install_and_reinstall_map_to_unit_variants() {
+        for (mode, expected) in [
+            (
+                station_api::CanisterInstallMode::Install,
+                station_api::CanisterInstallMode::Install,
+            ),
+            (
+                station_api::CanisterInstallMode::Reinstall,
+                station_api::CanisterInstallMode::Reinstall,
+            ),
         ] {
             let api_input = station_api::ChangeExternalCanisterOperationInput {
                 canister_id: Principal::management_canister(),
-                mode: mode.clone(),
+                mode,
                 module: vec![],
                 module_extra_chunks: None,
                 arg: None,
-                wasm_memory_persistence: Some(station_api::WasmMemoryPersistence::Keep),
-                skip_pre_upgrade: Some(true),
             };
             let internal: ChangeExternalCanisterOperationInput = api_input.into();
             let api_back: station_api::ChangeExternalCanisterOperationInput = internal.into();
-            assert!(api_back.wasm_memory_persistence.is_none());
-            assert!(api_back.skip_pre_upgrade.is_none());
+            assert!(
+                std::mem::discriminant(&api_back.mode) == std::mem::discriminant(&expected),
+                "expected {expected:?}, got {:?}",
+                api_back.mode,
+            );
         }
     }
 

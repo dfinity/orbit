@@ -453,18 +453,20 @@ export const idlFactory = ({ IDL }) => {
     'keep' : IDL.Null,
     'replace' : IDL.Null,
   });
+  const CanisterUpgradeOptionsInput = IDL.Record({
+    'wasm_memory_persistence' : IDL.Opt(WasmMemoryPersistence),
+    'skip_pre_upgrade' : IDL.Opt(IDL.Bool),
+  });
   const CanisterInstallMode = IDL.Variant({
     'reinstall' : IDL.Null,
-    'upgrade' : IDL.Null,
+    'upgrade' : IDL.Opt(CanisterUpgradeOptionsInput),
     'install' : IDL.Null,
   });
   const Sha256Hash = IDL.Text;
   const ChangeExternalCanisterOperation = IDL.Record({
-    'wasm_memory_persistence' : IDL.Opt(WasmMemoryPersistence),
     'mode' : CanisterInstallMode,
     'canister_id' : IDL.Principal,
     'module_checksum' : Sha256Hash,
-    'skip_pre_upgrade' : IDL.Opt(IDL.Bool),
     'arg_checksum' : IDL.Opt(Sha256Hash),
   });
   const CycleObtainStrategyInput = IDL.Variant({
@@ -978,10 +980,8 @@ export const idlFactory = ({ IDL }) => {
   const ChangeExternalCanisterOperationInput = IDL.Record({
     'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'module_extra_chunks' : IDL.Opt(WasmModuleExtraChunks),
-    'wasm_memory_persistence' : IDL.Opt(WasmMemoryPersistence),
     'mode' : CanisterInstallMode,
     'canister_id' : IDL.Principal,
-    'skip_pre_upgrade' : IDL.Opt(IDL.Bool),
     'module' : IDL.Vec(IDL.Nat8),
   });
   const SetDisasterRecoveryOperationInput = IDL.Record({

@@ -679,7 +679,13 @@ export interface CanisterExecutionAndValidationMethodPair {
   'validation_method' : ValidationMethodResourceTarget,
 }
 export type CanisterInstallMode = { 'reinstall' : null } |
-  { 'upgrade' : null } |
+  {
+    /**
+     * Upgrade an existing canister. Carries optional flags that mirror the
+     * IC management canister's `CanisterUpgradeOptions`.
+     */
+    'upgrade' : [] | [CanisterUpgradeOptionsInput]
+  } |
   { 'install' : null };
 export interface CanisterMethod {
   /**
@@ -718,6 +724,21 @@ export interface CanisterStatusResponse {
   'idle_cycles_burned_per_day' : bigint,
   'module_hash' : [] | [Uint8Array | number[]],
   'reserved_cycles' : bigint,
+}
+/**
+ * Optional upgrade flags forwarded to the IC management canister's
+ * `install_code` method when `mode` is `upgrade`.
+ */
+export interface CanisterUpgradeOptionsInput {
+  /**
+   * Required as `keep` for upgrading Motoko canisters that use Enhanced
+   * Orthogonal Persistence; otherwise the IC clears their main memory.
+   */
+  'wasm_memory_persistence' : [] | [WasmMemoryPersistence],
+  /**
+   * If `true`, the `pre_upgrade` hook is skipped during the canister upgrade.
+   */
+  'skip_pre_upgrade' : [] | [boolean],
 }
 /**
  * A record type that is used to show the current capabilities of the station.
@@ -821,11 +842,6 @@ export type ChangeExternalCanisterMetadata = {
   };
 export interface ChangeExternalCanisterOperation {
   /**
-   * WASM memory persistence setting recorded for this upgrade, if any.
-   * Only meaningful when `mode` is `upgrade`.
-   */
-  'wasm_memory_persistence' : [] | [WasmMemoryPersistence],
-  /**
    * The canister installation mode.
    */
   'mode' : CanisterInstallMode,
@@ -837,11 +853,6 @@ export interface ChangeExternalCanisterOperation {
    * The checksum of the wasm module.
    */
   'module_checksum' : Sha256Hash,
-  /**
-   * Whether the `pre_upgrade` hook was skipped. Only meaningful when `mode`
-   * is `upgrade`.
-   */
-  'skip_pre_upgrade' : [] | [boolean],
   /**
    * The checksum of the arg blob.
    */
@@ -857,12 +868,6 @@ export interface ChangeExternalCanisterOperationInput {
    */
   'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   /**
-   * WASM memory persistence setting. Only applicable when `mode` is `upgrade`.
-   * Required as `keep` for upgrading Motoko canisters that use Enhanced
-   * Orthogonal Persistence; otherwise the IC clears their main memory.
-   */
-  'wasm_memory_persistence' : [] | [WasmMemoryPersistence],
-  /**
    * The canister installation mode.
    */
   'mode' : CanisterInstallMode,
@@ -870,11 +875,6 @@ export interface ChangeExternalCanisterOperationInput {
    * The canister to install.
    */
   'canister_id' : Principal,
-  /**
-   * If `true`, the `pre_upgrade` hook is skipped. Only applicable when `mode`
-   * is `upgrade`.
-   */
-  'skip_pre_upgrade' : [] | [boolean],
   /**
    * The wasm module to install.
    */

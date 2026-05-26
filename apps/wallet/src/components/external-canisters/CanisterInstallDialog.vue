@@ -130,7 +130,7 @@ const dialogTitle = computed(() => props.title || i18n.t('external_canisters.ins
 
 const initialModel = (): CanisterInstallModel => {
   const model: CanisterInstallModel = {};
-  model.mode = props.canisterModuleHash ? { upgrade: null } : { install: null };
+  model.mode = props.canisterModuleHash ? { upgrade: [] } : { install: null };
   model.canisterId = props.canisterId
     ? Principal.fromUint8Array(props.canisterId.toUint8Array())
     : undefined;
@@ -165,8 +165,6 @@ const submit = async (input: CanisterInstallModel) => {
         module: assertAndReturn(input.wasmModule, 'wasm module required'),
         arg: input.wasmInstallArg !== undefined ? [input.wasmInstallArg] : [],
         module_extra_chunks: [],
-        wasm_memory_persistence: [],
-        skip_pre_upgrade: [],
       },
       {
         comment:

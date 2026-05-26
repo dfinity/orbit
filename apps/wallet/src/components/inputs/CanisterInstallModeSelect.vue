@@ -58,6 +58,6 @@ const modes = computed<
 >(() => [
   { title: i18n.t('external_canisters.install_mode.install'), value: { install: null } },
   { title: i18n.t('external_canisters.install_mode.reinstall'), value: { reinstall: null } },
-  { title: i18n.t('external_canisters.install_mode.upgrade'), value: { upgrade: null } },
+  { title: i18n.t('external_canisters.install_mode.upgrade'), value: { upgrade: [] } },
 ]);
 </script>

@@ -575,7 +575,19 @@ type RemoveUserGroupOperation = record {
 type CanisterInstallMode = variant {
   install;
   reinstall;
-  upgrade;
+  // Upgrade an existing canister. Carries optional flags that mirror the
+  // IC management canister's `CanisterUpgradeOptions`.
+  upgrade : opt CanisterUpgradeOptionsInput;
+};
+
+// Optional upgrade flags forwarded to the IC management canister's
+// `install_code` method when `mode` is `upgrade`.
+type CanisterUpgradeOptionsInput = record {
+  // Required as `keep` for upgrading Motoko canisters that use Enhanced
+  // Orthogonal Persistence; otherwise the IC clears their main memory.
+  wasm_memory_persistence : opt WasmMemoryPersistence;
+  // If `true`, the `pre_upgrade` hook is skipped during the canister upgrade.
+  skip_pre_upgrade : opt bool;
 };
 
 // WASM memory persistence setting passed to `install_code` when the install
@@ -675,13 +687,6 @@ type ChangeExternalCanisterOperationInput = record {
   module_extra_chunks : opt WasmModuleExtraChunks;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
-  // WASM memory persistence setting. Only applicable when `mode` is `upgrade`.
-  // Required as `keep` for upgrading Motoko canisters that use Enhanced
-  // Orthogonal Persistence; otherwise the IC clears their main memory.
-  wasm_memory_persistence : opt WasmMemoryPersistence;
-  // If `true`, the `pre_upgrade` hook is skipped. Only applicable when `mode`
-  // is `upgrade`.
-  skip_pre_upgrade : opt bool;
 };
 
 type ChangeExternalCanisterOperation = record {
@@ -693,12 +698,6 @@ type ChangeExternalCanisterOperation = record {
   module_checksum : Sha256Hash;
   // The checksum of the arg blob.
   arg_checksum : opt Sha256Hash;
-  // WASM memory persistence setting recorded for this upgrade, if any.
-  // Only meaningful when `mode` is `upgrade`.
-  wasm_memory_persistence : opt WasmMemoryPersistence;
-  // Whether the `pre_upgrade` hook was skipped. Only meaningful when `mode`
-  // is `upgrade`.
-  skip_pre_upgrade : opt bool;
 };
 
 type SubnetFilter = record {

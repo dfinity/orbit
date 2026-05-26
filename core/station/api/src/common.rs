@@ -33,11 +33,25 @@ pub enum SortDirection {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum CanisterInstallMode {
     #[serde(rename = "install")]
-    Install = 1,
+    Install,
     #[serde(rename = "reinstall")]
-    Reinstall = 2,
+    Reinstall,
+    /// Upgrade an existing canister. Carries optional flags that mirror the
+    /// IC management canister's `CanisterUpgradeOptions`.
     #[serde(rename = "upgrade")]
-    Upgrade = 3,
+    Upgrade(Option<CanisterUpgradeOptionsInput>),
+}
+
+/// Optional upgrade flags forwarded to the IC management canister's
+/// `install_code` method when `mode` is `upgrade`.
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
+pub struct CanisterUpgradeOptionsInput {
+    /// Required as `keep` for upgrading Motoko canisters that use Enhanced
+    /// Orthogonal Persistence; otherwise the IC clears their main memory.
+    pub wasm_memory_persistence: Option<WasmMemoryPersistence>,
+    /// If `true`, the `pre_upgrade` hook is skipped during the canister
+    /// upgrade.
+    pub skip_pre_upgrade: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]

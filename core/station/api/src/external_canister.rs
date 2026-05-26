@@ -1,7 +1,7 @@
 use crate::{
     AllowDTO, CanisterInstallMode, ChangeMetadataDTO, CycleObtainStrategyInput, MetadataDTO,
     PaginationInput, RequestPolicyRuleDTO, Sha256HashDTO, SortDirection, TimestampRfc3339, UuidDTO,
-    ValidationMethodResourceTargetDTO, WasmMemoryPersistence,
+    ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
 use orbit_essentials::cmc::SubnetSelection;
@@ -131,13 +131,6 @@ pub struct ChangeExternalCanisterOperationInput {
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
-    /// WASM memory persistence setting. Only applicable when `mode` is `upgrade`.
-    /// Required as `keep` for upgrading Motoko canisters that use Enhanced
-    /// Orthogonal Persistence; otherwise the IC clears their main memory.
-    pub wasm_memory_persistence: Option<WasmMemoryPersistence>,
-    /// If `true`, the `pre_upgrade` hook is skipped. Only applicable when
-    /// `mode` is `upgrade`.
-    pub skip_pre_upgrade: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -146,8 +139,6 @@ pub struct ChangeExternalCanisterOperationDTO {
     pub mode: CanisterInstallMode,
     pub module_checksum: Sha256HashDTO,
     pub arg_checksum: Option<Sha256HashDTO>,
-    pub wasm_memory_persistence: Option<WasmMemoryPersistence>,
-    pub skip_pre_upgrade: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
