@@ -1,3 +1,25 @@
+## 0.7.0 (2025-09-02)
+
+
+### 🚀 Features
+
+- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))
+
+- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))
+
+- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))
+
+
+### 🧱 Updated Dependencies
+
+- Updated station-api to 0.6.0
+
+
+### ❤️  Thank You
+
+- mraszyk @mraszyk
+- tomer-dfinity
+
 ## 0.6.0 (2025-06-02)
 
 
