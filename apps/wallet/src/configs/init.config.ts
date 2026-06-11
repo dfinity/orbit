@@ -30,7 +30,13 @@ const appInitConfig: AppInitConfig = {
   isProduction: !!import.meta.env.PROD,
   apiGatewayUrl: new URL(import.meta.env.PROD ? 'https://icp-api.io' : 'http://localhost:4943'),
   httpGatewayUrl: getHttpGatewayUrl(import.meta.env.PROD),
-  derivationOrigin: import.meta.env.PROD ? 'https://orbitwallet.io' : undefined,
+  // Only the production build mode derives the identity from the legacy domain; other
+  // IC-hosted build modes (e.g. playground, testing) authenticate against their own origin,
+  // which is not listed in the production domain's ii-alternative-origins.
+  derivationOrigin:
+    import.meta.env.PROD && import.meta.env.APP_BUILD_MODE === 'production'
+      ? 'https://orbitwallet.io'
+      : undefined,
   marketingSiteUrl: import.meta.env.APP_MARKETING_SITE_URL,
   locale: {
     default: defaultLocale,
