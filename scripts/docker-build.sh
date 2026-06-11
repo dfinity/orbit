@@ -56,8 +56,9 @@ function deterministic_build() {
   local project_name=$1
   local target=$2
 
-  # Build the canister
-  docker build --build-arg BUILD_MODE=$BUILD_MODE -t orbit-$project_name --target $target . --platform=linux/amd64
+  # Build the canister. Provenance attestations are disabled so the output is a single
+  # manifest that `docker create` can resolve on non-amd64 hosts (e.g. Apple Silicon).
+  docker build --build-arg BUILD_MODE=$BUILD_MODE -t orbit-$project_name --target $target . --platform=linux/amd64 --provenance=false
 
   # Create a container to extract the generated artifacts
   docker create --name orbit-$project_name-container orbit-$project_name
