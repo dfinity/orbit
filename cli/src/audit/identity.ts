@@ -4,6 +4,7 @@ import { createPrivateKey } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
+import { loadIcpIdentity } from './identity-icp';
 
 const DFX_IDENTITY_STORE = join(homedir(), '.config/dfx/identity');
 
@@ -13,15 +14,21 @@ const candidatePemPaths = (identity: string): string[] => [
   join(DFX_IDENTITY_STORE, identity, 'id.pem'),
 ];
 
+export type IdentitySource = 'dfx' | 'icp';
+
 /**
- * Loads a dfx-managed identity from its plaintext PEM and returns an agent-js
- * `Identity` suitable for signing canister requests.
- *
- * Encrypted (passphrase-protected) PEMs are not supported; the audit only
- * needs read access to `list_*` query methods, and decrypting PKCS#8 with
- * scrypt/PBKDF2 + AES would be a significant chunk of code for a read-only
- * tool. Operators with an encrypted identity should create a plaintext one
- * specifically for the audit:
+ * Loads a signing identity from either dfx's PEM store or the icp-cli identity
+ * store, depending on `source`. See `identity-icp.ts` for the icp variant.
+ */
+export const loadIdentity = (source: IdentitySource, name: string): Identity => {
+  if (source === 'icp') return loadIcpIdentity(name);
+  return loadDfxIdentity(name);
+};
+
+/**
+ * Loads a dfx-managed identity from its plaintext PEM. Encrypted PEMs are
+ * refused; the audit only needs read access, so create a plaintext identity
+ * for it:
  *
  *   dfx identity new orbit-audit --storage-mode plaintext
  */
@@ -38,7 +45,6 @@ export const loadDfxIdentity = (name: string): Identity => {
   }
 
   const pem = readFileSync(pemPath, 'utf8');
-
   if (pem.includes('ENCRYPTED PRIVATE KEY')) {
     throw new Error(
       `Identity '${name}' is passphrase-protected. The audit only needs read access; create a plaintext identity for it:\n` +
@@ -46,9 +52,14 @@ export const loadDfxIdentity = (name: string): Identity => {
         `then re-run with --identity ${name}-audit.`,
     );
   }
+  return parseEd25519Pem(pem, name);
+};
 
-  // Node's crypto can parse the PKCS#8 envelope; we then export the raw key
-  // material in JWK form and feed the seed into agent-js' Ed25519 identity.
+/**
+ * Parses an unencrypted Ed25519 PKCS#8 PEM into an `Ed25519KeyIdentity`.
+ * Shared between the dfx and icp identity loaders.
+ */
+export const parseEd25519Pem = (pem: string, name: string): Identity => {
   let jwk;
   try {
     const key = createPrivateKey({ key: pem, format: 'pem' });
@@ -59,23 +70,22 @@ export const loadDfxIdentity = (name: string): Identity => {
 
   if (jwk.kty !== 'OKP' || jwk.crv !== 'Ed25519') {
     throw new Error(
-      `Identity '${name}' is not Ed25519 (kty=${jwk.kty}, crv=${jwk.crv}). The audit supports Ed25519 dfx identities only.`,
+      `Identity '${name}' is not Ed25519 (kty=${jwk.kty}, crv=${jwk.crv}). The audit supports Ed25519 identities only.`,
     );
   }
-
-  if (!jwk.d || !jwk.x) {
+  if (typeof jwk.d !== 'string' || typeof jwk.x !== 'string') {
     throw new Error(`Identity '${name}' PEM is missing key material.`);
   }
 
-  const secretKey = b64urlDecode(jwk.d);
-  const publicKey = b64urlDecode(jwk.x);
-  const combined = new Uint8Array(secretKey.length + publicKey.length);
-  combined.set(secretKey, 0);
-  combined.set(publicKey, secretKey.length);
+  const secret = b64urlDecode(jwk.d);
+  const pub = b64urlDecode(jwk.x);
+  const combined = new Uint8Array(secret.length + pub.length);
+  combined.set(secret, 0);
+  combined.set(pub, secret.length);
   return Ed25519KeyIdentity.fromSecretKey(combined.buffer);
 };
 
-const b64urlDecode = (input: string): Uint8Array => {
+export const b64urlDecode = (input: string): Uint8Array => {
   const pad = '='.repeat((4 - (input.length % 4)) % 4);
   const base64 = (input + pad).replace(/-/g, '+').replace(/_/g, '/');
   return new Uint8Array(Buffer.from(base64, 'base64'));

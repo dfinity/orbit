@@ -2,7 +2,10 @@
 
 Read-only sanity checks against an Orbit station's configuration. The command pulls live state via the station's `list_*` query methods using `agent-js`, runs a set of static checks against the configuration, and prints a severity-sorted report. Nothing is mutated — the audit is safe to run at any time, against any station the caller has read access to.
 
-> **Identity prerequisite.** The audit signs requests with an Ed25519 dfx identity loaded from `~/.config/dfx/identity/<name>/identity.pem`. The `dfx` CLI itself does not need to be on PATH at runtime, but the identity store layout follows dfx's convention. Passphrase-protected identities aren't supported; create a plaintext one for the audit if needed (`dfx identity new orbit-audit --storage-mode plaintext`).
+> **Identity sources.** The audit signs requests with either a dfx-managed PEM or an `icp-cli` identity:
+>
+> - `--identity-source dfx` (default) — reads `~/.config/dfx/identity/<name>/identity.pem`. The `dfx` CLI itself does not need to be on PATH at runtime, only the PEM. Passphrase-protected identities aren't supported; create a plaintext one for the audit if needed (`dfx identity new orbit-audit --storage-mode plaintext`).
+> - `--identity-source icp` — reads the `icp-cli` identity store. Supports `kind: keyring` (Ed25519) via `icp identity export`, `kind: internet-identity` (e.g., II / Okta) via `icp identity delegation sign` (mints a 1-hour delegation for an ephemeral session key), and `kind: anonymous`. Requires `icp` on PATH. HSM and Secp256k1 keyring identities are not supported yet.
 
 ## Usage
 

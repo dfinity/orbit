@@ -1,12 +1,13 @@
 import { ActorSubclass } from '@dfinity/agent';
 import { createStationActor } from './agent';
-import { loadDfxIdentity } from './identity';
+import { IdentitySource, loadIdentity } from './identity';
 import { Asset, NamedRule, Permission, RequestPolicy, User, UserGroup } from './types';
 
 export interface StationContext {
   station: string;
   network: string;
   identity: string;
+  identitySource: IdentitySource;
 }
 
 const PAGE_SIZE = 50n;
@@ -49,7 +50,7 @@ const paginated = async <Item>(
  * pay agent + root-key bootstrap cost per query.
  */
 export const buildStationActor = async (ctx: StationContext): Promise<ActorSubclass> => {
-  const identity = loadDfxIdentity(ctx.identity);
+  const identity = loadIdentity(ctx.identitySource, ctx.identity);
   return createStationActor(ctx.station, ctx.network, identity);
 };
 

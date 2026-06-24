@@ -24,9 +24,14 @@ command
   .requiredOption('-s, --station <CANISTER_ID>', 'The station canister id to audit.')
   .option('-n, --network <TYPE>', 'The network the station lives on. Defaults to `ic`.', 'ic')
   .option(
-    '-i, --identity <TYPE>',
-    'The dfx identity to call the station with (needs read access to list_* methods). Defaults to `default`.',
+    '-i, --identity <NAME>',
+    "Identity to call the station with. Needs read access to the station's `list_*` methods.",
     'default',
+  )
+  .option(
+    '--identity-source <SOURCE>',
+    'Where to load the identity from: `dfx` reads ~/.config/dfx/identity/<name>/identity.pem; `icp` reads the icp-cli identity store (including II/delegation-based identities).',
+    'dfx',
   )
   .option(
     '-o, --output <PATH>',
@@ -34,10 +39,16 @@ command
   );
 
 command.action(async options => {
+  if (options.identitySource !== 'dfx' && options.identitySource !== 'icp') {
+    throw new Error(
+      `Invalid --identity-source '${options.identitySource}'. Must be 'dfx' or 'icp'.`,
+    );
+  }
   const ctx: StationContext = {
     station: options.station,
     network: options.network,
     identity: options.identity,
+    identitySource: options.identitySource,
   };
 
   const actor = await buildStationActor(ctx);
