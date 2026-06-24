@@ -16,7 +16,10 @@ const ICP_IDENTITY_STORE_PATHS = [
 ];
 
 interface IcpIdentityEntry {
-  kind: 'keyring' | 'internet-identity' | 'anonymous' | 'hsm';
+  // `web-auth` is the current name icp-cli uses for browser-based identities
+  // (II / OIDC providers via `icp identity link web`). Older versions of icp
+  // emitted `internet-identity` for the same shape; we accept both.
+  kind: 'keyring' | 'internet-identity' | 'web-auth' | 'anonymous' | 'hsm';
   principal?: string;
   algorithm?: 'ed25519' | 'secp256k1';
 }
@@ -136,7 +139,7 @@ export const loadIcpIdentity = (name: string): Identity => {
     return parseEd25519Pem(stdout, name);
   }
 
-  if (entry.kind === 'internet-identity') {
+  if (entry.kind === 'internet-identity' || entry.kind === 'web-auth') {
     const { pubKeyPem, identity: session } = generateSessionKey();
     const pubKeyPath = join(
       tmpdir(),
