@@ -72,11 +72,7 @@ const generateSessionKey = (): {
     throw new Error('Failed to extract Ed25519 session-key material from Node crypto.');
   }
   const secret = b64urlDecode(jwk.d);
-  const pub = b64urlDecode(jwk.x);
-  const combined = new Uint8Array(secret.length + pub.length);
-  combined.set(secret, 0);
-  combined.set(pub, secret.length);
-  return { pubKeyPem, identity: Ed25519KeyIdentity.fromSecretKey(combined.buffer) };
+  return { pubKeyPem, identity: Ed25519KeyIdentity.fromSecretKey(secret.buffer) };
 };
 
 /**

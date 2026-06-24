@@ -77,12 +77,10 @@ export const parseEd25519Pem = (pem: string, name: string): Identity => {
     throw new Error(`Identity '${name}' PEM is missing key material.`);
   }
 
+  // agent-js Ed25519KeyIdentity.fromSecretKey takes the 32-byte seed only;
+  // the public key is derived internally.
   const secret = b64urlDecode(jwk.d);
-  const pub = b64urlDecode(jwk.x);
-  const combined = new Uint8Array(secret.length + pub.length);
-  combined.set(secret, 0);
-  combined.set(pub, secret.length);
-  return Ed25519KeyIdentity.fromSecretKey(combined.buffer);
+  return Ed25519KeyIdentity.fromSecretKey(secret.buffer);
 };
 
 export const b64urlDecode = (input: string): Uint8Array => {
