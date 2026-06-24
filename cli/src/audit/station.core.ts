@@ -9,9 +9,16 @@ export interface StationContext {
 
 const PAGE_SIZE = 50;
 
+// Escapes a value for safe inclusion in a single-quoted POSIX shell argument.
+// A literal `'` inside single quotes is impossible, so the standard idiom is to
+// close the string, emit an escaped quote, and reopen: foo'bar -> 'foo'\''bar'.
+const shq = (value: string): string => `'${value.replace(/'/g, "'\\''")}'`;
+
 const dfx = async (ctx: StationContext, method: string, args: string): Promise<unknown> => {
   // Candid arguments are always tuples — even single-arg calls need the outer `( ... )`.
-  const cmd = `dfx canister call --identity '${ctx.identity}' --network '${ctx.network}' --output json '${ctx.station}' ${method} '(${args})'`;
+  // `method` and `args` come from this file (not user input); `identity` / `network` /
+  // `station` come from CLI flags and are shell-escaped to prevent injection.
+  const cmd = `dfx canister call --identity ${shq(ctx.identity)} --network ${shq(ctx.network)} --output json ${shq(ctx.station)} ${method} '(${args})'`;
   const raw = await execAsync(cmd);
   return JSON.parse(raw);
 };

@@ -100,6 +100,18 @@ describe('quorum.empty-approver-set', () => {
     expect(findings[0].location).toMatch(/Admin approval/);
   });
 
+  it('renders QuorumPercentage findings as a percentage, not a vote count', () => {
+    const carol = makeUser({ id: 'u-carol', status: { Inactive: null } });
+    const policy = makePolicy(
+      { Transfer: { Any: null } },
+      { QuorumPercentage: { approvers: { Id: ['u-carol'] }, min_approved: 50 } },
+    );
+    const findings = quorumEmptyApproverSet([policy], [carol], []);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toMatch(/50% of approvers/);
+    expect(findings[0].message).not.toMatch(/50 approval/);
+  });
+
   it('does not loop infinitely on cyclic NamedRule references', () => {
     const ruleA = makeNamedRule({
       id: 'nr-a',

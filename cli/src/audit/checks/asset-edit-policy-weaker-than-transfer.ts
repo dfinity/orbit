@@ -42,7 +42,7 @@ export const assetEditPolicyWeakerThanTransfer = (
       checkId: 'asset.edit-policy-weaker-than-transfer',
       severity: 'warning',
       location: `station-wide (${editPolicies.length} EditAsset policy/policies vs ${transferPolicies.length} Transfer policy/policies)`,
-      message: `Easiest EditAsset path requires ${easiestEdit} approval(s); strictest Transfer path requires ${strictestTransfer}. An attacker who can pass the EditAsset bar can mutate asset.metadata["ledger_canister_id"] and redirect an approved Transfer between approval and execution.`,
+      message: `Easiest EditAsset path requires at least ${easiestEdit} approval(s); strictest Transfer path requires at least ${strictestTransfer} (estimates — AllOf combinators are reduced via max-of-children, giving a lower bound). An actor who can pass the EditAsset bar can mutate asset.metadata["ledger_canister_id"] and redirect an approved Transfer between approval and execution.`,
       fix: 'Gate EditAsset at the same approval level as Transfer for the affected assets. Until v0.2 supports per-asset scoping, treat this as a station-wide signal to tighten the loosest EditAsset policy.',
     },
   ];

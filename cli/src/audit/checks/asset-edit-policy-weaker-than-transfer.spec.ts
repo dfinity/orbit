@@ -54,8 +54,8 @@ describe('asset.edit-policy-weaker-than-transfer', () => {
     const findings = assetEditPolicyWeakerThanTransfer([editPolicy, transferPolicy], users, []);
     expect(findings).toHaveLength(1);
     expect(findings[0].severity).toBe('warning');
-    expect(findings[0].message).toMatch(/Easiest EditAsset path requires 1/);
-    expect(findings[0].message).toMatch(/strictest Transfer path requires 3/);
+    expect(findings[0].message).toMatch(/Easiest EditAsset path requires at least 1/);
+    expect(findings[0].message).toMatch(/strictest Transfer path requires at least 3/);
   });
 
   it('uses minVotes including AutoApproved (treated as 0)', () => {
@@ -67,6 +67,6 @@ describe('asset.edit-policy-weaker-than-transfer', () => {
     );
     const findings = assetEditPolicyWeakerThanTransfer([editPolicy, transferPolicy], users, []);
     expect(findings).toHaveLength(1);
-    expect(findings[0].message).toMatch(/Easiest EditAsset path requires 0/);
+    expect(findings[0].message).toMatch(/Easiest EditAsset path requires at least 0/);
   });
 });
