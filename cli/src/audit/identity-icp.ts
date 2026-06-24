@@ -144,7 +144,20 @@ export const loadIcpIdentity = (name: string): Identity => {
           `'icp identity delegation sign --identity ${name}' failed: ${stderr.trim()}`,
         );
       }
-      const chain = DelegationChain.fromJSON(stdout);
+      // icp emits `"targets": null` for unrestricted delegations; agent-js'
+      // `JsonnableDelegation` expects `targets` to be either absent or an
+      // array, never null. Strip the null fields before parsing.
+      const parsed = JSON.parse(stdout) as {
+        publicKey: string;
+        delegations: Array<{
+          signature: string;
+          delegation: { pubkey: string; expiration: string; targets?: string[] | null };
+        }>;
+      };
+      parsed.delegations.forEach(d => {
+        if (d.delegation.targets === null) delete d.delegation.targets;
+      });
+      const chain = DelegationChain.fromJSON(parsed);
       return DelegationIdentity.fromDelegation(session, chain);
     } finally {
       try {
