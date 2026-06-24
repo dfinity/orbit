@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node dist/cli.js",
     "expose": "pnpm link --global",
+    "test": "vitest run",
     "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts"
   },
   "devDependencies": {
@@ -16,6 +17,7 @@
     "@dfinity/agent": "1.4.0",
     "@dfinity/candid": "1.4.0",
     "@dfinity/identity": "1.4.0",
-    "@dfinity/principal": "1.4.0"
+    "@dfinity/principal": "1.4.0",
+    "vitest": "1.6.1"
   }
 }
