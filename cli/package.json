@@ -6,7 +6,7 @@
   },
   "main": "cli.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && mkdir -p dist/audit/generated && cp src/audit/generated/station.did.js dist/audit/generated/",
     "start": "node dist/cli.js",
     "expose": "pnpm link --global",
     "test": "vitest run",

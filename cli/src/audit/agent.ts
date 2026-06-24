@@ -2,10 +2,9 @@ import { Actor, ActorSubclass, HttpAgent, Identity } from '@dfinity/agent';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { ROOT_PATH } from '../utils';
-// `idlFactory` is the runtime IDL constructor generated from `core/station/api/spec.did`.
-// The file is a regenerable mirror of `apps/wallet/src/generated/station/station.did.js`.
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - generated .js file without accompanying types in this directory
+// `idlFactory` is the runtime IDL constructor generated from
+// `core/station/api/spec.did`. Both the .js and its companion .d.ts live in
+// `./generated/`; regenerate them with `pnpm run generate-station-types`.
 import { idlFactory } from './generated/station.did.js';
 
 const MAINNET_HOSTS: Record<string, string> = {
