@@ -144,7 +144,7 @@ README).
 - **`SyntaxError: Unexpected token 'export'` running the CLI** — the generated
   IDL got copied into the CommonJS build as an ES module. The helper script
   repairs this after every build; if you're building by hand, copy the
-  perl/printf one-liner from its step 3. (It's gitignored build output, so the
+  IDL-repair Node snippet from its step 3. (It's gitignored build output, so the
   patch is safe and disposable — a rebuild reintroduces the problem, which is
   why the script re-applies the fix each run.) The real fix belongs in
   [`cli/package.json`](../../../cli/package.json)'s build script.

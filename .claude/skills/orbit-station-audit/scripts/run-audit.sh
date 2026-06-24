@@ -37,10 +37,18 @@ fi
 #
 #    The proper fix is to emit/copy this file as CommonJS in the CLI's build
 #    script (cli/package.json) so this guard becomes unnecessary.
-if grep -q '^export const' "$GEN"; then
-  perl -0pi -e 's/^export const /const /mg' "$GEN"
-  printf '\nmodule.exports = { idlFactory, init };\n' >>"$GEN"
-fi
+#
+#    Done in Node (already a hard requirement here) so the script needs no extra
+#    runtime like perl/sed. Idempotent: a no-op once the file is already CJS.
+node -e '
+  const fs = require("fs");
+  const p = process.argv[1];
+  let s = fs.readFileSync(p, "utf8");
+  if (s.includes("export const ")) {
+    s = s.replace(/^export const /gm, "const ") + "\nmodule.exports = { idlFactory, init };\n";
+    fs.writeFileSync(p, s);
+  }
+' "$GEN"
 
 # 4. Run the audit, forwarding all arguments (default to --help if none given,
 #    since `audit` requires --station and would otherwise error).
