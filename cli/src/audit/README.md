@@ -5,7 +5,7 @@ Read-only sanity checks against an Orbit station's configuration. The command pu
 > **Identity sources.** The audit signs requests with either a dfx-managed PEM or an `icp-cli` identity:
 >
 > - `--identity-source dfx` (default) — reads `~/.config/dfx/identity/<name>/identity.pem`. The `dfx` CLI itself does not need to be on PATH at runtime, only the PEM. Passphrase-protected identities aren't supported; create a plaintext one for the audit if needed (`dfx identity new orbit-audit --storage-mode plaintext`).
-> - `--identity-source icp` — reads the `icp-cli` identity store. Supports `kind: keyring` (Ed25519) via `icp identity export`, `kind: internet-identity` (e.g., II / Okta) via `icp identity delegation sign` (mints a 1-hour delegation for an ephemeral session key), and `kind: anonymous`. Requires `icp` on PATH. HSM and Secp256k1 keyring identities are not supported yet.
+> - `--identity-source icp` — reads the `icp-cli` identity store. Supports `kind: keyring` (Ed25519) via `icp identity export`, `kind: web-auth` / `kind: internet-identity` (browser logins via `icp identity link web --app <domain>`) via `icp identity delegation sign` (mints a 1-hour delegation for an ephemeral session key), and `kind: anonymous`. Requires `icp` on PATH. HSM and Secp256k1 keyring identities are not supported yet.
 
 ## Usage
 
@@ -15,13 +15,14 @@ orbit-cli audit --station <CANISTER_ID> [--network <ic|local>] [--identity <NAME
 
 ### Options
 
-| Flag                          | Default      | Purpose                                                                                                                                           |
-| ----------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-s, --station <CANISTER_ID>` | **required** | The station canister id to audit.                                                                                                                 |
-| `-n, --network <ic\|local>`   | `ic`         | The network the station lives on.                                                                                                                 |
-| `-i, --identity <NAME>`       | `default`    | The dfx identity used to call the station. Must have read access to the station's `list_*` query methods (admin-tier users have this by default). |
-| `-o, --output <PATH>`         | _(stdout)_   | Write the report to a file instead of stdout. Exit code is still set based on findings.                                                           |
-| `-h, --help`                  |              | Print help and exit.                                                                                                                              |
+| Flag                          | Default      | Purpose                                                                                                                               |
+| ----------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `-s, --station <CANISTER_ID>` | **required** | The station canister id to audit.                                                                                                     |
+| `-n, --network <ic\|local>`   | `ic`         | The network the station lives on.                                                                                                     |
+| `-i, --identity <NAME>`       | `default`    | Identity to call the station with. Needs read access to the station's `list_*` query methods (admin-tier users have this by default). |
+| `--identity-source <SOURCE>`  | `dfx`        | Where to load the identity from. `dfx` reads `~/.config/dfx/identity/<name>/identity.pem`; `icp` reads the icp-cli identity store.    |
+| `-o, --output <PATH>`         | _(stdout)_   | Write the report to a file instead of stdout. Exit code is still set based on findings.                                               |
+| `-h, --help`                  |              | Print help and exit.                                                                                                                  |
 
 ### Exit codes
 
@@ -43,6 +44,11 @@ orbit-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai
 orbit-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai \
                 --identity admin-readonly \
                 --output ./audit-report.txt
+
+# Sign with an icp-cli identity (II / Okta / linked browser logins).
+orbit-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai \
+                --identity my-icp-identity \
+                --identity-source icp
 
 # Local development station.
 orbit-cli audit --station <local-canister-id> --network local
