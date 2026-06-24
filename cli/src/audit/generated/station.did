@@ -1,0 +1,3515 @@
+// The asset symbol, e.g. "ICP" or "BTC".
+type AssetSymbol = text;
+// The network id, represented by the blockchain symbol and network name (e.g. "icp:mainnet").
+type NetworkId = text;
+// Most ids under the station canister are in the UUID format (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type UUID = text;
+// The timestamp type used in the canister.
+type TimestampRFC3339 = text;
+// The hash string representation for sha256.
+type Sha256Hash = text;
+
+type PaginationInput = record {
+  // The offset to use for pagination.
+  offset : opt nat64;
+  // The maximum number of items to retrieve.
+  //
+  // If not set, the default limit will be used.
+  limit : opt nat16;
+};
+
+// A record type that can be used to represent the caller privileges for a given request policy.
+type RequestPolicyCallerPrivileges = record {
+  // The request policy id.
+  id : UUID;
+  // Whether or not the caller can edit the resource.
+  can_edit : bool;
+  // Whether or not the caller can delete the resource.
+  can_delete : bool;
+};
+
+// Represents a request policy with the associated rule.
+type RequestPolicy = record {
+  id : UUID;
+  specifier : RequestSpecifier;
+  rule : RequestPolicyRule;
+};
+
+// Defines the various types of requests that can be created.
+type RequestSpecifier = variant {
+  AddAccount;
+  AddUser;
+  EditAccount : ResourceIds;
+  EditUser : ResourceIds;
+  Transfer : ResourceIds;
+  AddAddressBookEntry;
+  EditAddressBookEntry : ResourceIds;
+  RemoveAddressBookEntry : ResourceIds;
+  SystemUpgrade;
+  SetDisasterRecovery;
+  ChangeExternalCanister : ExternalCanisterId;
+  FundExternalCanister : ExternalCanisterId;
+  CreateExternalCanister;
+  CallExternalCanister : CallExternalCanisterResourceTarget;
+  EditPermission : ResourceSpecifier;
+  AddRequestPolicy;
+  EditRequestPolicy : ResourceIds;
+  RemoveRequestPolicy : ResourceIds;
+  AddUserGroup;
+  EditUserGroup : ResourceIds;
+  RemoveUserGroup : ResourceIds;
+  ManageSystemInfo;
+  AddAsset;
+  EditAsset : ResourceIds;
+  RemoveAsset : ResourceIds;
+  AddNamedRule;
+  EditNamedRule : ResourceIds;
+  RemoveNamedRule : ResourceIds;
+};
+
+// A record type that can be used to represent a percentage of users that are required to approve a rule.
+type QuorumPercentage = record {
+  // The users that are required to approve the request.
+  approvers : UserSpecifier;
+  // The required user approvals for the rule to be approved.
+  min_approved : nat16;
+};
+
+// A record type that can be used to represent the minimum quorum of users that are required to approve a rule.
+type Quorum = record {
+  // The users that can approve the request.
+  approvers : UserSpecifier;
+  // The minimum number of user approvals required for the rule to be approved.
+  min_approved : nat16;
+};
+
+type RequestPolicyRuleInput = variant {
+  Remove;
+  Set : RequestPolicyRule;
+};
+
+// Defines the various types rules that can be used in a request evaluation.
+type RequestPolicyRule = variant {
+  AutoApproved;
+  QuorumPercentage : QuorumPercentage;
+  Quorum : Quorum;
+  AllowListedByMetadata : AddressBookMetadata;
+  AllowListed;
+  AnyOf : vec RequestPolicyRule;
+  AllOf : vec RequestPolicyRule;
+  Not : RequestPolicyRule;
+  NamedRule : UUID;
+};
+
+// Defines the high level result of evaluating a request policy rule.
+type EvaluationStatus = variant {
+  Approved;
+  Rejected;
+  Pending;
+};
+
+// Defines the evaluation data of a request policy rule.
+type EvaluatedRequestPolicyRule = variant {
+  AutoApproved;
+  QuorumPercentage : record {
+    min_approved : nat64;
+    total_possible_approvers : nat64;
+    approvers : vec UUID;
+  };
+  Quorum : record {
+    min_approved : nat64;
+    total_possible_approvers : nat64;
+    approvers : vec UUID;
+  };
+  AllowListedByMetadata : record {
+    metadata : AddressBookMetadata;
+  };
+  AllowListed;
+  AnyOf : vec RequestPolicyRuleResult;
+  AllOf : vec RequestPolicyRuleResult;
+  Not : RequestPolicyRuleResult;
+};
+
+// A record type representing the full evaluation result of a request policy rule.
+type RequestPolicyRuleResult = record {
+  // The final evaluation status of the rule.
+  status : EvaluationStatus;
+  // The result of the evaluation of the rule and all its sub-rules.
+  evaluated_rule : EvaluatedRequestPolicyRule;
+};
+
+// List of reasons why a request can be approved or rejected.
+type EvaluationSummaryReason = variant {
+  ApprovalQuorum;
+  AllowList;
+  AllowListMetadata;
+  AutoApproved;
+};
+
+// A record type representing the full evaluation result of all matching policies for a request.
+type RequestEvaluationResult = record {
+  // The request id that was evaluated.
+  request_id : UUID;
+  // The final evaluation status of the request.
+  status : EvaluationStatus;
+  // The evaluation results of all matching policies.
+  policy_results : vec RequestPolicyRuleResult;
+  // The reasons why the request was approved or rejected.
+  result_reasons : opt vec EvaluationSummaryReason;
+};
+
+// Defines a user in the context of a request.
+type UserSpecifier = variant {
+  Any;
+  Id : vec UUID;
+  Group : vec UUID;
+};
+
+type ResourceSpecifier = variant {
+  Any;
+  Resource : Resource;
+};
+
+// Defines the various states that a notification can be in.
+type NotificationStatus = variant {
+  // The notification has been sent.
+  Sent;
+  // The notification has been read by the user.
+  Read;
+};
+
+// Represents the different types of notifications within the system.
+type NotificationType = variant {
+  // Notification for system-wide messages.
+  // This can be used for announcements, scheduled maintenance reminders, or other important system messages.
+  SystemMessage;
+  // Notification for the creation of a new request.
+  // This should be used to alert users when a new request that requires their attention has been created.
+  RequestCreated : record {
+    // The request id that was created.
+    request_id : UUID;
+    // The type of the request (e.g. "transfer").
+    operation_type : RequestOperationType;
+    // Account id is available for relevant request types.
+    account_id : opt UUID;
+    // User id is available for relevant request types.
+    user_id : opt UUID;
+  };
+  // Notification for the failure of a request.
+  // This should be used to alert the requester when a request has failed to be executed.
+  RequestFailed : record {
+    // The request id that was created.
+    request_id : UUID;
+    // The type of the request (e.g. "transfer").
+    operation_type : RequestOperationType;
+    // Details about the failure.
+    reason : opt text;
+  };
+
+  // Notification for the rejection of a request.
+  // This should be used to alert the requester when a request has been rejected.
+  RequestRejected : record {
+    // The request id that was created.
+    request_id : UUID;
+    // The type of the request (e.g. "transfer").
+    operation_type : RequestOperationType;
+    // List of reasons why the request was rejected.
+    reasons : opt vec EvaluationSummaryReason;
+  };
+};
+
+type NotificationTypeInput = variant {
+  SystemMessage;
+  RequestCreated;
+};
+
+// A record type that can be used to represent a notification.
+type Notification = record {
+  // The notification id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The type of the notification.
+  notification_type : NotificationType;
+  // The notification status.
+  status : NotificationStatus;
+  // The user that the notification is for.
+  target_user_id : UUID;
+  // The notification title in a single locale.
+  title : text;
+  // The notification message in a single locale.
+  message : opt text;
+  // The time at which the notification was created.
+  created_at : TimestampRFC3339;
+};
+
+// The input type for getting the list of notifications associated with the caller.
+type ListNotificationsInput = record {
+  // Show only notifications with the given status.
+  status : opt NotificationStatus;
+  // The type of the notification (e.g. "system-message").
+  notification_type : opt NotificationTypeInput;
+  // From which created time to retrieve the notifications.
+  from_dt : opt TimestampRFC3339;
+  // Until which created time to retrieve the notifications.
+  to_dt : opt TimestampRFC3339;
+};
+
+// The result type for getting the list of notifications.
+type ListNotificationsResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of notifications ordered by creation time (newest first).
+    notifications : vec Notification;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+type MarkNotificationsReadInput = record {
+  // The notifications to mark as read.
+  notification_ids : vec UUID;
+  // If true, all notifications will be marked as read.
+  read : bool;
+};
+
+type MarkNotificationReadResult = variant {
+  Ok;
+  Err : Error;
+};
+
+// The status of a request.
+type RequestStatus = variant {
+  Created;
+  Approved;
+  Rejected;
+  Cancelled : record {
+    reason : opt text;
+  };
+  Scheduled : record {
+    scheduled_at : TimestampRFC3339;
+  };
+  Processing : record {
+    started_at : TimestampRFC3339;
+  };
+  Completed : record {
+    completed_at : TimestampRFC3339;
+  };
+  Failed : record {
+    reason : opt text;
+  };
+};
+
+// The status code of a request.
+type RequestStatusCode = variant {
+  Created;
+  Approved;
+  Rejected;
+  Cancelled;
+  Scheduled;
+  Processing;
+  Completed;
+  Failed;
+};
+
+// The status of a request.
+type RequestApprovalStatus = variant { Approved; Rejected };
+
+// A record type that is used to represent a user approval decision on a request.
+type RequestApproval = record {
+  // The user that has recorded the approval decision.
+  approver_id : UUID;
+  // The user has added to the request, once provided it cannot be changed.
+  status : RequestApprovalStatus;
+  // Optional reason for the decision.
+  status_reason : opt text;
+  // The time at which the decision was made.
+  decided_at : TimestampRFC3339;
+};
+
+// Input type for transferring funds.
+type TransferOperationInput = record {
+  // The account id to use for the transaction.
+  from_account_id : UUID;
+  // The asset id to transfer.
+  from_asset_id : UUID;
+  // The standard to use for the transfer.
+  with_standard : text;
+  // The amount to transfer.
+  amount : nat;
+  // The destination address of the transaction (e.g. "1BvBMSE...").
+  to : text;
+  // The fee to pay for the transaction, if applicable.
+  //
+  // If not set, the default fee will be used.
+  fee : opt nat;
+  // The network to use for the transaction, if not the
+  // default network of the account will be used.
+  network : opt Network;
+  // Transactions can be tagged with an optional additional info
+  // (e.g. a nonce in the case of an Ethereum transaction)
+  metadata : vec TransferMetadata;
+};
+
+// Input type for transferring funds.
+type TransferOperation = record {
+  // The account to use for the transaction.
+  from_account : opt Account;
+  // The asset to use for the transaction.
+  from_asset : Asset;
+  // The network to use for the transaction.
+  network : Network;
+  // The input to the request to transfer funds.
+  input : TransferOperationInput;
+  // The id of the executed transfer.
+  transfer_id : opt UUID;
+  // The fee paid for the transaction.
+  fee : opt nat;
+};
+
+// Mutate the list of assets.
+type ChangeAssets = variant {
+  // Replace all current assets with the specified list.
+  ReplaceWith : record {
+    assets : vec UUID;
+  };
+  // Change the list of assets by adding and removing assets.
+  Change : record {
+    add_assets : vec UUID;
+    remove_assets : vec UUID;
+  };
+};
+
+// Input type for editing an account through a request.
+type EditAccountOperationInput = record {
+  // The account id that will be edited.
+  account_id : UUID;
+  // A friendly name for the account (e.g. "My Account").
+  name : opt text;
+  // Mutate the list of assets.
+  change_assets : opt ChangeAssets;
+  // Who can read the account information.
+  read_permission : opt Allow;
+  // Who can request configuration changes to the account.
+  configs_permission : opt Allow;
+  // Who can request transfers from the account.
+  transfer_permission : opt Allow;
+  // The request policy for what it takes to execute a configuration change.
+  configs_request_policy : opt RequestPolicyRuleInput;
+  // The request policy for what it takes to execute a transfer.
+  transfer_request_policy : opt RequestPolicyRuleInput;
+};
+
+type EditAccountOperation = record {
+  // The input to the request to edit the account.
+  input : EditAccountOperationInput;
+};
+
+// Input type for adding an account through a request.
+type AddAccountOperationInput = record {
+  // A friendly name for the account (e.g. "My Account").
+  name : text;
+  // The assets to add to the account.
+  assets : vec UUID;
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : vec AccountMetadata;
+  // Who can read the account information.
+  read_permission : Allow;
+  // Who can request updates to the account.
+  configs_permission : Allow;
+  // Who can request transfers from the account.
+  transfer_permission : Allow;
+  // The approval policy for updates to the account.
+  configs_request_policy : opt RequestPolicyRule;
+  // The approval policy for transfers from the account.
+  transfer_request_policy : opt RequestPolicyRule;
+};
+
+type AddAccountOperation = record {
+  // The account, only available after the request is executed.
+  account : opt Account;
+  // The input to the request to add the account.
+  input : AddAccountOperationInput;
+};
+
+type AddAddressBookEntryOperation = record {
+  // The address book entry, only available after the request is executed.
+  address_book_entry : opt AddressBookEntry;
+  // The input to the request to add the address book entry.
+  input : AddAddressBookEntryOperationInput;
+};
+
+// Input type for creating a new address book entry through a request.
+type AddAddressBookEntryOperationInput = record {
+  // The owner of the address.
+  address_owner : text;
+  // The actual address.
+  address : text;
+  // The format of the address, eg. icp_account_identifier
+  address_format : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
+  metadata : vec AddressBookMetadata;
+  // The labels associated with the address book entry (e.g. `["exchange", "kyc"]`).
+  labels : vec text;
+};
+
+type EditAddressBookEntryOperation = record {
+  // The input to the request to edit the address book entry.
+  input : EditAddressBookEntryOperationInput;
+};
+
+// Type for instructions to update the address book entry's metadata.
+type ChangeAddressBookMetadata = variant {
+  // Replace all existing metadata by the specified metadata.
+  ReplaceAllBy : vec AddressBookMetadata;
+  // Override values of existing metadata with the specified keys
+  // and add new metadata if no metadata can be found with the specified keys.
+  OverrideSpecifiedBy : vec AddressBookMetadata;
+  // Remove metadata with the specified keys.
+  RemoveKeys : vec text;
+};
+
+// Input type for updating an address book entry through a request.
+type EditAddressBookEntryOperationInput = record {
+  // The id of the address book entry.
+  address_book_entry_id : UUID;
+  // The new owner of the address.
+  address_owner : opt text;
+  // The updated list of labels associated with the address book entry.
+  labels : opt vec text;
+  // Instructions to update the address book entry's metadata.
+  change_metadata : opt ChangeAddressBookMetadata;
+};
+
+type RemoveAddressBookEntryOperation = record {
+  // The input to the request to remove the address book entry.
+  input : RemoveAddressBookEntryOperationInput;
+};
+
+// Input type for removing an address book entry through a request.
+type RemoveAddressBookEntryOperationInput = record {
+  // The id of the address book entry.
+  address_book_entry_id : UUID;
+};
+
+type AddUserOperationInput = record {
+  // The user name (e.g. "John Doe").
+  name : text;
+  // The principals associated with the user.
+  identities : vec principal;
+  // The list of groups the user belongs to.
+  //
+  // Users can be tagged with groups that can be used to control access to the station
+  // (e.g. the UUID of the finance group).
+  groups : vec UUID;
+  // The status of the user (e.g. `Active`).
+  //
+  // The user must be active to be able to practically use the station.
+  status : UserStatus;
+};
+
+type AddUserOperation = record {
+  // The user that was added, only available after the request is executed.
+  user : opt User;
+  // The input to the request to add the user.
+  input : AddUserOperationInput;
+};
+
+type EditUserOperationInput = record {
+  // The id of the user to edit.
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : opt text;
+  // The principals associated with the user.
+  identities : opt vec principal;
+  // The list of groups the user belongs to.
+  //
+  // Users can be tagged with groups that can be used to control access to the station
+  // (e.g. "UUID of the finance group").
+  groups : opt vec UUID;
+  // The status of the user (e.g. `Active`).
+  status : opt UserStatus;
+  // Cancel all pending (request status `Created`) requests for this user.
+  cancel_pending_requests : opt bool;
+};
+
+type EditUserOperation = record {
+  // The input to the request to edit the user.
+  input : EditUserOperationInput;
+};
+
+type AddUserGroupOperationInput = record {
+  // The name of the group.
+  name : text;
+};
+
+type AddUserGroupOperation = record {
+  // The user group that was added, only available after the request is executed.
+  user_group : opt UserGroup;
+  // The input to the request to add the user group.
+  input : AddUserGroupOperationInput;
+};
+
+type EditUserGroupOperationInput = record {
+  // The id of the group to edit.
+  user_group_id : UUID;
+  // The name of the group.
+  name : text;
+};
+
+type EditUserGroupOperation = record {
+  // The input to the request to edit the user group.
+  input : EditUserGroupOperationInput;
+};
+
+type RemoveUserGroupOperationInput = record {
+  // The id of the group to remove.
+  user_group_id : UUID;
+};
+
+type RemoveUserGroupOperation = record {
+  // The input to the request to remove the user group.
+  input : RemoveUserGroupOperationInput;
+};
+
+type CanisterInstallMode = variant {
+  install;
+  reinstall;
+  // Upgrade an existing canister. The optional record mirrors the IC
+  // management canister's `CanisterUpgradeOptions`.
+  // `wasm_memory_persistence = keep` is required for Motoko canisters that
+  // use Enhanced Orthogonal Persistence; otherwise the IC clears their main
+  // memory.
+  upgrade : opt record {
+    skip_pre_upgrade : opt bool;
+    wasm_memory_persistence : opt variant {
+      keep;
+      replace;
+    };
+  };
+};
+
+type SystemUpgradeTarget = variant {
+  UpgradeStation;
+  UpgradeUpgrader;
+};
+
+type WasmModuleExtraChunks = record {
+  // The asset canister from which the chunks are to be retrieved.
+  store_canister : principal;
+  // The name of the asset containing extra chunks in the asset canister.
+  extra_chunks_key : text;
+  // The hash of the assembled wasm module.
+  wasm_module_hash : blob;
+};
+
+type SystemUpgradeOperationInput = record {
+  // The target to change.
+  target : SystemUpgradeTarget;
+  // The wasm module to install.
+  module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
+  // The initial argument passed to the new wasm module.
+  arg : opt blob;
+  // Determines whether a backup snapshot should be taken (before the upgrade).
+  // If so and the maximum number of backup snapshots is reached,
+  // then the oldest backup snapshot is atomically replaced
+  // by the new backup snapshot.
+  take_backup_snapshot : opt bool;
+};
+
+type SystemUpgradeOperation = record {
+  // The target to change.
+  target : SystemUpgradeTarget;
+  // The checksum of the wasm module.
+  module_checksum : Sha256Hash;
+  // The checksum of the arg blob.
+  arg_checksum : opt Sha256Hash;
+  // Determines whether a backup snapshot should be taken (before the upgrade).
+  // If so and the maximum number of backup snapshots is reached,
+  // then the oldest backup snapshot is atomically replaced
+  // by the new backup snapshot.
+  take_backup_snapshot : opt bool;
+};
+
+type SystemRestoreTarget = variant {
+  RestoreStation;
+  RestoreUpgrader;
+};
+
+type SystemRestoreOperationInput = record {
+  // The target to restore from a snapshot.
+  target : SystemRestoreTarget;
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+
+type SystemRestoreOperation = record {
+  input: SystemRestoreOperationInput;
+};
+
+type DisasterRecoveryCommittee = record {
+  // The user group id of the committee.
+  user_group_id : UUID;
+  // The quorum required for the committee to approve a disaster recovery operation.
+  quorum : nat16;
+};
+
+type SetDisasterRecoveryOperationInput = record {
+  // The disaster recovery committee.
+  committee : opt DisasterRecoveryCommittee;
+};
+
+type SetDisasterRecoveryOperation = record {
+  // The disaster recovery committee.
+  committee : opt DisasterRecoveryCommittee;
+};
+
+type ChangeExternalCanisterOperationInput = record {
+  // The canister to install.
+  canister_id : principal;
+  // The canister installation mode.
+  mode : CanisterInstallMode;
+  // The wasm module to install.
+  module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
+  // The initial argument passed to the new wasm module.
+  arg : opt blob;
+};
+
+type ChangeExternalCanisterOperation = record {
+  // The canister to install.
+  canister_id : principal;
+  // The canister installation mode.
+  mode : CanisterInstallMode;
+  // The checksum of the wasm module.
+  module_checksum : Sha256Hash;
+  // The checksum of the arg blob.
+  arg_checksum : opt Sha256Hash;
+};
+
+type SubnetFilter = record {
+  subnet_type : opt text;
+};
+
+type SubnetSelection = variant {
+  // Choose a specific subnet
+  Subnet : record {
+    subnet : principal;
+  };
+  // Choose a random subnet that fulfills the specified properties
+  Filter : SubnetFilter;
+};
+
+type CreateExternalCanisterOperationKindCreateNew = record {
+  // The initial cycles to allocate to the canister.
+  //
+  // If not set, only the minimal amount of cycles required to create the
+  // canister will be allocated.
+  initial_cycles : opt nat64;
+
+  // The subnet on which the canister should be created.
+  //
+  // By default, the canister is created on the same subnet as the station.
+  subnet_selection : opt SubnetSelection;
+};
+
+type CreateExternalCanisterOperationKindAddExisting = record {
+  // The canister id to use.
+  canister_id : principal;
+};
+
+type CreateExternalCanisterOperationKind = variant {
+  // A new canister is created.
+  CreateNew : CreateExternalCanisterOperationKindCreateNew;
+  // An existing canister is added to the station.
+  AddExisting : CreateExternalCanisterOperationKindAddExisting;
+};
+
+// ExternalCanister can have additional information attached to them,
+// this type can be used to represent the additional info.
+type ExternalCanisterMetadata = record {
+  // The key of the additional info (e.g. "app_id")
+  key : text;
+  // The value of the additional info (e.g. "2ec270f1-7663-4d51-b70f-9339486b6d6d")
+  value : text;
+};
+
+type CreateExternalCanisterOperationInput = record {
+  // The kind of create operation to perform.
+  kind : CreateExternalCanisterOperationKind;
+  // The name of the external canister.
+  name : text;
+  // The description of the external canister.
+  description : opt text;
+  // The labels of the external canister.
+  labels : opt vec text;
+  // The metadata of the external canister.
+  metadata : opt vec ExternalCanisterMetadata;
+  // What operations are allowed on the canister.
+  permissions : ExternalCanisterPermissionsCreateInput;
+  // The request policies for the canister.
+  request_policies : ExternalCanisterRequestPoliciesCreateInput;
+};
+
+// Type for instructions to update the external canister's metadata.
+type ChangeExternalCanisterMetadata = variant {
+  // Replace all existing metadata by the specified metadata.
+  ReplaceAllBy : vec ExternalCanisterMetadata;
+  // Override values of existing metadata with the specified keys
+  // and add new metadata if no metadata can be found with the specified keys.
+  OverrideSpecifiedBy : vec ExternalCanisterMetadata;
+  // Remove metadata with the specified keys.
+  RemoveKeys : vec text;
+};
+
+type ConfigureExternalCanisterSettingsInput = record {
+  name : opt text;
+  // The description of the external canister.
+  description : opt text;
+  // The labels of the external canister.
+  labels : opt vec text;
+  // The metadata of the external canister.
+  change_metadata : opt ChangeExternalCanisterMetadata;
+  // What operations are allowed on the canister.
+  permissions : opt ExternalCanisterPermissionsUpdateInput;
+  // The request policies for the canister.
+  request_policies : opt ExternalCanisterRequestPoliciesUpdateInput;
+  // The state of the external canister.
+  state : opt ExternalCanisterState;
+};
+
+// The input type for configuring an external canister in the station.
+type ConfigureExternalCanisterOperationKind = variant {
+  // The settings to configure for the external canister.
+  Settings : ConfigureExternalCanisterSettingsInput;
+  // Remove the canister from the Station only.
+  SoftDelete;
+  // Remove the canister from the Station and the IC.
+  //
+  // Caution: This operation is irreversible.
+  Delete;
+  // The Internet Computer canister settings to configure for the external canister.
+  NativeSettings : DefiniteCanisterSettingsInput;
+};
+
+type ConfigureExternalCanisterOperationInput = record {
+  // The canister to update.
+  canister_id : principal;
+  // The kind of operation to perform.
+  kind : ConfigureExternalCanisterOperationKind;
+};
+
+type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
+
+// The operation kind for funding an external canister in the station.
+type FundExternalCanisterOperationKind = variant {
+  // The amount of cycles to send to the canister.
+  Send : FundExternalCanisterSendCyclesInput;
+};
+
+// The input type for specifying the cycles to send to an external canister.
+type FundExternalCanisterSendCyclesInput = record {
+  // The amount of cycles to send to the canister.
+  cycles : nat64;
+};
+
+// The input type for funding an external canister in the station.
+type FundExternalCanisterOperationInput = record {
+  // The external canister to fund.
+  canister_id : principal;
+  // The kind of funding operation to perform.
+  kind : FundExternalCanisterOperationKind;
+};
+
+// The request operation for funding an external canister from the station.
+type FundExternalCanisterOperation = FundExternalCanisterOperationInput;
+
+type MonitoringExternalCanisterCyclesThresholdInput = record {
+  /// The min cycles threshold to trigger the funding operation.
+  min_cycles : nat;
+  /// The cycles to fund the canister with when the threshold is triggered.
+  fund_cycles : nat;
+};
+
+type MonitoringExternalCanisterEstimatedRuntimeInput = record {
+  /// The estimated min runtime in seconds to trigger the funding operation.
+  min_runtime_secs : nat64;
+  /// The runtime seconds to add to the estimated runtime.
+  fund_runtime_secs : nat64;
+  /// The maximum cycles to fund the canister with, only used when the estimated runtime is available.
+  max_runtime_cycles_fund : nat;
+  /// The fallback min cycles to trigger the funding operation when the estimated runtime is not available,
+  /// or the cycles balance is below the threshold.
+  fallback_min_cycles : nat;
+  /// The fallback cycles to fund the canister with when the estimated runtime is not available,
+  /// or the cycles balance is below the threshold.
+  fallback_fund_cycles : nat;
+};
+
+// The input type for specifying the strategy for monitoring an external canister.
+type MonitorExternalCanisterStrategyInput = variant {
+  // Fund the canister when the balance is below the threshold.
+  BelowThreshold : MonitoringExternalCanisterCyclesThresholdInput;
+  // Fund the canister based on the estimated run time in seconds.
+  BelowEstimatedRuntime : MonitoringExternalCanisterEstimatedRuntimeInput;
+  // Fund the canister at a fixed interval with the specified amount of cycles.
+  Always : nat;
+};
+
+// The input type for specifying the strategy for monitoring an external canister.
+type MonitorExternalCanisterStartInput = record {
+  // The strategy for funding the canister.
+  funding_strategy : MonitorExternalCanisterStrategyInput;
+  // The strategy for obtaining cycles for the funding operation.
+  cycle_obtain_strategy : opt CycleObtainStrategyInput;
+};
+
+// The operation kind for monitoring an external canister in the station.
+type MonitorExternalCanisterOperationKind = variant {
+  Start : MonitorExternalCanisterStartInput;
+  Stop;
+};
+
+// The input type for monitoring an external canister in the station.
+type MonitorExternalCanisterOperationInput = record {
+  // The external canister to monitor.
+  canister_id : principal;
+  // The kind of funding operation to perform.
+  kind : MonitorExternalCanisterOperationKind;
+};
+
+// The request operation for monitoring an external canister from the station.
+type MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
+
+type CreateExternalCanisterOperation = record {
+  canister_id : opt principal;
+  input : CreateExternalCanisterOperationInput;
+};
+
+type CanisterMethod = record {
+  // The canister to call.
+  canister_id : principal;
+  // The method to call on the canister.
+  method_name : text;
+};
+
+type CallExternalCanisterOperationInput = record {
+  // The canister method validating the argument blob:
+  //   - on validation success, returns a human-readable rendering of the argument blob
+  //     and then the request becomes `Created`;
+  //   - on validation error, returns a textual diagnostic message
+  //     and then the request creation fails with a validation error
+  //     containing the textual diagnostic message.
+  // Formally, the return type of the validation method must be
+  // ```
+  // variant {
+  //   Ok : text;
+  //   Err : text;
+  // }
+  // ```
+  // If omitted (`validation_method = null`), no validation of the argument blob is performed
+  // and no human-readable rendering of the argument blob is provided.
+  validation_method : opt CanisterMethod;
+  // The canister method that is called after the request becomes `Approved`
+  // passing the validated argument blob.
+  execution_method : CanisterMethod;
+  // The argument blob passed to both the validation and execution method.
+  // Defaults to the candid encoding of '()' if omitted.
+  arg : opt blob;
+  // The amount of cycles attached to the call of the execution method.
+  execution_method_cycles : opt nat64;
+};
+
+type CallExternalCanisterOperation = record {
+  // see `CallExternalCanisterOperationInput`
+  validation_method : opt CanisterMethod;
+  // see `CallExternalCanisterOperationInput`
+  execution_method : CanisterMethod;
+  // The checksum of the argument blob passed to both the validation and execution method.
+  // Defaults to `null` if no argument blob is provided.
+  arg_checksum : opt Sha256Hash;
+  // A human-readable rendering of the argument blob procuded by the validation method.
+  arg_rendering : opt text;
+  // The amount of cycles attached to the call of the execution method.
+  execution_method_cycles : opt nat64;
+  // The reply blob produced by a successful call of the execution method,
+  // i.e., when the request is `Completed`.
+  execution_method_reply : opt blob;
+  // This field is not populated in list responses, only when using `get_request` and
+  // setting `with_full_info` to `opt true` to avoid going over the response size limit.
+  arg : opt blob;
+};
+
+type SnapshotExternalCanisterOperationInput = record {
+  // The canister to snapshot.
+  canister_id : principal;
+  // A snapshot to be replaced.
+  replace_snapshot : opt text;
+  // Should a snapshot be taken if the external canister fails to stop.
+  force : bool;
+};
+
+type SnapshotExternalCanisterOperation = record {
+  input : SnapshotExternalCanisterOperationInput;
+  // The snapshot id of the new snapshot.
+  snapshot_id : opt text;
+};
+
+type RestoreExternalCanisterOperationInput = record {
+  // The canister to restore from a snapshot.
+  canister_id : principal;
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+
+type RestoreExternalCanisterOperation = record {
+  input : RestoreExternalCanisterOperationInput;
+};
+
+type PruneExternalCanisterOperationInput = record {
+  // The canister to prune.
+  canister_id : principal;
+  // The resource to prune.
+  prune : variant {
+    chunk_store;
+    snapshot : text;
+    state;
+  };
+};
+
+type PruneExternalCanisterOperation = record {
+  input : PruneExternalCanisterOperationInput;
+};
+
+type EditPermissionOperationInput = record {
+  // The updated resource that this policy will apply to.
+  resource : Resource;
+  // The updated authorization scope for the resource.
+  auth_scope : opt AuthScope;
+  // The updated list of users that have access to the resource.
+  users : opt vec UUID;
+  // The updated list of user groups that have access to the resource.
+  user_groups : opt vec UUID;
+};
+
+type EditPermissionOperation = record {
+  // The input to the request to edit an permission.
+  input : EditPermissionOperationInput;
+};
+
+type AddRequestPolicyOperationInput = record {
+  // The request specifier that identifies the request to add a policy for.
+  specifier : RequestSpecifier;
+  // The rule to use for the request evaluation.
+  rule : RequestPolicyRule;
+};
+
+type AddRequestPolicyOperation = record {
+  // The request policy that was created by the request (only available after the request is executed).
+  policy_id : opt UUID;
+  // The input to the request to add a request policy.
+  input : AddRequestPolicyOperationInput;
+};
+
+type EditRequestPolicyOperationInput = record {
+  // The request policy id that will be edited.
+  policy_id : UUID;
+  // The updated request specifier that identifies the request to add a policy for.
+  specifier : opt RequestSpecifier;
+  // The updated rule to use for the request evaluation.
+  rule : opt RequestPolicyRule;
+};
+
+type EditRequestPolicyOperation = record {
+  // The input to the request to edit a request policy.
+  input : EditRequestPolicyOperationInput;
+};
+
+type RemoveRequestPolicyOperationInput = record {
+  // The request policy id that will be removed.
+  policy_id : UUID;
+};
+
+type RemoveRequestPolicyOperation = record {
+  // The input to the request to remove a request policy.
+  input : RemoveRequestPolicyOperationInput;
+};
+
+type RequestOperation = variant {
+  // A new transfer of funds from a given account.
+  Transfer : TransferOperation;
+  // An operation for updating information of an account.
+  EditAccount : EditAccountOperation;
+  // An operation for creating a new account.
+  AddAccount : AddAccountOperation;
+  // An operation for adding a new user.
+  AddUser : AddUserOperation;
+  // An operation for editing an existing user.
+  EditUser : EditUserOperation;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry : AddAddressBookEntryOperation;
+  // An operation for updating an existing address book entry.
+  EditAddressBookEntry : EditAddressBookEntryOperation;
+  // An operation for removing an existing address book entry.
+  RemoveAddressBookEntry : RemoveAddressBookEntryOperation;
+  // An operation for adding a new user group.
+  AddUserGroup : AddUserGroupOperation;
+  // An operation for editing an existing user group.
+  EditUserGroup : EditUserGroupOperation;
+  // An operation for removing an existing user group.
+  RemoveUserGroup : RemoveUserGroupOperation;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade : SystemUpgradeOperation;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore : SystemRestoreOperation;
+  // An operation for setting disaster recovery.
+  SetDisasterRecovery : SetDisasterRecoveryOperation;
+  // An operation for changing a external canister.
+  ChangeExternalCanister : ChangeExternalCanisterOperation;
+  // An operation for creating a external canister.
+  CreateExternalCanister : CreateExternalCanisterOperation;
+  // An operation for configuring an external canister.
+  ConfigureExternalCanister : ConfigureExternalCanisterOperation;
+  // An operation for funding an external canister.
+  FundExternalCanister : FundExternalCanisterOperation;
+  // An operation for monitoring an external canister.
+  MonitorExternalCanister : MonitorExternalCanisterOperation;
+  // An operation for calling an external canister.
+  CallExternalCanister : CallExternalCanisterOperation;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : SnapshotExternalCanisterOperation;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : RestoreExternalCanisterOperation;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperation;
+  // An operation for editing an permission.
+  EditPermission : EditPermissionOperation;
+  // An operation for adding a request policy.
+  AddRequestPolicy : AddRequestPolicyOperation;
+  // An operation for editing a request policy.
+  EditRequestPolicy : EditRequestPolicyOperation;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy : RemoveRequestPolicyOperation;
+  // An operation for managing system info.
+  ManageSystemInfo : ManageSystemInfoOperation;
+  // An operation for adding a new asset.
+  AddAsset : AddAssetOperation;
+  // An operation for editing an existing asset.
+  EditAsset : EditAssetOperation;
+  // An operation for removing an existing asset.
+  RemoveAsset : RemoveAssetOperation;
+  // An operation for adding a new named rule.
+  AddNamedRule : AddNamedRuleOperation;
+  // An operation for editing an existing named rule.
+  EditNamedRule : EditNamedRuleOperation;
+  // An operation for removing an existing named rule.
+  RemoveNamedRule : RemoveNamedRuleOperation;
+};
+
+type RequestOperationInput = variant {
+  // A new transfer of funds from a given account.
+  Transfer : TransferOperationInput;
+  // An operation for updating information of an account.
+  EditAccount : EditAccountOperationInput;
+  // An operation for adding a new account.
+  AddAccount : AddAccountOperationInput;
+  // An operation for adding a new user.
+  AddUser : AddUserOperationInput;
+  // An operation for editing an existing user.
+  EditUser : EditUserOperationInput;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry : AddAddressBookEntryOperationInput;
+  // An operation for updating an address book entry.
+  EditAddressBookEntry : EditAddressBookEntryOperationInput;
+  // An operation for removing an address book entry.
+  RemoveAddressBookEntry : RemoveAddressBookEntryOperationInput;
+  // An operation for adding a new user group.
+  AddUserGroup : AddUserGroupOperationInput;
+  // An operation for editing an existing user group.
+  EditUserGroup : EditUserGroupOperationInput;
+  // An operation for removing an existing user group.
+  RemoveUserGroup : RemoveUserGroupOperationInput;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade : SystemUpgradeOperationInput;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore : SystemRestoreOperationInput;
+  // An operation for setting disaster recovery.
+  SetDisasterRecovery : SetDisasterRecoveryOperationInput;
+  // An operation for changing a external canister.
+  ChangeExternalCanister : ChangeExternalCanisterOperationInput;
+  // An operation for creating a external canister.
+  CreateExternalCanister : CreateExternalCanisterOperationInput;
+  // An operation for configuring an external canister.
+  ConfigureExternalCanister : ConfigureExternalCanisterOperationInput;
+  // An operation for calling an external canister.
+  CallExternalCanister : CallExternalCanisterOperationInput;
+  // An operation for funding an external canister.
+  FundExternalCanister : FundExternalCanisterOperationInput;
+  // An operation for monitoring an external canister.
+  MonitorExternalCanister : MonitorExternalCanisterOperationInput;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : SnapshotExternalCanisterOperationInput;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : RestoreExternalCanisterOperationInput;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperationInput;
+  // An operation for editing an permission.
+  EditPermission : EditPermissionOperationInput;
+  // An operation for adding a request policy.
+  AddRequestPolicy : AddRequestPolicyOperationInput;
+  // An operation for editing a request policy.
+  EditRequestPolicy : EditRequestPolicyOperationInput;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy : RemoveRequestPolicyOperationInput;
+  // An operation for managing system info.
+  ManageSystemInfo : ManageSystemInfoOperationInput;
+  // An operation for adding a new asset.
+  AddAsset : AddAssetOperationInput;
+  // An operation for editing an existing asset.
+  EditAsset : EditAssetOperationInput;
+  // An operation for removing an existing asset.
+  RemoveAsset : RemoveAssetOperationInput;
+  // An operation for adding a new named rule.
+  AddNamedRule : AddNamedRuleOperationInput;
+  // An operation for editing an existing named rule.
+  EditNamedRule : EditNamedRuleOperationInput;
+  // An operation for removing an existing named rule.
+  RemoveNamedRule : RemoveNamedRuleOperationInput;
+};
+
+type RequestOperationType = variant {
+  // A new transfer of funds from a given account.
+  Transfer;
+  // An operation for updating information of an account.
+  EditAccount;
+  // An operation for creating a new account.
+  AddAccount;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry;
+  // An operation for updating an address book entry.
+  EditAddressBookEntry;
+  // An operation for removing an address book entry.
+  RemoveAddressBookEntry;
+  // An operation for adding a new user.
+  AddUser;
+  // An operation for editing an existing user.
+  EditUser;
+  // An operation for adding a new user group.
+  AddUserGroup;
+  // An operation for editing an existing user group.
+  EditUserGroup;
+  // An operation for removing an existing user group.
+  RemoveUserGroup;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore;
+  // An operation for setting disaster recovery for a canister.
+  SetDisasterRecovery;
+  // An operation for changing a external canister.
+  ChangeExternalCanister;
+  // An operation for creating a external canister.
+  ConfigureExternalCanister;
+  // An operation for creating a external canister.
+  CreateExternalCanister;
+  // An operation for calling an external canister.
+  CallExternalCanister;
+  // An operation for sending cycles to an external canister.
+  FundExternalCanister;
+  // An operation for monitoring cycles of an external canister.
+  MonitorExternalCanister;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister;
+  // An operation for pruning an external canister.
+  PruneExternalCanister;
+  // An operation for editing an permission.
+  EditPermission;
+  // An operation for adding a request policy.
+  AddRequestPolicy;
+  // An operation for editing a request policy.
+  EditRequestPolicy;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy;
+  // And operation for managing system info.
+  ManageSystemInfo;
+  // An operation for adding a new asset.
+  AddAsset;
+  // An operation for editing an existing asset.
+  EditAsset;
+  // An operation for removing an existing asset.
+  RemoveAsset;
+  // An operation for adding a new named rule.
+  AddNamedRule;
+  // An operation for editing an existing named rule.
+  EditNamedRule;
+  // An operation for removing an existing named rule.
+  RemoveNamedRule;
+};
+
+// The schedule for executing a transaction of a given transfer.
+type RequestExecutionSchedule = variant {
+  // The transaction will be executed immediately.
+  Immediate;
+  // The transaction will be executed at a given time.
+  Scheduled : record {
+    // The time at which the transaction will be executed,
+    // it must be in the future.
+    execution_time : TimestampRFC3339;
+  };
+};
+
+// A record type that can be used to represent the caller privileges for a given request.
+type RequestCallerPrivileges = record {
+  // The request id.
+  id : UUID;
+  // Whether or not the caller can submit an approval decision.
+  can_approve : bool;
+};
+
+// A record type that can be used to represent additional information about a request.
+type RequestAdditionalInfo = record {
+  // The request id.
+  id : UUID;
+  // The requester name (e.g. "John Doe").
+  requester_name : text;
+  // Display information for the approvers.
+  approvers : vec DisplayUser;
+  // The evaluation result of all matching policies for the request.
+  evaluation_result : opt RequestEvaluationResult;
+};
+
+// A record type that can be used to represent a requested operation in the station.
+type Request = record {
+  // The request id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The request title.
+  title : text;
+  // The request summary (e.g. "This request will transfer 100 ICP to the account 0x1234").
+  summary : opt text;
+  // The operation that was requested.
+  operation : RequestOperation;
+  // The user that created the request.
+  requested_by : UUID;
+  // The list of user approvals on the request.
+  approvals : vec RequestApproval;
+  // The time at which the request was created.
+  created_at : TimestampRFC3339;
+  // The request approval status.
+  status : RequestStatus;
+  // The time at which the request will expire.
+  expiration_dt : TimestampRFC3339;
+  // The time at which the request should be executed if approved.
+  execution_plan : RequestExecutionSchedule;
+  // The optional deduplication key used to ensure request uniqueness.
+  deduplication_key : opt text;
+  // The tags that were provided during request creation.
+  tags : vec text;
+};
+
+// The input type for creating a request.
+type CreateRequestInput = record {
+  // The operation that was requested.
+  operation : RequestOperationInput;
+  // The request title (e.g. "Payment to John").
+  title : opt text;
+  // The request summary (e.g. "This request will transfer 100 ICP to the account 0x1234").
+  summary : opt text;
+  // The time at which the request will execute if approved.
+  execution_plan : opt RequestExecutionSchedule;
+  // The time at which the request will expire if still pending.
+  expiration_dt : opt TimestampRFC3339;
+  // The optional deduplication key used to ensure request uniqueness.
+  deduplication_key : opt text;
+  // The list of tags for the request.
+  tags : opt vec text;
+};
+
+// The result type for creating a request.
+type CreateRequestResult = variant {
+  Ok : record {
+    // The request that was created.
+    request : Request;
+    // The privileges of the caller.
+    privileges : RequestCallerPrivileges;
+    // The additional info about the request.
+    additional_info : RequestAdditionalInfo;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The input type for canceling a request.
+type CancelRequestInput = record {
+  // The request id to cancel.
+  request_id : UUID;
+  // The reason for canceling the request.
+  reason : opt text;
+};
+
+// The result type for canceling a request.
+type CancelRequestResult = variant {
+  Ok : record {
+    // The request that was canceled.
+    request : Request;
+  };
+  Err : Error;
+};
+
+type ListRequestsOperationType = variant {
+  // A new transfer of funds from a given account.
+  Transfer : opt UUID;
+  // An operation for updating information of an account.
+  EditAccount;
+  // An operation for creating a new account.
+  AddAccount;
+  // An operation for adding a new user.
+  AddUser;
+  // An operation for editing an existing user.
+  EditUser;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry;
+  // An operation for updating an address book entry.
+  EditAddressBookEntry;
+  // An operation for removing an address book entry.
+  RemoveAddressBookEntry;
+  // An operation for adding a new user group.
+  AddUserGroup;
+  // An operation for editing an existing user group.
+  EditUserGroup;
+  // An operation for removing an existing user group.
+  RemoveUserGroup;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore;
+  // An operation for changing a external canister with an optionally specified canister ID.
+  ChangeExternalCanister : opt principal;
+  // An operation for configuring an external canister.
+  ConfigureExternalCanister : opt principal;
+  // An operation for creating a external canister.
+  CreateExternalCanister;
+  // An operation for calling an external canister with an optionally specified canister ID.
+  CallExternalCanister : opt principal;
+  // An operation for sending cycles to an external canister.
+  FundExternalCanister : opt principal;
+  // An operation for monitoring cycles of an external canister.
+  MonitorExternalCanister : opt principal;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : opt principal;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : opt principal;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : opt principal;
+  // An operation for editing an permission.
+  EditPermission;
+  // An operation for adding a request policy.
+  AddRequestPolicy;
+  // An operation for editing a request policy.
+  EditRequestPolicy;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy;
+  // An operation for managing system info.
+  ManageSystemInfo;
+  // An operation for setting disaster recovery config.
+  SetDisasterRecovery;
+  // An operation for adding an asset.
+  AddAsset;
+  // An operation for editing an asset.
+  EditAsset;
+  // An operation for removing an asset.
+  RemoveAsset;
+  // An operation for adding a named rule.
+  AddNamedRule;
+  // An operation for editing a named rule.
+  EditNamedRule;
+  // An operation for removing a named rule.
+  RemoveNamedRule;
+};
+
+// The direction to use for sorting.
+type SortByDirection = variant {
+  // Sort in ascending order.
+  Asc;
+  // Sort in descending order.
+  Desc;
+};
+
+// The input type that can be used to sort the list of requests by a given field.
+type ListRequestsSortBy = variant {
+  // Sort by the request creation time.
+  CreatedAt : SortByDirection;
+  // Sort by the request expiration time.
+  ExpirationDt : SortByDirection;
+  // Sort by the request last modification time.
+  LastModificationDt : SortByDirection;
+};
+
+// The input type for getting the list of requests based on the given filters.
+type ListRequestsInput = record {
+  // Show only requests made by the given users.
+  requester_ids : opt vec UUID;
+  // Show only requests that the specified users have submitted an approval decision for.
+  approver_ids : opt vec UUID;
+  // Show only requests with the given status.
+  statuses : opt vec RequestStatusCode;
+  // The type of the request (e.g. "transfer").
+  operation_types : opt vec ListRequestsOperationType;
+  // From which expiration time to retrieve the requests.
+  expiration_from_dt : opt TimestampRFC3339;
+  // Until which expiration time to retrieve the requests.
+  expiration_to_dt : opt TimestampRFC3339;
+  // From which created time to retrieve the requests.
+  created_from_dt : opt TimestampRFC3339;
+  // Until which created time to retrieve the requests.
+  created_to_dt : opt TimestampRFC3339;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+  // The sorting parameters.
+  sort_by : opt ListRequestsSortBy;
+  // Return only requests the the user can submit an approval decision for.
+  only_approvable : bool;
+  // Return the full evaluation results for the requests.
+  with_evaluation_results : bool;
+  // Return only requests with one of these deduplication keys.
+  deduplication_keys : opt vec text;
+  // The tags to search. Return only requests which have at least one matching tag.
+  tags : opt vec text;
+};
+
+// The result type for getting the list of requests.
+type ListRequestsResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of requests.
+    requests : vec Request;
+    // The total number of requests.
+    total : nat64;
+    // The next offset to use for pagination.
+    next_offset : opt nat64;
+    // The privileges of the caller.
+    privileges : vec RequestCallerPrivileges;
+    // The additional info about the requests.
+    additional_info : vec RequestAdditionalInfo;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Input type for getting a request.
+type GetRequestInput = record {
+  // The request id to retrieve.
+  request_id : UUID;
+  // Fill in all the additional info about the request operation, request types such as `CallExternalCanisterOperation`
+  // will include the request argument, this can be a large amount of data and could potentially exceed the response
+  // size limit.
+  //
+  // If not provided, this field defaults to `false` and the additional info is not included in the response.
+  with_full_info : opt bool;
+};
+
+type GetRequestResultData = record {
+  // The request that was requested.
+  request : Request;
+  // The privileges of the caller.
+  privileges : RequestCallerPrivileges;
+  // The additional info about the request.
+  additional_info : RequestAdditionalInfo;
+};
+
+// Result type for retrieving a request.
+type GetRequestResult = variant {
+  // The result data for a successful execution.
+  Ok : GetRequestResultData;
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The input type for getting the list of requests based on the given filters.
+type GetNextApprovableRequestInput = record {
+  // The type of the request (e.g. "transfer").
+  operation_types : opt vec ListRequestsOperationType;
+  // Exclude requests the user indicated to skip.
+  excluded_request_ids : vec UUID;
+  // Get the next request from a list sorted by the given field.
+  sort_by : opt ListRequestsSortBy;
+};
+
+// Result type for retrieving a request.
+type GetNextApprovableRequestResult = variant {
+  // The result data for a successful execution.
+  Ok : opt GetRequestResultData;
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Input type for submitting an approval decision on a request.
+type SubmitRequestApprovalInput = record {
+  // The request id to interact with.
+  request_id : UUID;
+  // The decision to submit.
+  decision : RequestApprovalStatus;
+  // The reason for the approval or rejection.
+  reason : opt text;
+};
+
+// Result type for submitting an approval decision on a request.
+type SubmitRequestApprovalResult = variant {
+  Ok : record {
+    // The request that the decision was submitted for.
+    request : Request;
+    // The privileges of the caller.
+    privileges : RequestCallerPrivileges;
+    // The additional info about the request.
+    additional_info : RequestAdditionalInfo;
+  };
+  Err : Error;
+};
+
+// A record type that can be used to represent a account balance.
+type AccountBalanceInfo = record {
+  // Balance of the account.
+  balance : nat;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals : nat32;
+  // The time at which the balance was last updated.
+  last_update_timestamp : TimestampRFC3339;
+};
+
+// A record type that can be used search for accounts.
+type ListAccountsInput = record {
+  // The name of the account to search for.
+  search_term : opt text;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// Result type for listing all accounts.
+type ListAccountsResult = variant {
+  Ok : record {
+    // The list of accounts.
+    accounts : vec Account;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of users.
+    total : nat64;
+    // The privileges of the caller.
+    privileges : vec AccountCallerPrivileges;
+  };
+  Err : Error;
+};
+
+type ListAccountTransfersInput = record {
+  // The account id to retrieve.
+  account_id : UUID;
+  // The transfer status in text format (e.g. "pending", "approved", etc.).
+  status : opt TransferStatusType;
+  // From which date to retrieve the transfers.
+  from_dt : opt TimestampRFC3339;
+  // Until which date to retrieve the transfers.
+  to_dt : opt TimestampRFC3339;
+};
+
+type TransferListItem = record {
+  // The transfer id.
+  transfer_id : UUID;
+  // The id of the request that created the transfer.
+  request_id : UUID;
+  // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
+  to : text;
+  // The amount to transfer.
+  amount : nat;
+  // The status of the transfer.
+  status : TransferStatus;
+  // The time at which the transfer was created.
+  created_at : TimestampRFC3339;
+};
+
+type ListAccountTransfersResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of transfers.
+    transfers : vec TransferListItem;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// A record type that can be used to represent the privileges of a caller for a given user group.
+type UserGroupCallerPrivileges = record {
+  // The user id.
+  id : UUID;
+  // Whether or not the caller can edit the user group.
+  can_edit : bool;
+  // Whether or not the caller can delete the user group.
+  can_delete : bool;
+};
+
+// A record type that can be used to represent a user group in the station.
+type UserGroup = record {
+  // The UUID of the group (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The name of the group (e.g. "Finance").
+  name : text;
+};
+
+type UserStatus = variant {
+  // The user is active.
+  Active;
+  // The user is inactive.
+  Inactive;
+};
+
+// A record type that can be used to represent the privileges of a caller for a given user.
+type UserCallerPrivileges = record {
+  // The user id.
+  id : UUID;
+  // Whether or not the caller can edit the user.
+  can_edit : bool;
+};
+
+// A record type that can be used to represent a user in the station.
+type User = record {
+  // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : text;
+  // The status of the user (e.g. `Active`).
+  status : UserStatus;
+  // The list of groups the user belongs to.
+  //
+  // Users can be tagged with groups that can be used to control access to resources.
+  groups : vec UserGroup;
+  // The principals associated with the user.
+  identities : vec principal;
+  // The time at which the user was created or last modified (e.g. "2021-01-01T00:00:00Z").
+  last_modification_timestamp : TimestampRFC3339;
+};
+
+// The blockchain network to used in a transaction.
+type Network = record {
+  // The network id, represented by the blockchain symbol and network name (e.g. "icp:mainnet").
+  id : NetworkId;
+  // The name of the network (e.g. "Mainnet").
+  name : text;
+};
+
+// Transfers can have additional information attached to them,
+// this type can be used to represent the additional info.
+type TransferMetadata = record {
+  // The key of the additional info (e.g. "nonce",  "tag", "memo", etc...)
+  key : text;
+  // The value of the additional info (e.g. "0x1234" or "my-tag")
+  value : text;
+};
+
+// The status of a transfer.
+type TransferStatus = variant {
+  // The transfer is created for processing.
+  Created;
+  // The transfer has been failed.
+  Failed : record {
+    // The failure reason.
+    reason : text;
+  };
+  // The transfer is being processed.
+  Processing : record {
+    // The time at which the transfer started being processed.
+    started_at : TimestampRFC3339;
+  };
+  // The transfer has been completed.
+  //
+  // For natively supported tokens this means that the transaction has
+  // submitted to the blockchain. For non natively supported tokens this means
+  // that the transaction has been signed and can be submitted by the client.
+  Completed : record {
+    // Time at which the transaction was completed.
+    completed_at : TimestampRFC3339;
+    // The transaction hash, if available.
+    hash : opt text;
+    // The base64 encoded value of the signed transaction, if available.
+    signature : opt text;
+  };
+};
+
+// Transfer status type for filtering on the transfer status.
+type TransferStatusType = variant {
+  Created;
+  Failed;
+  Processing;
+  Completed;
+};
+
+// A record type that can be used to represent a transfer in a given account.
+type Transfer = record {
+  // The internal transfer id, this a unique identifier for the transfer.
+  id : UUID;
+  // The id of the request that created the transfer.
+  request_id : UUID;
+  // The account id to use for the transfer.
+  from_account_id : UUID;
+  // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
+  to : text;
+  // The fee to pay for the transaction, if applicable.
+  fee : nat;
+  // The amount to transfer.
+  amount : nat;
+  // The status of the transfer.
+  status : TransferStatus;
+  // The network used when submitting the transaction to the blockchain.
+  network : Network;
+  // Transfers can be tagged with optional additional info (e.g. a `nonce` for Ethereum transactions).
+  metadata : vec TransferMetadata;
+};
+
+type GetTransfersInput = record {
+  // The list of transfer ids to retrieve.
+  transfer_ids : vec UUID;
+};
+
+type GetTransfersResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The transfer that was retrieved.
+    transfers : vec Transfer;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Generic error type added to responses that can fail.
+type Error = record {
+  // Error code, added as a string to allow for custom error codes.
+  code : text;
+  // Error message to be displayed to the user.
+  message : opt text;
+  // Error details to be displayed to the user.
+  details : opt vec record { text; text };
+};
+
+// Account can have additional information attached to them,
+// this type can be used to represent the additional info.
+type AccountMetadata = record {
+  // The key of the additional info (e.g. "contract")
+  key : text;
+  // The value of the additional info (e.g. "0x1234")
+  value : text;
+};
+
+// A record type that can be used to represent the privileges of a caller for a given account.
+type AccountCallerPrivileges = record {
+  // The account id that the caller has privileges for.
+  id : UUID;
+  // Whether or not the caller can edit the account.
+  can_edit : bool;
+  // Whether or not the caller can request transfers from the account.
+  can_transfer : bool;
+};
+
+// A record type that can be used to represent a account in the canister.
+type Account = record {
+  // The internal account id.
+  id : UUID;
+
+  // The list of assets supported by this account.
+  assets : vec AccountAsset;
+
+  // The list of addresses associated with the account.
+  addresses : vec AccountAddress;
+
+  // A friendly name for the account.
+  name : text;
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : vec AccountMetadata;
+  // The transfer approval policy for the account.
+  //
+  // The transfer approval policy defines the rule that must be met for a transfer to be approved.
+  transfer_request_policy : opt RequestPolicyRule;
+  // The configs approval policy for the account.
+  //
+  // The configs approval policy defines the rule that must be met for the account to have its configs updated.
+  configs_request_policy : opt RequestPolicyRule;
+  // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
+  last_modification_timestamp : TimestampRFC3339;
+};
+
+// The seed used to derive the addresses of the account.
+type AccountSeed = blob;
+
+// Record type to describe an address of an account.
+type AccountAddress = record {
+  // The address.
+  address : text;
+  // The format of the address, eg. icp_account_identifier.
+  format : text;
+};
+
+// Record type to describe an asset of an account.
+type AccountAsset = record {
+  // The asset id.
+  asset_id : UUID;
+  // The balance of the asset.
+  balance : opt AccountBalance;
+};
+
+// Input type for getting a account.
+type GetAccountInput = record {
+  // The account id to retrieve.
+  account_id : UUID;
+};
+
+// Result type for getting a account.
+type GetAccountResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The account that was retrieved.
+    account : Account;
+    // The privileges of the caller for the account.
+    privileges : AccountCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+type AccountBalance = record {
+  // The account id.
+  account_id : UUID;
+  // The asset id.
+  asset_id : UUID;
+  // The balance of the account.
+  balance : nat;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals : nat32;
+  // The time at which the balance was last updated.
+  last_update_timestamp : TimestampRFC3339;
+  // The state of balance query:
+  //  - `fresh`: The balance was recently updated and is considered fresh.
+  //  - `stale`: The balance may be out of date.
+  //  - `stale_refreshing`: The balance may be out of date but it is being refreshed in the background.
+  query_state : text;
+};
+
+// Input type for getting a account balance.
+type FetchAccountBalancesInput = record {
+  // The account ids to retrieve.
+  account_ids : vec UUID;
+};
+
+// Result type for getting a account.
+type FetchAccountBalancesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The account balance that was retrieved.
+    balances : vec opt AccountBalance;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Address book entries can have additional information attached to them,
+// this type can be used to represent the additional info.
+type AddressBookMetadata = record {
+  // The key of the additional info (e.g. "kyc")
+  key : text;
+  // The value of the additional info (e.g. "true")
+  value : text;
+};
+
+// A record type that can be used to represent the privileges of a caller for a given address book entry.
+type AddressBookEntryCallerPrivileges = record {
+  // The address book entry id.
+  id : UUID;
+  // Whether or not the caller can edit the address book entry.
+  can_edit : bool;
+  // Whether or not the caller can delete the address book entry.
+  can_delete : bool;
+};
+
+// A record type that can be used to represent an address book entry in the canister.
+type AddressBookEntry = record {
+  // The internal address book entry id.
+  id : UUID;
+  // The address owner.
+  address_owner : text;
+  // The actual address.
+  address : text;
+  // The address format (e.g. "icp_account_identifier").
+  address_format : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
+  metadata : vec AddressBookMetadata;
+  // The list of labels associated with the address book entry (e.g. `["kyc", "approved"]`).
+  labels : vec text;
+  // The time at which the address book entry was created or last modified (e.g. "2021-01-01T00:00:00Z").
+  last_modification_timestamp : text;
+};
+
+// Input type for getting a single address book entry.
+type GetAddressBookEntryInput = record {
+  // The address book entry id to retrieve.
+  address_book_entry_id : UUID;
+};
+
+// Result type for getting an address book entry.
+type GetAddressBookEntryResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The address book entry that was retrieved.
+    address_book_entry : AddressBookEntry;
+    // The privileges of the caller for the address book entry.
+    privileges : AddressBookEntryCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Input type for listing address book entries for a given blockchain standard.
+type ListAddressBookEntriesInput = record {
+  // The address boo entry ids to retrieve.
+  ids : opt vec UUID;
+  // The address to search for.
+  addresses : opt vec text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : opt text;
+  // The labels to search for, if provided only address book entries with the given labels will be returned.
+  labels : opt vec text;
+  // The address formats to search for.
+  address_formats : opt vec text;
+  // The term to use for filtering the address book entries.
+  search_term : opt text;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// Result type for listing address book entries for a given blockchain standard.
+type ListAddressBookEntriesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of retrieved address book entries.
+    address_book_entries : vec AddressBookEntry;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of address book entries for the given blockchain standard.
+    total : nat64;
+    // The privileges of the caller for the address book entries.
+    privileges : vec AddressBookEntryCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Assets can have additional information attached to them,
+// this type can be used to represent the additional info.
+type AssetMetadata = record {
+  // The key of the additional info (e.g. "logo")
+  key : text;
+  // The value of the additional info (e.g. "https://example.com/logo.png")
+  value : text;
+};
+
+// A record type that can be used to represent an asset in the station.
+type Asset = record {
+  // The internal asset id.
+  id : UUID;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  standards : vec text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : AssetSymbol;
+  // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+  name : text;
+  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
+  metadata : vec AssetMetadata;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals : nat32;
+};
+
+// Describes a standard suported by a blockchain.
+type StandardData = record {
+  // The standard name.
+  standard : text;
+  // Required metadata fields for the standard (e.g. `["ledger_canister_id"]`).
+  required_metadata_fields : vec text;
+  // Supported operations for the standard (e.g. `["transfer", "list_transfers", "balance"]`).
+  supported_operations : vec text;
+  // Supported address formats of the standard.
+  supported_address_formats : vec text;
+};
+
+// Describes a blockchain and its standards supported by the station.
+type SupportedBlockchain = record {
+  // The blockchain name.
+  blockchain : text;
+  // The supported standards for the blockchain.
+  supported_standards : vec StandardData;
+};
+
+// The named rule type.
+// 
+// A named rule is a reusable configuration that can be applied to many approval policies.
+type NamedRule = record {
+  // The rule id.
+  id : UUID;
+  // The rule name.
+  name : text;
+  // The rule description.
+  description : opt text;
+  // The rule value.
+  rule : RequestPolicyRule;
+};
+
+// A record type that can be used to represent the caller privileges for a given named rule.
+type NamedRuleCallerPrivileges = record {
+  // The named rule id.
+  id : UUID;
+  // Whether or not the caller can edit the resource.
+  can_edit : bool;
+  // Whether or not the caller can delete the resource.
+  can_delete : bool;
+};
+
+// Input type for getting a named rule.
+type GetNamedRuleInput = record {
+  // The named rule to retrieve by the id.
+  named_rule_id : UUID;
+};
+
+// Result type for retrieving a named rule.
+type GetNamedRuleResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The named rule that was retrieved.
+    named_rule : NamedRule;
+    // The privileges of the caller for the named rule.
+    privileges : NamedRuleCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Input type for listing named rules.
+type ListNamedRulesInput = record {
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// Result type for listing named rules.
+type ListNamedRulesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of named rules.
+    named_rules : vec NamedRule;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of named rules.
+    total : nat64;
+    // The privileges of the caller.
+    privileges : vec NamedRuleCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The operation type for adding a new named rule.
+type AddNamedRuleOperation = record {
+  // The result of adding a named rule.
+  named_rule : opt NamedRule;
+  // The input to the request to add a named rule.
+  input : AddNamedRuleOperationInput;
+};
+
+// The input type for creating a named rule.
+type AddNamedRuleOperationInput = record {
+  // The rule name.
+  name : text;
+  // The rule description.
+  description : opt text;
+  // The rule value.
+  rule : RequestPolicyRule;
+};
+
+// The operation type for editing an existing named rule.
+type EditNamedRuleOperation = record {
+  // The input to the request to edit a named rule.
+  input : EditNamedRuleOperationInput;
+};
+
+// The input type for editing a named rule.
+type EditNamedRuleOperationInput = record {
+  // The named rule id to edit.
+  named_rule_id : UUID;
+  // The rule name.
+  name : opt text;
+  // The optional rule description.
+  description : opt opt text;
+  // The rule value.
+  rule : opt RequestPolicyRule;
+};
+
+// The operation type for removing a named rule.
+type RemoveNamedRuleOperation = record {
+  // The input to the request to remove a named rule.
+  input : RemoveNamedRuleOperationInput;
+};
+
+// The input type for deleting a named rule.
+type RemoveNamedRuleOperationInput = record {
+  // The named rule id to remove.
+  named_rule_id : UUID;
+};
+
+// A record type that is used to show the current capabilities of the station.
+type Capabilities = record {
+  // The name of the station.
+  name : text;
+  // Version of the station.
+  version : text;
+  // The list of supported assets.
+  supported_assets : vec Asset;
+  // The list of supported blockchains and standards.
+  supported_blockchains : vec SupportedBlockchain;
+};
+
+// Result type for getting the current config.
+type CapabilitiesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The config.
+    capabilities : Capabilities;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// An operation for managing the system information.
+type ManageSystemInfoOperation = record {
+  // The input to the request to manage the system information.
+  input : ManageSystemInfoOperationInput;
+};
+
+// Input type for managing the system information.
+type ManageSystemInfoOperationInput = record {
+  // The name of the station.
+  name : opt text;
+  // The strategy to use to for the station to top itself up with cycles.
+  cycle_obtain_strategy : opt CycleObtainStrategyInput;
+  // The maximum number of station backup snapshots to keep.
+  max_station_backup_snapshots : opt nat64;
+  // The maximum number of upgrader backup snapshots to keep.
+  max_upgrader_backup_snapshots : opt nat64;
+};
+
+// Strategy defining how the station canister tops up its own cycles.
+type CycleObtainStrategyInput = variant {
+  // Do not obtain cycles for Orbit.
+  Disabled;
+  // Use the CMC to mint cycles from ICP held in an Orbit account.
+  MintFromNativeToken : record {
+    // The Orbit account ID to use for minting cycles.
+    account_id : UUID;
+  };
+  // Use the Cycles Ledger balance to obtain cycles.
+  WithdrawFromCyclesLedger : record {
+    // The Orbit account ID to use for obtaining cycles.
+    account_id : UUID;
+  };
+};
+
+// Strategy defining how the station canister tops up its own cycles.
+type CycleObtainStrategy = variant {
+  // Do not obtain cycles for Orbit.
+  Disabled;
+  // Use the CMC to mint cycles from ICP held in an Orbit account.
+  MintFromNativeToken : record {
+    // The Orbit account ID to use for minting cycles.
+    account_id : UUID;
+    // The Orbit account name.
+    account_name : opt text;
+  };
+  // Use the Cycles Ledger balance to obtain cycles.
+  WithdrawFromCyclesLedger : record {
+    // The Orbit account ID to use for obtaining cycles.
+    account_id : UUID;
+    // The Orbit account name.
+    account_name : opt text;
+  };
+};
+
+// The system information.
+type SystemInfo = record {
+  // The name of the station.
+  name : text;
+  // The station version.
+  version : text;
+  // The upgrader principal id.
+  upgrader_id : principal;
+  // Cycle balance of the station.
+  cycles : nat64;
+  // Cycle balance of the canister.
+  upgrader_cycles : opt nat64;
+  // The time at which the canister was last upgraded.
+  last_upgrade_timestamp : TimestampRFC3339;
+  // Did the canister successfully fetched randomness from the management canister.
+  raw_rand_successful : bool;
+  // The disaster recovery configuration.
+  disaster_recovery : opt DisasterRecovery;
+  // Strategy defining how the station canister tops up its own cycles.
+  cycle_obtain_strategy : CycleObtainStrategy;
+  // The maximum number of station backup snapshots to keep.
+  max_station_backup_snapshots : nat64;
+  // The maximum number of upgrader backup snapshots to keep.
+  max_upgrader_backup_snapshots : nat64;
+};
+
+// The disaster recovery committee extended with the user group name.
+type DisasterRecovery = record {
+  // The disaster recovery committee.
+  committee : DisasterRecoveryCommittee;
+  // The name of the disaster recovery committee user group.
+  user_group_name : opt text;
+};
+
+// Result type for getting the canister system information.
+type SystemInfoResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The system information.
+    system : SystemInfo;
+  };
+  // The error that occurred (e.g. the caller does not have sufficient privileges).
+  Err : Error;
+};
+
+// Input type for retrieving a user.
+type GetUserInput = record {
+  // The user id to retrieve (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  user_id : UUID;
+};
+
+// Result type for retrieving a user.
+type GetUserResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The user that was retrieved.
+    user : User;
+    // The caller privileges for the user.
+    privileges : UserCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Input type for listing users of the station.
+type ListUsersInput = record {
+  // The search term to use for filtering the users.
+  search_term : opt text;
+  // The statuses to use for filtering the users.
+  statuses : opt vec UserStatus;
+  // The groups to use for filtering the users.
+  groups : opt vec UUID;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// Result type for listing users of the station.
+type ListUsersResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of users.
+    users : vec User;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of users.
+    total : nat64;
+    // The privileges of the caller.
+    privileges : vec UserCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The record id of a resource, used to specify the resource that is being accessed.
+type ResourceId = variant {
+  Any;
+  Id : UUID;
+};
+
+// The record ids of a resource, used to specify the resources that are being accessed.
+type ResourceIds = variant {
+  Any;
+  Ids : vec UUID;
+};
+
+// The allow rules for who can access the resource.
+type Allow = record {
+  // Required authentication level for accessing the resource.
+  auth_scope : AuthScope;
+  // Only the specified users can access the resource.
+  users : vec UUID;
+  // Only the specified user groups can access the resource.
+  user_groups : vec UUID;
+};
+
+// The authorization scope the caller must have, used to specify the required scope for accessing a resource.
+type AuthScope = variant {
+  // Allows access to the resource without requiring any authentication.
+  Public;
+  // Requires to be an authenticated user to access the resource.
+  Authenticated;
+  // Requires the caller to have direct access to the resource through user groups or user ids.
+  Restricted;
+};
+
+// The resource actions, used to specify the action that is performed on a resource.
+type ResourceAction = variant {
+  List;
+  Create;
+  Read : ResourceId;
+  Update : ResourceId;
+  Delete : ResourceId;
+};
+
+// The actions that are available for accounts.
+type AccountResourceAction = variant {
+  List;
+  Create;
+  Transfer : ResourceId;
+  Read : ResourceId;
+  Update : ResourceId;
+};
+
+// The target canister to interact with.
+type ExternalCanisterId = variant {
+  Any;
+  Canister : principal;
+};
+
+// The actions that are available for external canisters.
+type ExternalCanisterResourceAction = variant {
+  List;
+  Create;
+  Change : ExternalCanisterId;
+  Read : ExternalCanisterId;
+  Fund : ExternalCanisterId;
+  Call : CallExternalCanisterResourceTarget;
+};
+
+// The validation method targets of a `CallExternalCanister` request.
+type ValidationMethodResourceTarget = variant {
+  No;
+  ValidationMethod : CanisterMethod;
+};
+
+// The execution method targets of a `CallExternalCanister` request.
+type ExecutionMethodResourceTarget = variant {
+  Any;
+  ExecutionMethod : CanisterMethod;
+};
+
+// The validation and execution method targets of a `CallExternalCanister` request.
+type CallExternalCanisterResourceTarget = record {
+  validation_method : ValidationMethodResourceTarget;
+  execution_method : ExecutionMethodResourceTarget;
+};
+
+// The actions that are available for notifications.
+type NotificationResourceAction = variant {
+  List;
+  Update : ResourceId;
+};
+
+// The actions that are available for requests.
+type RequestResourceAction = variant {
+  List;
+  Read : ResourceId;
+};
+
+// The actions that are available for the system.
+type SystemResourceAction = variant {
+  SystemInfo;
+  Capabilities;
+  ManageSystemInfo;
+  Upgrade;
+};
+
+// The actions that are available for users.
+type UserResourceAction = variant {
+  List;
+  Create;
+  Read : ResourceId;
+  Update : ResourceId;
+};
+
+// The actions that are available for permissions.
+type PermissionResourceAction = variant {
+  Read;
+  Update;
+};
+
+// The Resource is used to specify what is being accessed.
+type Resource = variant {
+  Permission : PermissionResourceAction;
+  Account : AccountResourceAction;
+  AddressBook : ResourceAction;
+  ExternalCanister : ExternalCanisterResourceAction;
+  Notification : NotificationResourceAction;
+  Request : RequestResourceAction;
+  RequestPolicy : ResourceAction;
+  System : SystemResourceAction;
+  User : UserResourceAction;
+  UserGroup : ResourceAction;
+  Asset : ResourceAction;
+  NamedRule : ResourceAction;
+};
+
+// A record type that can be used to represent the caller privileges for a given permission.
+type PermissionCallerPrivileges = record {
+  // The resource that the caller has privileges for.
+  resource : Resource;
+  // Whether or not the caller can edit the resource.
+  can_edit : bool;
+};
+
+// The permission, used to specify the rules for users when interacting with resources.
+type Permission = record {
+  // The allowed users and user groups for the resource.
+  allow : Allow;
+  // The resource that the permission is for.
+  resource : Resource;
+};
+
+// Input type for listing permissions with the given pagination parameters.
+type ListPermissionsInput = record {
+  // The resources to retrieve the permissions for.
+  resources : opt vec Resource;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// A basic user record that can be used to represent a user in the station.
+type BasicUser = record {
+  // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : text;
+  // The status of the user (e.g. `Active`).
+  status : UserStatus;
+};
+
+// A minimal user record that is meant to aid displaying users on the client.
+type DisplayUser = record {
+  // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : text;
+};
+
+// Result type for listing permissions.
+type ListPermissionsResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of permissions.
+    permissions : vec Permission;
+    // The user groups that are associated with returned permissions.
+    user_groups : vec UserGroup;
+    // The users that are associated with returned permissions.
+    users : vec BasicUser;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of permissions.
+    total : nat64;
+    // The caller privileges for the permissions.
+    privileges : vec PermissionCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+type GetPermissionInput = record {
+  // The resource to retrieve the permission for.
+  resource : Resource;
+};
+
+type GetPermissionResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The permission that was retrieved.
+    permission : Permission;
+    // The privileges of the caller for the permission.
+    privileges : PermissionCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+type ListUserGroupsInput = record {
+  // The term to use for filtering the user groups.
+  search_term : opt text;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// Result type for listing all user groups.
+type ListUserGroupsResult = variant {
+  Ok : record {
+    // The list of groups.
+    user_groups : vec UserGroup;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of user groups.
+    total : nat64;
+    // The caller privileges for the user groups.
+    privileges : vec UserGroupCallerPrivileges;
+  };
+  Err : Error;
+};
+
+// Input type for getting a user group.
+type GetUserGroupInput = record {
+  // The group id to retrieve.
+  user_group_id : UUID;
+};
+
+// Result type for getting a user group.
+type GetUserGroupResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The group that was retrieved.
+    user_group : UserGroup;
+    // The caller privileges for the user group.
+    privileges : UserGroupCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+type GetRequestPolicyInput = record {
+  // The id of the request policy to retrieve.
+  id : UUID;
+};
+
+type GetRequestPolicyResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The request policy that was retrieved.
+    policy : RequestPolicy;
+    // The privileges of the caller for the request policy.
+    privileges : RequestPolicyCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Input type for listing request policies with the given pagination parameters.
+type ListRequestPoliciesInput = PaginationInput;
+
+// Result type for listing request policies.
+type ListRequestPoliciesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of request policies.
+    policies : vec RequestPolicy;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of request policies.
+    total : nat64;
+    // The caller privileges for the request policies.
+    privileges : vec RequestPolicyCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+type AddAssetOperation = record {
+  // The result of adding an asset.
+  asset : opt Asset;
+  // The input to the request to add an asset.
+  input : AddAssetOperationInput;
+};
+
+// The input type for adding an asset.
+type AddAssetOperationInput = record {
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  standards : vec text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : AssetSymbol;
+  // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+  name : text;
+  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
+  metadata : vec AssetMetadata;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals : nat32;
+};
+
+type EditAssetOperation = record {
+  // The input to the request to edit an asset.
+  input : EditAssetOperationInput;
+};
+
+// The input type for editing an asset.
+type EditAssetOperationInput = record {
+  // The asset id to edit.
+  asset_id : UUID;
+  // The name of the asset.
+  name : opt text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : opt text;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  standards : opt vec text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : opt AssetSymbol;
+  // The metadata to change.
+  change_metadata : opt ChangeMetadata;
+};
+
+// Type for instructions to update the address book entry's metadata.
+type ChangeMetadata = variant {
+  // Replace all existing metadata by the specified metadata.
+  ReplaceAllBy : vec AssetMetadata;
+  // Override values of existing metadata with the specified keys
+  // and add new metadata if no metadata can be found with the specified keys.
+  OverrideSpecifiedBy : vec AssetMetadata;
+  // Remove metadata with the specified keys.
+  RemoveKeys : vec text;
+};
+
+type RemoveAssetOperation = record {
+  // The input to the request to remove an asset.
+  input : RemoveAssetOperationInput;
+};
+
+// The input type for removing an asset.
+type RemoveAssetOperationInput = record {
+  // The asset id to remove.
+  asset_id : UUID;
+};
+
+// The input type for listing assets.
+type ListAssetsInput = record {
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// The result type for listing assets.
+type ListAssetsResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of assets.
+    assets : vec Asset;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of assets.
+    total : nat64;
+    // The caller privileges for the assets.
+    privileges : vec AssetCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The input type for getting an asset.
+type GetAssetInput = record {
+  // The asset id to retrieve.
+  asset_id : UUID;
+};
+
+// The result type for getting an asset.
+type GetAssetResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The asset that was retrieved.
+    asset : Asset;
+    // The caller privileges for the asset.
+    privileges : AssetCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+type AssetCallerPrivileges = record {
+  id : UUID;
+  can_edit : bool;
+  can_delete : bool;
+};
+
+// The top level privileges that the user has when making calls to the canister.
+type UserPrivilege = variant {
+  Capabilities;
+  SystemInfo;
+  ManageSystemInfo;
+  ListAccounts;
+  AddAccount;
+  ListUsers;
+  AddUser;
+  ListUserGroups;
+  AddUserGroup;
+  ListPermissions;
+  ListRequestPolicies;
+  AddRequestPolicy;
+  ListAddressBookEntries;
+  AddAddressBookEntry;
+  SystemUpgrade;
+  ListRequests;
+  CreateExternalCanister;
+  ListExternalCanisters;
+  CallAnyExternalCanister;
+  ListAssets;
+  AddAsset;
+  ListNamedRules;
+  AddNamedRule;
+};
+
+type MeResult = variant {
+  Ok : record {
+    // The user that is associated with the caller.
+    me : User;
+    // The list of privileges associated with the user.
+    privileges : vec UserPrivilege;
+  };
+  Err : Error;
+};
+
+// An input type for configuring the upgrader canister.
+type SystemUpgraderInput = variant {
+  // An existing upgrader canister.
+  Id : principal;
+  // Creates and deploys a new canister.
+  Deploy : record {
+    wasm_module : blob;
+    // The initial cycles to allocate to the canister.
+    //
+    // If not set, only the minimal amount of cycles required to create
+    // and deploy the canister will be allocated.
+    initial_cycles : opt nat;
+  };
+};
+
+// The initial accounts to create when initializing the canister for the first time, e.g., after disaster recovery.
+type InitAccountInput = record {
+  // The UUID of the account, if not provided a new UUID will be generated.
+  id : opt UUID;
+  // A friendly name for the account (e.g. "My Account").
+  name : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  seed : AccountSeed;
+  // The asset standard for this account (e.g. `native`, `erc20`, etc.).
+  assets : vec UUID;
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : vec AccountMetadata;
+};
+
+// The permissions for the account.
+type InitAccountPermissionsInput = record {
+  // Who can read the account information.
+  read_permission : Allow;
+  // Who can request updates to the account.
+  configs_permission : Allow;
+  // Who can request transfers from the account.
+  transfer_permission : Allow;
+  // The approval policy for updates to the account.
+  configs_request_policy : opt RequestPolicyRule;
+  // The approval policy for transfers from the account.
+  transfer_request_policy : opt RequestPolicyRule;
+};
+
+// The initial account to create when initializing the canister for the first time.
+type InitAccountWithPermissionsInput = record {
+  // The initial account to create.
+  account_init : InitAccountInput;
+  // The permissions for the account.
+  permissions : InitAccountPermissionsInput;
+};
+
+// The initial assets to create when initializing the canister for the first time, e.g., after disaster recovery.
+type InitAssetInput = record {
+  // The UUID of the asset, if not provided a new UUID will be generated.
+  id : opt UUID;
+  // The name of the asset.
+  name : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The standards this asset supports.
+  standards : vec text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : text;
+  // The number of decimals used to format the asset balance.
+  decimals : nat32;
+  // Metadata associated with the asset.
+  metadata : vec AssetMetadata;
+};
+
+// The input type for creating a user group when initializing the canister for the first time.
+type InitUserGroupInput = record {
+  // The id of the user group, if not provided a new UUID will be generated.  
+  id : opt UUID;
+  // The name of the user group, must be unique.
+  name : text;
+};
+
+// The input type for adding identities to a user.
+type UserIdentityInput = record {
+  // The identity of the user.
+  identity : principal;
+};
+
+// The users to create when initializing the canister for the first time.
+type InitUserInput = record {
+  // The id of the user, if not provided a new UUID will be generated.
+  id : opt UUID;
+  // The name of the user.
+  name : text;
+  // The identities of the user.
+  identities : vec UserIdentityInput;
+  // The user groups to associate with the user (optional).
+  // If not provided it defaults to the [`Admin`,`Operator`] groups if default user groups are created,
+  // i.e., when the field `initial_config` in `SystemInit` has the form of `WithAllDefaults` or `WithDefaultPolicies`.
+  groups : opt vec UUID;
+  // The status of the user (e.g. `Active`).
+  status : UserStatus;
+};
+
+// The init type for initializing the permissions when first creating the canister.
+type InitPermissionInput = record {
+  // The resource that the permission is for.
+  resource : Resource;
+  // The allow rules for who can access the resource.
+  allow : Allow;
+};
+
+// The init type for adding a request approval policy when initializing the canister for the first time.
+type InitRequestPolicyInput = record {
+  // The id of the request policy, if not provided a new UUID will be generated.
+  id : opt UUID;
+  // The request specifier that identifies what operation this policy is for (e.g. "transfer").
+  specifier : RequestSpecifier;
+  // The rule to use for the request approval evaluation (e.g. "quorum").
+  rule : RequestPolicyRule;
+};
+
+// The init type for adding a named rule when initializing the canister for the first time.
+type InitNamedRuleInput = record {
+  // The id of the named rule, if not provided a new UUID will be generated.
+  id : opt UUID;  
+  // The name of the named rule.
+  name : text;
+  // The description of the named rule.
+  description : opt text;
+  // The rule to use for the named rule.
+  rule : RequestPolicyRule;
+};
+
+// The initial configuration for the station. 
+//
+// Unless the `Complete` variant is used, the station will be initialized with default user 
+// groups, named rules (aka. approval rules), request policies, permissions, and assets.
+//
+// The default user groups for the station will be:
+//  - `Admin` with the UUID "00000000-0000-4000-8000-000000000000"
+//  - `Operator` with the UUID "00000000-0000-4000-8000-000000000001"
+//
+// The default named rules for the station will be:
+//  - `Admin approval` with a specified admin quorum
+//  - `Operator approval` with a specified operator and admin quorum
+//
+type InitialConfig = variant {
+  // Initialize the station with default user groups, named rules, policies, permissions, and assets.
+  // This does not create an initial account. 
+  WithAllDefaults : record {
+    // The initial users to create.
+    users : vec InitUserInput;
+    // The initial admin quorum in the admin level approval rule.
+    admin_quorum : nat16;
+    // The initial operator quorum in the operator level approval rule.
+    operator_quorum : nat16;
+  };
+  // Initialize the station with default user groups, named rules, policies, permissions.
+  WithDefaultPolicies : record {
+    // The initial users to create.
+    users : vec InitUserInput;
+    // The initial accounts to create.
+    accounts : vec InitAccountInput;
+    // The initial assets to create.
+    assets : vec InitAssetInput;
+    // The initial admin quorum in the admin level approval rule.
+    admin_quorum : nat16;
+    // The initial operator quorum in the operator level approval rule.
+    operator_quorum : nat16;
+  };
+  // Initialize the station with all custom entries.
+  Complete : record {
+    // The initial users to create.
+    users : vec InitUserInput;
+    // The initial user groups to create.
+    user_groups : vec InitUserGroupInput;
+    // The initial permissions to create.
+    permissions : vec InitPermissionInput;
+    // The initial request policies to create.
+    request_policies : vec InitRequestPolicyInput;
+    // The initial named rules to create.
+    named_rules : vec InitNamedRuleInput;
+    // The initial accounts to create.
+    accounts : vec InitAccountWithPermissionsInput;
+    // The initial assets to create.
+    assets : vec InitAssetInput;
+    // The initial disaster recovery committee to create.
+    disaster_recovery_committee : opt DisasterRecoveryCommittee;
+  };
+};
+
+type SystemInit = record {
+  // The name of the station.
+  name : text;
+  // The upgrader configuration.
+  upgrader : SystemUpgraderInput;
+  // An additional controller of the station and upgrader canisters (optional).
+  fallback_controller : opt principal;
+  // The initial configuration to apply.
+  initial_config: InitialConfig;
+};
+
+// The upgrade configuration for the canister.
+type SystemUpgrade = record {
+  // The updated name of the station.
+  name : opt text;
+};
+
+// The input type for the canister install method (e.g. init or upgrade).
+type SystemInstall = variant {
+  // The configuration to use when initializing the canister.
+  Init : SystemInit;
+  // The configuration to use when upgrading the canister.
+  Upgrade : SystemUpgrade;
+};
+
+type HealthStatus = variant {
+  Healthy;
+  Uninitialized;
+};
+
+type CanisterStatusInput = record {
+  canister_id : principal;
+};
+
+type LogVisibility = variant {
+  public;
+  controllers;
+  allowed_viewers: vec principal;
+};
+
+type DefiniteCanisterSettings = record {
+  controllers : vec principal;
+  compute_allocation : nat;
+  memory_allocation : nat;
+  freezing_threshold : nat;
+  reserved_cycles_limit : nat;
+  log_visibility : LogVisibility;
+  wasm_memory_limit : nat;
+};
+
+type DefiniteCanisterSettingsInput = record {
+  controllers : opt vec principal;
+  compute_allocation : opt nat;
+  memory_allocation : opt nat;
+  freezing_threshold : opt nat;
+  reserved_cycles_limit : opt nat;
+  log_visibility : opt LogVisibility;
+  wasm_memory_limit : opt nat;
+};
+
+type CanisterStatusResponse = record {
+  status : variant { running; stopping; stopped };
+  settings : DefiniteCanisterSettings;
+  module_hash : opt blob;
+  memory_size : nat;
+  cycles : nat;
+  reserved_cycles : nat;
+  idle_cycles_burned_per_day : nat;
+  query_stats : record {
+    num_calls_total : nat;
+    num_instructions_total : nat;
+    request_payload_bytes_total : nat;
+    response_payload_bytes_total : nat;
+  };
+};
+
+// The permission for making calls to a specific or any external canister method.
+type ExternalCanisterCallPermission = record {
+  // Allowed users and user groups for the operation.
+  allow : Allow;
+  // The validation method that is used to validate the request and
+  // render the argument.
+  validation_method : ValidationMethodResourceTarget;
+  // The execution method that the caller can use,
+  // if `*` is used the caller can use any method.
+  execution_method : text;
+};
+
+// The request policy rule for the canister call operation.
+type ExternalCanisterCallRequestPolicyRule = record {
+  // The id of the request policy rule.
+  policy_id : UUID;
+  // The request policy rule for the canister call operation.
+  rule : RequestPolicyRule;
+  // The validation method that is used to match the policy against
+  // the permission of the resource.
+  validation_method : ValidationMethodResourceTarget;
+  // The method name that the rule is for,
+  // if `*` is used the rule applies to all methods.
+  execution_method : text;
+};
+
+// The request policy rule for the canister call operation.
+type ExternalCanisterCallRequestPolicyRuleInput = record {
+  // The id of the request policy rule.
+  //
+  // If not provided a new entry will be created.
+  policy_id : opt UUID;
+  // The request policy rule for the canister call operation.
+  rule : RequestPolicyRule;
+  // The validation method that is used to match the policy against
+  // the permission of the resource.
+  validation_method : ValidationMethodResourceTarget;
+  // The method name that the rule is for,
+  // if `*` is used the rule applies to all methods.
+  execution_method : text;
+};
+
+// The request policy rule for the canister change operation.
+type ExternalCanisterChangeRequestPolicyRule = record {
+  // The id of the request policy rule.
+  policy_id : UUID;
+  // The request policy rule for the canister change operation.
+  rule : RequestPolicyRule;
+};
+
+// The request policy rule for the canister change operation.
+type ExternalCanisterChangeRequestPolicyRuleInput = record {
+  // The id of the request policy rule.
+  //
+  // If not provided a new entry will be created.
+  policy_id : opt UUID;
+  // The request policy rule for the canister change operation.
+  rule : RequestPolicyRule;
+};
+
+// The permissions set for the external canister.
+type ExternalCanisterPermissions = record {
+  // Who can read information about the canister (e.g. canister status),
+  // changes to this permission can be made by the `change` permission.
+  read : Allow;
+  // Who can make changes to the canister, includes:
+  // - changing the permissions
+  // - install operations
+  change : Allow;
+  // The permissions for the calling methods on the canister.
+  calls : vec ExternalCanisterCallPermission;
+};
+
+// The create input type for setting the permissions for the external canister.
+type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
+
+// The pair that is used to represent the execution and validation method.
+type CanisterExecutionAndValidationMethodPair = record {
+  // The validation method that is used to validate the request and
+  // render the argument.
+  validation_method : ValidationMethodResourceTarget;
+  // The method that the caller can call on the external canister.
+  //
+  // The `*` method name is used to represent that the caller can call any method on the canister.
+  execution_method : text;
+};
+
+// The input type for setting call permissions of an existing external canister.
+type ExternalCanisterChangeCallPermissionsInput = variant {
+  // Replaces all the call permissions with the provided list, if the list is empty
+  // all the call permissions will be removed.
+  ReplaceAllBy : vec ExternalCanisterCallPermission;
+  // Override the call permissions from the specified execution methods.
+  OverrideSpecifiedByExecutionMethods : vec record {
+    // The method that the caller can call on the external canister.
+    //
+    // The `*` method name is used to represent that the caller can call any method on the canister.
+    execution_method : text;
+    // The permissions associated with the execution method, if the list is empty all call permissions of the
+    // execution method will be removed.
+    permissions : vec record {
+      // Allowed users and user groups for the operation.
+      allow : Allow;
+      // The validation method that is used to validate the request and render the argument.
+      validation_method : ValidationMethodResourceTarget;
+    };
+  };
+  // Override the permissions for the specified execution and validation method pairs.
+  OverrideSpecifiedByExecutionValidationMethodPairs : vec record {
+    // The method configuration that is used to represent the execution and validation method pair.
+    method_configuration : CanisterExecutionAndValidationMethodPair;
+    // If allow is not provided the call permission will be removed for the specified execution
+    // and validation method pair.
+    allow : opt Allow;
+  };
+};
+
+// The input type for setting the permissions for the external canister.
+type ExternalCanisterPermissionsUpdateInput = record {
+  // Who can read information about the canister (e.g. canister status),
+  // changes to this permission can be made by the `change` permission.
+  read : opt Allow;
+  // Who can make changes to the canister, includes:
+  // - changing the permissions
+  // - install operations
+  change : opt Allow;
+  // The permissions for calling methods on the canister.
+  calls : opt ExternalCanisterChangeCallPermissionsInput;
+};
+
+// The request policy rules for the external canister.
+type ExternalCanisterRequestPolicies = record {
+  // The request policy rules for the canister change operation.
+  change : vec ExternalCanisterChangeRequestPolicyRule;
+  // The request policy rules for the calling methods on the canister.
+  calls : vec ExternalCanisterCallRequestPolicyRule;
+};
+
+// The input type for setting the request policies for a new external canister.
+type ExternalCanisterRequestPoliciesCreateInput = record {
+  // The request policy rules for the canister change operation.
+  change : vec ExternalCanisterChangeRequestPolicyRuleInput;
+  // The request policy rules for the calling methods on the canister.
+  calls : vec ExternalCanisterCallRequestPolicyRuleInput;
+};
+
+type ExternalCanisterChangeCallRequestPoliciesInput = variant {
+  // Replaces all the call request policies with the provided list.
+  ReplaceAllBy : vec ExternalCanisterCallRequestPolicyRuleInput;
+  // Remove call request policies by the provided ids.
+  RemoveByPolicyIds : vec UUID;
+  // Override the request policies for the specified execution methods.
+  OverrideSpecifiedByExecutionMethods : vec record {
+    // The method that the caller can call on the external canister.
+    //
+    // The `*` method name is used to represent that the caller can call any method on the canister.
+    execution_method : text;
+    // The request policies associated with the execution method, if the list is empty all the policies of
+    // the execution method will be removed.
+    policies : vec record {
+      // The id of the request policy rule.
+      //
+      // If not provided a new entry will be created.
+      policy_id : opt UUID;
+      // The request policy rule for the canister call operation.
+      rule : RequestPolicyRule;
+      // The validation method that is used to match the policy against
+      // the permission of the resource.
+      validation_method : ValidationMethodResourceTarget;
+    };
+  };
+  // Override the request policies for the specified execution and validation method pairs.
+  OverrideSpecifiedByExecutionValidationMethodPairs : vec record {
+    // The method configuration that is used to represent the execution and validation method pair.
+    method_configuration : CanisterExecutionAndValidationMethodPair;
+    // The request policies to use for the method configuration, if the list is empty all the policies of
+    // the execution and validation method pair will be removed.
+    policies : vec ExternalCanisterChangeRequestPolicyRuleInput;
+  };
+};
+
+// The input type for setting the request policies for an existing external canister.
+type ExternalCanisterRequestPoliciesUpdateInput = record {
+  // The request policy rules for the canister change operation.
+  change : opt vec ExternalCanisterChangeRequestPolicyRuleInput;
+  // The request policy rules for the calling methods on the canister.
+  calls : opt ExternalCanisterChangeCallRequestPoliciesInput;
+};
+
+// An external canister that the station can interact with.
+type ExternalCanister = record {
+  // The id of the resource in the station.
+  id : UUID;
+  // The principal id of the canister.
+  canister_id : principal;
+  // The name of the canister.
+  name : text;
+  // A description that can be used to describe the canister.
+  description : opt text;
+  // The labels that can be used to categorize the canister.
+  labels : vec text;
+  // The metadata that is associated with the canister.
+  metadata : vec ExternalCanisterMetadata;
+  // The current state of the record (e.g. `Active`).
+  state : ExternalCanisterState;
+  // The permissions that are set for who can interact with the canister.
+  permissions : ExternalCanisterPermissions;
+  // The request policies that are associated with the canister.
+  request_policies : ExternalCanisterRequestPolicies;
+  // The time at which the canister was created.
+  created_at : TimestampRFC3339;
+  // The time at which the canister was last modified, if available.
+  modified_at : opt TimestampRFC3339;
+  // Monitoring configuration for the canister.
+  monitoring : opt MonitorExternalCanisterStartInput;
+};
+
+// The state of the external canister.
+type ExternalCanisterState = variant {
+  // The record is active and can be interacted with.
+  Active;
+  // The record is archived and can no longer be interacted with.
+  Archived;
+};
+
+// Input type for getting a external canister.
+type GetExternalCanisterInput = record {
+  // The principal id of the external canister.
+  canister_id : principal;
+};
+
+// The caller privileges for the external canister methods.
+type ExternalCanisterCallerMethodsPrivileges = record {
+  // The validation method that is used to validate the request and
+  // render the argument.
+  validation_method : ValidationMethodResourceTarget;
+  // The method that the caller can call on the external canister.
+  //
+  // The `*` method name is used to represent that the caller can
+  // call any method on the canister.
+  execution_method : text;
+};
+
+// The caller privileges for the external canister.
+type ExternalCanisterCallerPrivileges = record {
+  // The external canister entry id.
+  id : UUID;
+  // The canister id.
+  canister_id : principal;
+  // Whether or not the caller can edit the external canister.
+  can_change : bool;
+  // Whether or not the caller can fund the external canister.
+  can_fund : bool;
+  // The list of methods that the caller can call on the external canister.
+  can_call : vec ExternalCanisterCallerMethodsPrivileges;
+};
+
+type GetExternalCanisterResult = variant {
+  Ok : record {
+    // The external canister that was retrieved.
+    canister : ExternalCanister;
+    // The caller privileges for the external canister.
+    privileges : ExternalCanisterCallerPrivileges;
+  };
+  Err : Error;
+};
+
+// The input type for sorting the results of listing external canisters.
+type ListExternalCanistersSortInput = variant {
+  // Sort by the name of the external canister.
+  Name : SortByDirection;
+};
+
+// Input type for listing external canisters with the given filters.
+type ListExternalCanistersInput = record {
+  // The principal id of the external canister to search for.
+  canister_ids : opt vec principal;
+  // The labels to use for filtering the external canisters.
+  labels : opt vec text;
+  // The current state of the external canisters to use for filtering (e.g. `Active`, `Archived`).
+  states : opt vec ExternalCanisterState;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+  // The sort parameters.
+  sort_by : opt ListExternalCanistersSortInput;
+};
+
+// Result type for listing external canisters.
+type ListExternalCanistersResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of external canisters.
+    canisters : vec ExternalCanister;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of external canisters.
+    total : nat64;
+    // The caller privileges for the external canisters.
+    privileges : vec ExternalCanisterCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The input type for getting the available filters for the external canisters.
+type GetExternalCanisterFiltersInput = record {
+  // Include the names of the external canisters in the result.
+  with_name : opt record {
+    // The prefix to use for filtering the names.
+    //
+    // If the prefix is not provided, any name will be returned.
+    prefix : opt text;
+  };
+  // Include the labels of the external canisters in the result.
+  with_labels : opt bool;
+};
+
+// The result type for the filtering of external canisters.
+type GetExternalCanisterFiltersResult = variant {
+  Ok : record {
+    // The list of names that are used by the external canisters
+    // and their canister id.
+    names : opt vec record { name : text; canister_id : principal };
+    // The list of labels that are used by the external canisters.
+    labels : opt vec text;
+  };
+  Err : Error;
+};
+
+type CanisterSnapshotsInput = record {
+  canister_id : principal;
+};
+
+type CanisterSnapshotsResponse = vec record {
+  snapshot_id : text;
+  taken_at_timestamp : TimestampRFC3339;
+  total_size : nat64;
+};
+
+type CanisterSnapshotsResult = variant {
+  Ok : CanisterSnapshotsResponse;
+  Err : Error;
+};
+
+type HeaderField = record { text; text };
+
+type HttpRequest = record {
+  method : text;
+  url : text;
+  headers : vec HeaderField;
+  body : blob;
+};
+
+type HttpResponse = record {
+  status_code : nat16;
+  headers : vec HeaderField;
+  body : blob;
+};
+
+type NotifyFailedStationUpgradeInput = record {
+  // the failure reason
+  reason : text;
+};
+
+type NotifyFailedStationUpgradeResult = variant {
+  Ok;
+  Err : Error;
+};
+
+// The Station service definition.
+service : (opt SystemInstall) -> {
+  // Check if the station is healthy and ready to be used.
+  health_status : () -> (HealthStatus) query;
+  // Get the system information of the canister (e.g. version, cycles, etc.).
+  //
+  // This method contains sensitive information and is up to the canister owner to
+  // decide who can access it (e.g. only admins).
+  system_info : () -> (SystemInfoResult) query;
+  // This method exposes the supported assets and other capabilities of the canister.
+  //
+  // By default can be accessed by any active user.
+  capabilities : () -> (CapabilitiesResult) query;
+  // Get the authenticated user and its privileges from the caller.
+  me : () -> (MeResult) query;
+  // Get the list of notifications associated with the caller.
+  list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
+  // Mark the notifications as read.
+  mark_notifications_read : (input : MarkNotificationsReadInput) -> (MarkNotificationReadResult);
+  // Get the external canister by its canister id.
+  get_external_canister : (input : GetExternalCanisterInput) -> (GetExternalCanisterResult) query;
+  // List all external canisters that the caller has access to.
+  list_external_canisters : (input : ListExternalCanistersInput) -> (ListExternalCanistersResult) query;
+  // Get the available filters for the external canisters.
+  get_external_canister_filters : (input : GetExternalCanisterFiltersInput) -> (GetExternalCanisterFiltersResult) query;
+  // Get a account by id.
+  //
+  // If the caller does not have access to the account, an error will be returned.
+  get_account : (input : GetAccountInput) -> (GetAccountResult) query;
+  // Get the account balance.
+  //
+  // If the caller does not have access to the account, an error will be returned.
+  fetch_account_balances : (input : FetchAccountBalancesInput) -> (FetchAccountBalancesResult);
+  // List all accounts that the caller has access to.
+  //
+  // If the caller is not the owner of any account, an error will be returned.
+  list_accounts : (input : ListAccountsInput) -> (ListAccountsResult) query;
+  // List all transfers from the requested account.
+  list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
+  // Get transfers by their ids.
+  get_transfers : (input : GetTransfersInput) -> (GetTransfersResult) query;
+  // If the caller does not have access to the address book entry, an error will be returned.
+  get_address_book_entry : (input : GetAddressBookEntryInput) -> (GetAddressBookEntryResult) query;
+  // List all address book entries for a given blockchain standard.
+  list_address_book_entries : (input : ListAddressBookEntriesInput) -> (ListAddressBookEntriesResult) query;
+  // Create a new request.
+  //
+  // The request will be created and the caller will be added as the requester.
+  create_request : (input : CreateRequestInput) -> (CreateRequestResult);
+  // Cancel a request if the request is in a cancelable state.
+  //
+  // Cancelable conditions:
+  //
+  // - The request is in the `Created` state.
+  // - The caller is the requester of the request.
+  cancel_request : (input : CancelRequestInput) -> (CancelRequestResult);
+  // Get the list of requests.
+  //
+  // Only requests that the caller has access to will be returned.
+  list_requests : (input : ListRequestsInput) -> (ListRequestsResult) query;
+  // Get the request by id.
+  get_request : (input : GetRequestInput) -> (GetRequestResult) query;
+  // Finds the next aprovable request for the caller.
+  get_next_approvable_request : (input : GetNextApprovableRequestInput) -> (GetNextApprovableRequestResult) query;
+  // Submits the user approval decision for a request.
+  submit_request_approval : (input : SubmitRequestApprovalInput) -> (SubmitRequestApprovalResult);
+  // Get the user associated with the user id provided.
+  get_user : (input : GetUserInput) -> (GetUserResult) query;
+  // List all users of the station.
+  list_users : (input : ListUsersInput) -> (ListUsersResult) query;
+  // List all permissions.
+  list_permissions : (input : ListPermissionsInput) -> (ListPermissionsResult) query;
+  // Get the permission for the resource provided.
+  get_permission : (input : GetPermissionInput) -> (GetPermissionResult) query;
+  // List add request policies.
+  list_request_policies : (input : ListRequestPoliciesInput) -> (ListRequestPoliciesResult) query;
+  // Get request policy by id.
+  get_request_policy : (input : GetRequestPolicyInput) -> (GetRequestPolicyResult) query;
+  // Get a user group by id.
+  //
+  // If the caller does not have access to the user group, an error will be returned.
+  get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
+  // List all user groups of the station.
+  list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
+  // Get canister status of a canister controlled by the station.
+  canister_status : (input : CanisterStatusInput) -> (CanisterStatusResponse);
+  // Get snapshots of a canister controlled by the station.
+  canister_snapshots : (input : CanisterSnapshotsInput) -> (CanisterSnapshotsResult);
+  // HTTP Protocol interface.
+  http_request : (HttpRequest) -> (HttpResponse) query;
+  // Internal endpoint used by the upgrader canister to notify the station about a failed station upgrade request.
+  notify_failed_station_upgrade : (NotifyFailedStationUpgradeInput) -> (NotifyFailedStationUpgradeResult);
+  // Get an asset by id.
+  get_asset : (input : GetAssetInput) -> (GetAssetResult) query;
+  // List all assets that the caller has access to.
+  list_assets : (input : ListAssetsInput) -> (ListAssetsResult) query;
+  // Get a named rule by id.
+  get_named_rule : (input : GetNamedRuleInput) -> (GetNamedRuleResult) query;
+  // List named rules that the caller has access to.
+  list_named_rules : (input : ListNamedRulesInput) -> (ListNamedRulesResult) query;
+};

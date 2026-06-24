@@ -1,5 +1,6 @@
 import { program } from 'commander';
 import { version } from '../package.json';
+import audit from './audit';
 import release from './release';
 import registry from './registry';
 
@@ -12,6 +13,7 @@ program
   .description('Print the path to the Orbit CLI')
   .action(() => console.log(__dirname));
 
+program.addCommand(audit);
 program.addCommand(release);
 program.addCommand(registry);
 

@@ -1,0 +1,96 @@
+import { createCommand } from 'commander';
+import { writeFileSync } from 'fs';
+import { resolve } from 'path';
+import { assetEditPolicyWeakerThanTransfer } from './checks/asset-edit-policy-weaker-than-transfer';
+import { externalCallValidationEqualsExecution } from './checks/external-call-validation-equals-execution';
+import { quorumEmptyApproverSet } from './checks/quorum-empty-approver-set';
+import {
+  buildStationActor,
+  listAssets,
+  listNamedRules,
+  listPermissions,
+  listRequestPolicies,
+  listUserGroups,
+  listUsers,
+  StationContext,
+} from './station.core';
+import { AuditReport, exitCodeFor, Finding, renderReport } from './report';
+
+const command = createCommand('audit').description(
+  'Read-only sanity checks against an Orbit station configuration.',
+);
+
+command
+  .requiredOption('-s, --station <CANISTER_ID>', 'The station canister id to audit.')
+  .option('-n, --network <TYPE>', 'The network the station lives on. Defaults to `ic`.', 'ic')
+  .option(
+    '-i, --identity <NAME>',
+    "Identity to call the station with. Needs read access to the station's `list_*` methods.",
+    'default',
+  )
+  .option(
+    '--identity-source <SOURCE>',
+    'Where to load the identity from: `dfx` reads ~/.config/dfx/identity/<name>/identity.pem; `icp` reads the icp-cli identity store (including II/delegation-based identities).',
+    'dfx',
+  )
+  .option(
+    '-o, --output <PATH>',
+    'Write the report to a file instead of stdout. The exit code is still set based on findings.',
+  );
+
+command.action(async options => {
+  if (options.identitySource !== 'dfx' && options.identitySource !== 'icp') {
+    throw new Error(
+      `Invalid --identity-source '${options.identitySource}'. Must be 'dfx' or 'icp'.`,
+    );
+  }
+  const ctx: StationContext = {
+    station: options.station,
+    network: options.network,
+    identity: options.identity,
+    identitySource: options.identitySource,
+  };
+
+  const actor = await buildStationActor(ctx);
+
+  const [policies, users, userGroups, assets, namedRules, permissions] = await Promise.all([
+    listRequestPolicies(actor),
+    listUsers(actor),
+    listUserGroups(actor),
+    listAssets(actor),
+    listNamedRules(actor),
+    listPermissions(actor),
+  ]);
+
+  const findings: Finding[] = [
+    ...quorumEmptyApproverSet(policies, users, namedRules),
+    ...externalCallValidationEqualsExecution(policies, permissions),
+    ...assetEditPolicyWeakerThanTransfer(policies, users, namedRules),
+  ];
+
+  const confirmations: string[] = [
+    `${policies.length} request policies loaded.`,
+    `${users.length} users loaded.`,
+    `${userGroups.length} user groups loaded.`,
+    `${assets.length} assets loaded.`,
+    `${namedRules.length} named rules loaded.`,
+    `${permissions.length} permissions loaded.`,
+  ];
+
+  const report: AuditReport = { ctx, findings, confirmations };
+  const rendered = renderReport(report);
+
+  if (options.output) {
+    const target = resolve(options.output);
+    writeFileSync(target, rendered + '\n', 'utf8');
+    // Progress on stderr so file-output mode still gives feedback without
+    // polluting the report file or stdout pipes.
+    console.error(`Wrote audit report to ${target}`);
+  } else {
+    console.log(rendered);
+  }
+
+  process.exit(exitCodeFor(report));
+});
+
+export default command;
