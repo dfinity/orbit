@@ -46,6 +46,22 @@ const readIdentityList = (): IcpIdentityList => {
   return JSON.parse(readFileSync(path, 'utf8')) as IcpIdentityList;
 };
 
+const stripNullTargets = (json: string): string => {
+  const parsed = JSON.parse(json) as Record<string, unknown>;
+  const delegations = parsed.delegations;
+  if (Array.isArray(delegations)) {
+    for (const item of delegations) {
+      const delegation = (item as Record<string, unknown>).delegation as
+        | Record<string, unknown>
+        | undefined;
+      if (delegation && delegation.targets === null) {
+        delete delegation.targets;
+      }
+    }
+  }
+  return JSON.stringify(parsed);
+};
+
 const runIcp = (args: string[]): { stdout: string; stderr: string; status: number | null } => {
   const result = spawnSync('icp', args, { encoding: 'utf8' });
   if (result.error) {
@@ -147,17 +163,7 @@ export const loadIcpIdentity = (name: string): Identity => {
       // icp emits `"targets": null` for unrestricted delegations; agent-js'
       // `JsonnableDelegation` expects `targets` to be either absent or an
       // array, never null. Strip the null fields before parsing.
-      const parsed = JSON.parse(stdout) as {
-        publicKey: string;
-        delegations: Array<{
-          signature: string;
-          delegation: { pubkey: string; expiration: string; targets?: string[] | null };
-        }>;
-      };
-      parsed.delegations.forEach(d => {
-        if (d.delegation.targets === null) delete d.delegation.targets;
-      });
-      const chain = DelegationChain.fromJSON(parsed);
+      const chain = DelegationChain.fromJSON(stripNullTargets(stdout));
       return DelegationIdentity.fromDelegation(session, chain);
     } finally {
       try {
