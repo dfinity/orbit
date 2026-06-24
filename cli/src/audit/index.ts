@@ -1,11 +1,11 @@
 import { createCommand } from 'commander';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
-import { assertReplicaIsHealthy } from '../utils';
 import { assetEditPolicyWeakerThanTransfer } from './checks/asset-edit-policy-weaker-than-transfer';
 import { externalCallValidationEqualsExecution } from './checks/external-call-validation-equals-execution';
 import { quorumEmptyApproverSet } from './checks/quorum-empty-approver-set';
 import {
+  buildStationActor,
   listAssets,
   listNamedRules,
   listPermissions,
@@ -40,15 +40,15 @@ command.action(async options => {
     identity: options.identity,
   };
 
-  await assertReplicaIsHealthy(ctx.network);
+  const actor = await buildStationActor(ctx);
 
   const [policies, users, userGroups, assets, namedRules, permissions] = await Promise.all([
-    listRequestPolicies(ctx),
-    listUsers(ctx),
-    listUserGroups(ctx),
-    listAssets(ctx),
-    listNamedRules(ctx),
-    listPermissions(ctx),
+    listRequestPolicies(actor),
+    listUsers(actor),
+    listUserGroups(actor),
+    listAssets(actor),
+    listNamedRules(actor),
+    listPermissions(actor),
   ]);
 
   const findings: Finding[] = [

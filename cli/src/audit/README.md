@@ -1,6 +1,8 @@
 # `orbit-cli audit`
 
-Read-only sanity checks against an Orbit station's configuration. The command pulls live state via the station's `list_*` query methods, runs a set of static checks against the configuration, and prints a severity-sorted report. Nothing is mutated — the audit is safe to run at any time, against any station the caller has read access to.
+Read-only sanity checks against an Orbit station's configuration. The command pulls live state via the station's `list_*` query methods using `agent-js`, runs a set of static checks against the configuration, and prints a severity-sorted report. Nothing is mutated — the audit is safe to run at any time, against any station the caller has read access to.
+
+> **Identity prerequisite.** The audit signs requests with an Ed25519 dfx identity loaded from `~/.config/dfx/identity/<name>/identity.pem`. The `dfx` CLI itself does not need to be on PATH at runtime, but the identity store layout follows dfx's convention. Passphrase-protected identities aren't supported; create a plaintext one for the audit if needed (`dfx identity new orbit-audit --storage-mode plaintext`).
 
 ## Usage
 

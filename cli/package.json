@@ -10,7 +10,8 @@
     "start": "node dist/cli.js",
     "expose": "pnpm link --global",
     "test": "vitest run",
-    "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts"
+    "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts",
+    "generate-station-types": "didc bind --target ts ../core/station/api/spec.did > ./src/audit/generated/station.did.d.ts && didc bind --target js ../core/station/api/spec.did > ./src/audit/generated/station.did.js && cp ../core/station/api/spec.did ./src/audit/generated/station.did"
   },
   "devDependencies": {
     "commander": "12.1.0",
