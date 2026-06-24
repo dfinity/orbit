@@ -69,6 +69,8 @@ network: ic
 summary: 1 blocker, 0 warning, 0 info
 ```
 
+Findings include policy, user, group, canister, and method identifiers. When using `--output`, write to a location that's appropriate for that level of detail — the report is internal station metadata, not something you'd want to commit to a public repo or sync to a shared drive without thinking about it first.
+
 ## Tests
 
 ```bash
