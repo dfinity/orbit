@@ -1,4 +1,4 @@
-export const idlFactory = ({ IDL }) => {
+exports.idlFactory = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const RequestPolicyRuleResult = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
@@ -1900,7 +1900,7 @@ export const idlFactory = ({ IDL }) => {
     'system_info' : IDL.Func([], [SystemInfoResult], ['query']),
   });
 };
-export const init = ({ IDL }) => {
+exports.init = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
   const UUID = IDL.Text;
