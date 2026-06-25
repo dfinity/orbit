@@ -22,21 +22,16 @@ prints a severity-sorted report — safe to run any time, since it only issues
 `list_*` queries and mutates nothing. Flags, exit codes, and report format are
 documented in [`cli/src/audit/README.md`](../../../cli/src/audit/README.md);
 read that for reference. This skill is the *operational* guide — it gets you
-from a fresh checkout to a successful run and front-loads the four things that
+from a fresh checkout to a successful run and front-loads the three things that
 actually derail a first one.
 
-## The four gotchas (read these first)
+## The three gotchas (read these first)
 
-1. **Don't rely on the global `orbit-cli`.** Depending on when it was last
-   built it either predates the `audit` subcommand (unknown-command error) or —
-   after a `pnpm install`, which rebuilds and re-links it via the `prepare-cli`
-   postinstall — carries the gotcha-2 bug and crashes. Build and run this repo's
-   freshly-repaired `cli/dist/cli.js` instead; the helper script does exactly that.
-2. **The built CLI may crash with `SyntaxError: Unexpected token 'export'`.**
-   The build copies a generated IDL (`station.did.js`) that is an ES module
-   into the CommonJS bundle, and `require()` can't parse it. The helper script
-   below repairs this automatically; the manual fix is in *Troubleshooting*.
-3. **Internet Identity principals are per-origin.** The same II anchor yields a
+1. **Don't rely on the global `orbit-cli`.** A global on `PATH` may be from an
+   older checkout that predates the `audit` subcommand (unknown-command error).
+   Build and run this repo's `cli/dist/cli.js` instead — what the helper script
+   does — so there's no doubt about which version you're invoking.
+2. **Internet Identity principals are per-origin.** The same II anchor yields a
    *different* principal for every app origin. The audit must be called by a
    principal the station knows as a member, so the identity has to be derived
    from the origin the wallet itself uses. In production that origin is
@@ -46,7 +41,7 @@ actually derail a first one.
    `https://`, even though the config shows a scheme). Deriving from anything
    else (`app.orbit.global`, `oisy.com`, the default `cli.id.ai`) gives a
    stranger principal that the station will reject.
-4. **`icp identity link web` waits for an Enter keypress** before it opens the
+3. **`icp identity link web` waits for an Enter keypress** before it opens the
    browser. Running it non-interactively, pipe a newline in so it proceeds:
    `printf '\n' | icp identity link web ...`. The human still completes the
    actual sign-in in the browser.
@@ -62,8 +57,8 @@ actually derail a first one.
 
 ## Step 1 — Build the CLI from source
 
-The helper script does this for you (install if needed → build → repair the
-ESM/CJS quirk from gotcha 2), so prefer it:
+The helper script does this for you (install if needed → build → run), so
+prefer it:
 
 ```bash
 .claude/skills/orbit-station-audit/scripts/run-audit.sh --help
@@ -74,19 +69,18 @@ Equivalent by hand, if you'd rather see each step:
 ```bash
 pnpm install                       # once, if node_modules is missing
 pnpm --filter orbit-cli build      # emits cli/dist/cli.js
-node cli/dist/cli.js audit --help  # may hit gotcha 2 — see Troubleshooting
+node cli/dist/cli.js audit --help
 ```
 
-Run the freshly built `cli/dist/cli.js` directly — that's the copy the helper
-script repairs. The global on `PATH` isn't repaired, even right after
-`pnpm install`.
+Run the freshly built `cli/dist/cli.js` directly so there's no doubt about
+which build is on `PATH`.
 
 ## Step 2 — Get an identity the station recognizes
 
 The audit signs its calls with an identity that must be a station **member**
 (admin-tier users have the required read access by default). For an
 Internet-Identity-based wallet, that means an `icp-cli` identity derived from
-`orbitwallet.io` (gotcha 3).
+`orbitwallet.io` (gotcha 2).
 
 First, reuse an existing one if you already have it:
 
@@ -141,13 +135,6 @@ README).
 
 ## Troubleshooting
 
-- **`SyntaxError: Unexpected token 'export'` running the CLI** — the generated
-  IDL got copied into the CommonJS build as an ES module. The helper script
-  repairs this after every build; if you're building by hand, copy the
-  IDL-repair Node snippet from its step 3. (It's gitignored build output, so the
-  patch is safe and disposable — a rebuild reintroduces the problem, which is
-  why the script re-applies the fix each run.) The real fix belongs in
-  [`cli/package.json`](../../../cli/package.json)'s build script.
 - **`Unauthorized` / read calls rejected** — the calling principal isn't a
   station member. Re-check Step 2: right anchor, right `--app` origin, and the
   principal actually matches your wallet UI.
