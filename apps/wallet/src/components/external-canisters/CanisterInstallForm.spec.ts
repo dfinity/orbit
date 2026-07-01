@@ -1,5 +1,6 @@
 import { Principal } from '@dfinity/principal';
 import { describe, expect, it } from 'vitest';
+import { VCheckbox } from 'vuetify/components';
 import CanisterWasmMemoryPersistenceSelect from '~/components/inputs/CanisterWasmMemoryPersistenceSelect.vue';
 import { mount } from '~/test.utils';
 import CanisterInstallForm from './CanisterInstallForm.vue';
@@ -80,6 +81,38 @@ describe('CanisterInstallForm', () => {
     form
       .findComponent(CanisterWasmMemoryPersistenceSelect)
       .vm.$emit('update:modelValue', undefined);
+    await form.vm.$nextTick();
+
+    const updates = form.emitted('update:modelValue');
+    expect(updates?.at(-1)?.[0]).toEqual({ mode: { upgrade: [] } });
+  });
+
+  it('folds the skip_pre_upgrade toggle into the upgrade mode', async () => {
+    const form = mount(CanisterInstallForm, {
+      props: {
+        modelValue: { mode: { upgrade: [] } },
+      },
+    });
+
+    form.findComponent(VCheckbox).vm.$emit('update:modelValue', true);
+    await form.vm.$nextTick();
+
+    const updates = form.emitted('update:modelValue');
+    expect(updates?.at(-1)?.[0]).toEqual({
+      mode: { upgrade: [{ wasm_memory_persistence: [], skip_pre_upgrade: [true] }] },
+    });
+  });
+
+  it('collapses back to a plain upgrade when skip_pre_upgrade is disabled', async () => {
+    const form = mount(CanisterInstallForm, {
+      props: {
+        modelValue: {
+          mode: { upgrade: [{ wasm_memory_persistence: [], skip_pre_upgrade: [true] }] },
+        },
+      },
+    });
+
+    form.findComponent(VCheckbox).vm.$emit('update:modelValue', false);
     await form.vm.$nextTick();
 
     const updates = form.emitted('update:modelValue');
