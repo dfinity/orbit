@@ -673,6 +673,17 @@ export default {
       upgrade: 'Mettre à jour',
       install: 'Installer',
     },
+    wasm_memory_persistence: {
+      label: 'Persistance de la mémoire Wasm',
+      hint: 'Contrôle la mémoire principale du canister lors de la mise à jour. Les canisters Motoko utilisant la persistance orthogonale améliorée nécessitent « Conserver ».',
+      default: 'Par défaut (remplacer)',
+      keep: 'Conserver',
+      replace: 'Remplacer',
+    },
+    skip_pre_upgrade: {
+      label: 'Ignorer le hook pre-upgrade',
+      hint: 'Ignore le hook pre_upgrade du canister lors de la mise à jour. Utile pour la récupération lorsque le hook échoue.',
+    },
   },
   terms: {
     license: 'Licence',

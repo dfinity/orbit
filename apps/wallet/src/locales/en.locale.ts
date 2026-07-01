@@ -663,6 +663,17 @@ export default {
       upgrade: 'Upgrade',
       install: 'Install',
     },
+    wasm_memory_persistence: {
+      label: 'Wasm Memory Persistence',
+      hint: 'Controls the canister main memory on upgrade. Motoko canisters using Enhanced Orthogonal Persistence require "Keep".',
+      default: 'Default (replace)',
+      keep: 'Keep',
+      replace: 'Replace',
+    },
+    skip_pre_upgrade: {
+      label: 'Skip pre-upgrade hook',
+      hint: 'Skips the canister pre_upgrade hook during the upgrade. Useful for recovery when the hook traps.',
+    },
   },
   terms: {
     license: 'License',

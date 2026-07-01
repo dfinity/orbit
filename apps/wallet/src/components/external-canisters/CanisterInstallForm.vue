@@ -15,6 +15,26 @@
         <VCol cols="12" class="pb-0">
           <CanisterInstallModeSelect v-model="model.mode" :readonly="props.readonly" required />
         </VCol>
+        <template v-if="isUpgradeMode">
+          <VCol cols="12" class="pb-0">
+            <CanisterWasmMemoryPersistenceSelect
+              v-model="wasmMemoryPersistence"
+              :readonly="props.readonly"
+              :hint="$t('external_canisters.wasm_memory_persistence.hint')"
+            />
+          </VCol>
+          <VCol cols="12" class="pb-0">
+            <VCheckbox
+              v-model="skipPreUpgrade"
+              :readonly="props.readonly"
+              :label="$t('external_canisters.skip_pre_upgrade.label')"
+              :hint="$t('external_canisters.skip_pre_upgrade.hint')"
+              persistent-hint
+              density="comfortable"
+              :prepend-icon="mdiDebugStepOver"
+            />
+          </VCol>
+        </template>
         <VCol cols="12" class="pb-0">
           <CanisterWasmModuleField
             v-model="model.wasmModule"
@@ -38,14 +58,21 @@
   </VForm>
 </template>
 <script lang="ts" setup>
+import { mdiDebugStepOver } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
-import { VCol, VContainer, VForm, VRow } from 'vuetify/components';
+import { VCheckbox, VCol, VContainer, VForm, VRow } from 'vuetify/components';
 import CanisterArgumentField from '~/components/inputs/CanisterArgumentField.vue';
 import CanisterInstallModeSelect from '~/components/inputs/CanisterInstallModeSelect.vue';
+import CanisterWasmMemoryPersistenceSelect from '~/components/inputs/CanisterWasmMemoryPersistenceSelect.vue';
 import CanisterWasmModuleField from '~/components/inputs/CanisterWasmModuleField.vue';
 import { VFormValidation } from '~/types/helper.types';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
-import { CanisterIcSettingsModel, CanisterInstallModel } from './external-canisters.types';
+import {
+  CanisterIcSettingsModel,
+  CanisterInstallModel,
+  CanisterUpgradeOptions,
+  WasmMemoryPersistence,
+} from './external-canisters.types';
 
 const props = withDefaults(
   defineProps<{
@@ -81,6 +108,46 @@ const fieldsWithErrors = ref<string[]>([]);
 const model = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
+});
+
+const isUpgradeMode = computed(() => !!model.value.mode && 'upgrade' in model.value.mode);
+
+const upgradeOptions = computed<CanisterUpgradeOptions | undefined>(() => {
+  const mode = model.value.mode;
+  if (mode && 'upgrade' in mode && mode.upgrade.length > 0) {
+    return mode.upgrade[0];
+  }
+
+  return undefined;
+});
+
+// Merges a partial patch into the upgrade-options record, collapsing back to an
+// empty record (`{ upgrade: [] }`) when neither option is set so a plain
+// upgrade request is emitted.
+const setUpgradeOptions = (patch: Partial<CanisterUpgradeOptions>): void => {
+  const mode = model.value.mode;
+  if (!mode || !('upgrade' in mode)) {
+    return;
+  }
+
+  const current: CanisterUpgradeOptions = upgradeOptions.value ?? {
+    wasm_memory_persistence: [],
+    skip_pre_upgrade: [],
+  };
+  const next: CanisterUpgradeOptions = { ...current, ...patch };
+  const isEmpty = next.wasm_memory_persistence.length === 0 && next.skip_pre_upgrade.length === 0;
+
+  model.value = { ...model.value, mode: { upgrade: isEmpty ? [] : [next] } };
+};
+
+const wasmMemoryPersistence = computed<WasmMemoryPersistence | undefined>({
+  get: () => upgradeOptions.value?.wasm_memory_persistence?.[0],
+  set: value => setUpgradeOptions({ wasm_memory_persistence: value !== undefined ? [value] : [] }),
+});
+
+const skipPreUpgrade = computed<boolean>({
+  get: () => upgradeOptions.value?.skip_pre_upgrade?.[0] ?? false,
+  set: value => setUpgradeOptions({ skip_pre_upgrade: value ? [true] : [] }),
 });
 
 const triggerSubmit = computed({
