@@ -141,6 +141,19 @@ Then a verifier can verify this request, using:
 dfx-orbit verify [REQUEST_ID] canister install --mode upgrade [CANISTER_NAME] --wasm [WASM_PATH]
 ```
 
+##### Enhanced Orthogonal Persistence (Motoko)
+
+Motoko canisters that use Enhanced Orthogonal Persistence must be upgraded with
+`--wasm-memory-persistence keep`, otherwise the IC clears their main memory:
+
+```
+dfx-orbit request canister install --mode upgrade --wasm-memory-persistence keep [CANISTER_NAME] --wasm [WASM_PATH]
+```
+
+If the existing `pre_upgrade` hook traps and needs to be bypassed during a
+recovery upgrade, add `--skip-pre-upgrade`. Both flags are only valid together
+with `--mode upgrade`, and must also be repeated when verifying the request.
+
 ### Upload assets to a canister
 
 We will assume that Orbit is a controller of the asset canister.

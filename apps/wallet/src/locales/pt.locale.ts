@@ -669,6 +669,13 @@ export default {
       upgrade: 'Atualizar',
       install: 'Instalar',
     },
+    wasm_memory_persistence: {
+      label: 'Persistência da memória Wasm',
+      keep: 'Manter',
+      replace: 'Substituir',
+      hint: 'Use "Manter" para preservar a memória principal do canister na atualização, conforme exigido por canisters Motoko que usam Persistência Ortogonal Aprimorada.',
+    },
+    skip_pre_upgrade: 'Ignorar o hook pre-upgrade',
   },
   terms: {
     license: 'Licença',

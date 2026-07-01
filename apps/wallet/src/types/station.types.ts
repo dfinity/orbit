@@ -9,6 +9,14 @@ import {
   ListExternalCanistersSortInput,
 } from '~/generated/station/station.did';
 
+/**
+ * The wasm memory persistence value nested inside the `upgrade` variant of
+ * `CanisterInstallMode`. Candid inlines this variant, so the generated
+ * bindings expose no named type for it; this mirrors the candid definition and
+ * is validated wherever it is assigned into a `CanisterInstallMode`.
+ */
+export type WasmMemoryPersistence = { keep: null } | { replace: null };
+
 export enum AccountTransferStatus {
   Created = 'created',
   Failed = 'failed',

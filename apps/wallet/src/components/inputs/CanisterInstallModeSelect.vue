@@ -18,6 +18,7 @@ import { useI18n } from 'vue-i18n';
 import { VSelect } from 'vuetify/components';
 import { CanisterInstallMode } from '~/generated/station/station.did';
 import { requiredRule } from '~/utils/form.utils';
+import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -43,7 +44,13 @@ const emit = defineEmits<{
 }>();
 
 const model = computed({
-  get: () => props.modelValue,
+  // The `upgrade` variant can carry options (e.g. wasm memory persistence),
+  // but those are edited elsewhere in the form. Strip them here so the value
+  // still deep-equals the `{ upgrade: [] }` select item and stays selected.
+  get: () =>
+    props.modelValue && variantIs(props.modelValue, 'upgrade')
+      ? ({ upgrade: [] } as CanisterInstallMode)
+      : props.modelValue,
   set: value => emit('update:modelValue', value),
 });
 

@@ -15,6 +15,25 @@
         <VCol cols="12" class="pb-0">
           <CanisterInstallModeSelect v-model="model.mode" :readonly="props.readonly" required />
         </VCol>
+        <template v-if="isUpgrade">
+          <VCol cols="12" class="pb-0">
+            <WasmMemoryPersistenceSelect
+              v-model="wasmMemoryPersistence"
+              :readonly="props.readonly"
+              name="wasm_memory_persistence"
+            />
+          </VCol>
+          <VCol cols="12" class="pb-0">
+            <VCheckbox
+              v-model="skipPreUpgrade"
+              name="skip_pre_upgrade"
+              :label="$t('external_canisters.skip_pre_upgrade')"
+              :readonly="props.readonly"
+              density="comfortable"
+              hide-details
+            />
+          </VCol>
+        </template>
         <VCol cols="12" class="pb-0">
           <CanisterWasmModuleField
             v-model="model.wasmModule"
@@ -39,11 +58,14 @@
 </template>
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
-import { VCol, VContainer, VForm, VRow } from 'vuetify/components';
+import { VCheckbox, VCol, VContainer, VForm, VRow } from 'vuetify/components';
 import CanisterArgumentField from '~/components/inputs/CanisterArgumentField.vue';
 import CanisterInstallModeSelect from '~/components/inputs/CanisterInstallModeSelect.vue';
 import CanisterWasmModuleField from '~/components/inputs/CanisterWasmModuleField.vue';
+import WasmMemoryPersistenceSelect from '~/components/inputs/WasmMemoryPersistenceSelect.vue';
 import { VFormValidation } from '~/types/helper.types';
+import { WasmMemoryPersistence } from '~/types/station.types';
+import { variantIs } from '~/utils/helper.utils';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
 import { CanisterIcSettingsModel, CanisterInstallModel } from './external-canisters.types';
 
@@ -81,6 +103,46 @@ const fieldsWithErrors = ref<string[]>([]);
 const model = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
+});
+
+const isUpgrade = computed(
+  () => model.value.mode !== undefined && variantIs(model.value.mode, 'upgrade'),
+);
+
+// The upgrade options (wasm memory persistence, skip pre-upgrade) live inside
+// the `upgrade` variant of `model.mode`.
+const upgradeOptions = computed(() => {
+  const mode = model.value.mode;
+  return mode && variantIs(mode, 'upgrade') ? mode.upgrade[0] : undefined;
+});
+
+const setUpgradeOptions = (
+  wasmMemoryPersistence: [] | [WasmMemoryPersistence],
+  skipPreUpgrade: [] | [boolean],
+): void => {
+  // Collapse to `{ upgrade: [] }` when no option is set so the request matches
+  // one created without any upgrade options.
+  const hasOptions = wasmMemoryPersistence.length > 0 || skipPreUpgrade.length > 0;
+  model.value = {
+    ...model.value,
+    mode: {
+      upgrade: hasOptions
+        ? [{ wasm_memory_persistence: wasmMemoryPersistence, skip_pre_upgrade: skipPreUpgrade }]
+        : [],
+    },
+  };
+};
+
+const wasmMemoryPersistence = computed<WasmMemoryPersistence | undefined>({
+  get: () => upgradeOptions.value?.wasm_memory_persistence[0],
+  set: value =>
+    setUpgradeOptions(value ? [value] : [], upgradeOptions.value?.skip_pre_upgrade ?? []),
+});
+
+const skipPreUpgrade = computed<boolean>({
+  get: () => upgradeOptions.value?.skip_pre_upgrade[0] ?? false,
+  set: value =>
+    setUpgradeOptions(upgradeOptions.value?.wasm_memory_persistence ?? [], value ? [true] : []),
 });
 
 const triggerSubmit = computed({
