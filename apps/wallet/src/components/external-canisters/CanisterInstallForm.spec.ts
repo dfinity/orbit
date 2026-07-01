@@ -77,7 +77,9 @@ describe('CanisterInstallForm', () => {
       },
     });
 
-    form.findComponent(CanisterWasmMemoryPersistenceSelect).vm.$emit('update:modelValue', undefined);
+    form
+      .findComponent(CanisterWasmMemoryPersistenceSelect)
+      .vm.$emit('update:modelValue', undefined);
     await form.vm.$nextTick();
 
     const updates = form.emitted('update:modelValue');
