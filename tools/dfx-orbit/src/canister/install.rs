@@ -312,6 +312,8 @@ impl DfxOrbit {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used)]
+
     use super::*;
 
     fn args(mode: CanisterInstallModeArgs) -> RequestCanisterInstallArgs {
@@ -402,14 +404,13 @@ mod tests {
             CanisterInstallModeArgs::Install,
             CanisterInstallModeArgs::Reinstall,
         ] {
-            let mut args = args(mode);
-            args.wasm_memory_persistence = Some(WasmMemoryPersistenceArgs::Keep);
-            assert!(args.install_mode().is_err());
+            let mut with_persistence = args(mode);
+            with_persistence.wasm_memory_persistence = Some(WasmMemoryPersistenceArgs::Keep);
+            assert!(with_persistence.install_mode().is_err());
 
-            let mut args = args;
-            args.wasm_memory_persistence = None;
-            args.skip_pre_upgrade = true;
-            assert!(args.install_mode().is_err());
+            let mut with_skip = args(mode);
+            with_skip.skip_pre_upgrade = true;
+            assert!(with_skip.install_mode().is_err());
         }
     }
 }
