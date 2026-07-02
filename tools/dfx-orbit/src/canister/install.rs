@@ -185,20 +185,27 @@ impl RequestCanisterInstallArgs {
     fn install_mode(&self) -> anyhow::Result<CanisterInstallMode> {
         match self.mode {
             CanisterInstallModeArgs::Install => {
-                self.ensure_no_upgrade_options()?;
+                self.err_if_upgrade_flags_were_passed()?;
                 Ok(CanisterInstallMode::Install)
             }
             CanisterInstallModeArgs::Reinstall => {
-                self.ensure_no_upgrade_options()?;
+                self.err_if_upgrade_flags_were_passed()?;
                 Ok(CanisterInstallMode::Reinstall)
             }
             CanisterInstallModeArgs::Upgrade => {
                 // Collapse to `None` when neither flag is set so the request stays
                 // byte-for-byte identical to a plain `--mode upgrade`.
                 let options = if self.wasm_memory_persistence.is_some() || self.skip_pre_upgrade {
+                    let skip_pre_upgrade = if self.skip_pre_upgrade {
+                        Some(true)
+                    } else {
+                        None
+                    };
                     Some(CanisterUpgradeOptionsInput {
-                        wasm_memory_persistence: self.wasm_memory_persistence.map(Into::into),
-                        skip_pre_upgrade: self.skip_pre_upgrade.then_some(true),
+                        wasm_memory_persistence: self
+                            .wasm_memory_persistence
+                            .map(WasmMemoryPersistence::from),
+                        skip_pre_upgrade,
                     })
                 } else {
                     None
@@ -208,7 +215,7 @@ impl RequestCanisterInstallArgs {
         }
     }
 
-    fn ensure_no_upgrade_options(&self) -> anyhow::Result<()> {
+    fn err_if_upgrade_flags_were_passed(&self) -> anyhow::Result<()> {
         if self.wasm_memory_persistence.is_some() || self.skip_pre_upgrade {
             bail!(
                 "--wasm-memory-persistence and --skip-pre-upgrade are only valid with --mode upgrade"
@@ -291,10 +298,7 @@ impl DfxOrbit {
 
         if let CanisterInstallMode::Upgrade(Some(options)) = &op.mode {
             if let Some(persistence) = &options.wasm_memory_persistence {
-                let persistence = match persistence {
-                    WasmMemoryPersistence::Keep => "keep",
-                    WasmMemoryPersistence::Replace => "replace",
-                };
+                let persistence = format!("{persistence:?}").to_lowercase();
                 writeln!(output, "Wasm memory persistence: {persistence}")?;
             }
             if let Some(skip_pre_upgrade) = options.skip_pre_upgrade {
@@ -330,7 +334,7 @@ mod tests {
     }
 
     #[test]
-    fn install_mode_ignores_upgrade_flags_when_unset() {
+    fn plain_modes_produce_no_upgrade_options() {
         assert_eq!(
             args(CanisterInstallModeArgs::Install)
                 .install_mode()
@@ -343,10 +347,6 @@ mod tests {
                 .unwrap(),
             CanisterInstallMode::Reinstall
         );
-    }
-
-    #[test]
-    fn upgrade_without_flags_produces_no_options() {
         assert_eq!(
             args(CanisterInstallModeArgs::Upgrade)
                 .install_mode()
@@ -400,17 +400,33 @@ mod tests {
 
     #[test]
     fn upgrade_flags_rejected_for_install_and_reinstall() {
+        const EXPECTED_ERROR: &str =
+            "--wasm-memory-persistence and --skip-pre-upgrade are only valid with --mode upgrade";
+
         for mode in [
             CanisterInstallModeArgs::Install,
             CanisterInstallModeArgs::Reinstall,
         ] {
-            let mut with_persistence = args(mode);
-            with_persistence.wasm_memory_persistence = Some(WasmMemoryPersistenceArgs::Keep);
-            assert!(with_persistence.install_mode().is_err());
+            let mut install_args_with_wasm_memory_persistence = args(mode);
+            install_args_with_wasm_memory_persistence.wasm_memory_persistence =
+                Some(WasmMemoryPersistenceArgs::Keep);
+            let error = install_args_with_wasm_memory_persistence
+                .install_mode()
+                .unwrap_err();
+            assert!(
+                error.to_string().contains(EXPECTED_ERROR),
+                "unexpected error: {error}"
+            );
 
-            let mut with_skip = args(mode);
-            with_skip.skip_pre_upgrade = true;
-            assert!(with_skip.install_mode().is_err());
+            let mut install_args_with_skip_pre_upgrade = args(mode);
+            install_args_with_skip_pre_upgrade.skip_pre_upgrade = true;
+            let error = install_args_with_skip_pre_upgrade
+                .install_mode()
+                .unwrap_err();
+            assert!(
+                error.to_string().contains(EXPECTED_ERROR),
+                "unexpected error: {error}"
+            );
         }
     }
 }

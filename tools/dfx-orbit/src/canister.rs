@@ -7,11 +7,9 @@ mod install;
 mod settings;
 mod util;
 
-pub use self::{
-    call::RequestCanisterCallArgs, install::CanisterInstallModeArgs,
-    install::RequestCanisterInstallArgs, install::WasmMemoryPersistenceArgs,
-    settings::RequestCanisterUpdateSettingsArgs,
-};
+pub use call::RequestCanisterCallArgs;
+pub use install::{CanisterInstallModeArgs, RequestCanisterInstallArgs, WasmMemoryPersistenceArgs};
+pub use settings::RequestCanisterUpdateSettingsArgs;
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality

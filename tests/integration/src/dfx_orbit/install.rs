@@ -158,11 +158,13 @@ fn canister_install(use_chunks: bool) {
 }
 
 /// Test that `--wasm-memory-persistence` and `--skip-pre-upgrade` are plumbed
-/// through into the upgrade request and survive the round-trip through the
-/// station, so that `verify` accepts a matching request and rejects a
-/// mismatched one. The request is left pending (four-eyes is enabled and only
-/// the requester has approved) so the incompatible `keep` upgrade never
-/// executes against the empty test canister.
+/// through into the upgrade request, survive the round-trip through the
+/// station (so `verify` accepts a matching request and rejects a mismatched
+/// one), and are forwarded to the IC when the approved upgrade executes.
+///
+/// The upgrade requests `wasm_memory_persistence = replace`: the test canister
+/// is not built with Enhanced Orthogonal Persistence, and the IC rejects
+/// `keep` for such modules.
 #[test]
 fn canister_upgrade_options_round_trip() {
     let TestEnv {
@@ -175,7 +177,16 @@ fn canister_upgrade_options_round_trip() {
     let other_user = user_test_id(1);
     add_user(&env, other_user, vec![], canister_ids.station);
 
+    // Create and install the test canister, so that it can be upgraded later.
     let test_canister = create_canister(&env, canister_ids.station);
+    let module_bytes = get_canister_wasm("test_canister");
+    let module_hash = hash(&module_bytes);
+    env.install_canister(
+        test_canister,
+        module_bytes.clone(),
+        vec![],
+        Some(canister_ids.station),
+    );
 
     permit_change_operation(&env, &canister_ids);
     set_four_eyes_on_change(&env, &canister_ids);
@@ -186,13 +197,12 @@ fn canister_upgrade_options_round_trip() {
     };
 
     let mut wasm = NamedTempFile::new().unwrap();
-    let module_bytes = get_canister_wasm("test_canister");
     wasm.write_all(&module_bytes).unwrap();
 
-    let inner_args = RequestCanisterInstallArgs {
+    let install_args = RequestCanisterInstallArgs {
         canister: String::from("test"),
         mode: CanisterInstallModeArgs::Upgrade,
-        wasm_memory_persistence: Some(WasmMemoryPersistenceArgs::Keep),
+        wasm_memory_persistence: Some(WasmMemoryPersistenceArgs::Replace),
         skip_pre_upgrade: true,
         wasm: wasm.path().as_os_str().to_str().unwrap().to_string(),
         argument: None,
@@ -200,26 +210,26 @@ fn canister_upgrade_options_round_trip() {
         asset_canister: None,
     };
 
-    dfx_orbit_test(&mut env, config, async {
+    let request = dfx_orbit_test(&mut env, config, async {
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
         let request = RequestArgs {
             title: None,
             summary: None,
             action: RequestArgsActions::Canister(RequestCanisterArgs {
-                action: RequestCanisterActionArgs::Install(inner_args.clone()),
+                action: RequestCanisterActionArgs::Install(install_args.clone()),
             }),
         }
         .into_request(&dfx_orbit)
         .await
         .unwrap();
 
-        let request = dfx_orbit.station.request(request.clone()).await.unwrap();
+        let response = dfx_orbit.station.request(request.clone()).await.unwrap();
 
-        let req_response = dfx_orbit
+        let review_response = dfx_orbit
             .station
             .review_id(GetRequestInput {
-                request_id: request.request.id.clone(),
+                request_id: response.request.id.clone(),
                 with_full_info: Some(false),
             })
             .await
@@ -227,36 +237,48 @@ fn canister_upgrade_options_round_trip() {
 
         // The stored upgrade options match, so verification succeeds.
         VerifyArgs {
-            request_id: request.request.id.clone(),
+            request_id: response.request.id.clone(),
             and_approve: false,
             or_reject: false,
             action: VerifyArgsAction::Canister(VerifyCanisterArgs {
-                action: VerifyCanisterActionArgs::Install(inner_args.clone()),
+                action: VerifyCanisterActionArgs::Install(install_args.clone()),
             }),
         }
-        .verify(&dfx_orbit, &req_response)
+        .verify(&dfx_orbit, &review_response)
         .await
         .unwrap();
 
         // A mismatched `wasm_memory_persistence` must fail verification.
-        let mut mismatched_args = inner_args.clone();
-        mismatched_args.wasm_memory_persistence = Some(WasmMemoryPersistenceArgs::Replace);
+        let mut mismatched_args = install_args.clone();
+        mismatched_args.wasm_memory_persistence = Some(WasmMemoryPersistenceArgs::Keep);
         VerifyArgs {
-            request_id: request.request.id.clone(),
+            request_id: response.request.id.clone(),
             and_approve: false,
             or_reject: false,
             action: VerifyArgsAction::Canister(VerifyCanisterArgs {
                 action: VerifyCanisterActionArgs::Install(mismatched_args),
             }),
         }
-        .verify(&dfx_orbit, &req_response)
+        .verify(&dfx_orbit, &review_response)
         .await
         .expect_err("verification must reject a mismatched wasm_memory_persistence");
 
-        request.request
+        response.request
     });
 
-    // The upgrade request is still pending, so the canister remains empty.
+    // The other user approves the request; the upgrade carrying the upgrade
+    // options executes successfully (a failure to forward the options to the
+    // IC would leave the request failed and `wait_for_request` erroring).
+    submit_request_approval(
+        &env,
+        other_user,
+        canister_ids.station,
+        request.clone(),
+        RequestApprovalStatusDTO::Approved,
+    );
+    wait_for_request(&env, other_user, canister_ids.station, request).unwrap();
+
+    // The canister still runs the same module after the upgrade.
     let status = canister_status(&env, Some(canister_ids.station), test_canister);
-    assert_eq!(status.module_hash, None);
+    assert_eq!(status.module_hash, Some(module_hash));
 }

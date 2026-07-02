@@ -64,8 +64,11 @@ const selected = computed<WasmMemoryPersistenceOption>({
       case 'replace':
         emit('update:modelValue', { replace: null });
         break;
-      default:
+      case 'default':
+        // `default` means "let the IC decide" and maps to an absent
+        // wasm_memory_persistence option in the request.
         emit('update:modelValue', undefined);
+        break;
     }
   },
 });
