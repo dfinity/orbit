@@ -18,9 +18,10 @@ use dfx_orbit::{
         VerifyCanisterArgs,
     },
 };
+use flate2::read::GzDecoder;
 use sha2::{Digest, Sha256};
 use station_api::{GetRequestInput, RequestApprovalStatusDTO};
-use std::io::Write;
+use std::io::{Read, Write};
 use tempfile::NamedTempFile;
 
 fn hash(data: &[u8]) -> Vec<u8> {
@@ -333,8 +334,15 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
 
     // Mark the test module as supporting Enhanced Orthogonal Persistence and
     // install it, so that upgrades require `wasm_memory_persistence = keep`.
+    // The bundled module is gzipped and must be decompressed before appending
+    // the custom section: the IC reads the uncompressed size of gzipped
+    // modules from the trailing bytes of the gzip stream, so bytes appended
+    // after the stream would corrupt the module.
     let test_canister = create_canister(&env, canister_ids.station);
-    let mut module_bytes = get_canister_wasm("test_canister");
+    let mut module_bytes = Vec::new();
+    GzDecoder::new(get_canister_wasm("test_canister").as_slice())
+        .read_to_end(&mut module_bytes)
+        .unwrap();
     append_wasm_custom_section(
         &mut module_bytes,
         "icp:private enhanced-orthogonal-persistence",
