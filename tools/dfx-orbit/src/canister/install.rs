@@ -22,8 +22,8 @@ pub struct RequestCanisterInstallArgs {
     pub mode: CanisterInstallModeArgs,
     /// Controls whether the canister's Wasm main memory is kept or replaced during
     /// an upgrade. Only valid with `--mode upgrade`. Motoko canisters that use
-    /// Enhanced Orthogonal Persistence require `keep`, otherwise the IC clears
-    /// their main memory. When omitted, the IC default (`replace`) applies.
+    /// Enhanced Orthogonal Persistence require `keep` — the IC refuses to upgrade
+    /// them otherwise. When omitted, the IC default (`replace`) applies.
     #[clap(long, value_enum, rename_all = "kebab-case")]
     pub wasm_memory_persistence: Option<WasmMemoryPersistenceArgs>,
     /// Skip the canister's `pre_upgrade` hook during an upgrade. Only valid with

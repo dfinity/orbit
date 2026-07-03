@@ -29,6 +29,36 @@ fn hash(data: &[u8]) -> Vec<u8> {
     hasher.finalize().to_vec()
 }
 
+/// Appends a custom section to a Wasm module. The IC decides whether a module
+/// supports Enhanced Orthogonal Persistence by the presence of the
+/// `icp:private enhanced-orthogonal-persistence` custom section, so appending
+/// it turns the plain test canister into an EOP module from the IC's
+/// perspective.
+fn append_wasm_custom_section(module: &mut Vec<u8>, name: &str, payload: &[u8]) {
+    fn write_leb128(mut value: usize, out: &mut Vec<u8>) {
+        loop {
+            let mut byte = (value & 0x7f) as u8;
+            value >>= 7;
+            if value != 0 {
+                byte |= 0x80;
+            }
+            out.push(byte);
+            if value == 0 {
+                break;
+            }
+        }
+    }
+
+    let mut contents = Vec::new();
+    write_leb128(name.len(), &mut contents);
+    contents.extend_from_slice(name.as_bytes());
+    contents.extend_from_slice(payload);
+
+    module.push(0); // custom section id
+    write_leb128(contents.len(), module);
+    module.extend_from_slice(&contents);
+}
+
 /// Test installing a canister through orbit using the station agent
 #[test]
 fn canister_install_no_chunks() {
@@ -279,6 +309,117 @@ fn canister_upgrade_options_round_trip() {
     wait_for_request(&env, other_user, canister_ids.station, request).unwrap();
 
     // The canister still runs the same module after the upgrade.
+    let status = canister_status(&env, Some(canister_ids.station), test_canister);
+    assert_eq!(status.module_hash, Some(module_hash));
+}
+
+/// Test upgrading a canister that runs a module declaring Enhanced Orthogonal
+/// Persistence — the actual use case motivating `--wasm-memory-persistence`.
+/// The IC refuses to upgrade such canisters unless
+/// `wasm_memory_persistence = keep` is set (a safety check against
+/// accidentally dropping their main memory), so the same upgrade request must
+/// fail without the flag and execute successfully with it.
+#[test]
+fn canister_upgrade_with_wasm_memory_persistence_keep() {
+    let TestEnv {
+        mut env,
+        canister_ids,
+        ..
+    } = setup_new_env();
+
+    let (_dfx_user, _) = setup_dfx_user(&env, &canister_ids);
+    let other_user = user_test_id(1);
+    add_user(&env, other_user, vec![], canister_ids.station);
+
+    // Mark the test module as supporting Enhanced Orthogonal Persistence and
+    // install it, so that upgrades require `wasm_memory_persistence = keep`.
+    let test_canister = create_canister(&env, canister_ids.station);
+    let mut module_bytes = get_canister_wasm("test_canister");
+    append_wasm_custom_section(
+        &mut module_bytes,
+        "icp:private enhanced-orthogonal-persistence",
+        &[],
+    );
+    let module_hash = hash(&module_bytes);
+    env.install_canister(
+        test_canister,
+        module_bytes.clone(),
+        vec![],
+        Some(canister_ids.station),
+    );
+
+    permit_change_operation(&env, &canister_ids);
+    set_four_eyes_on_change(&env, &canister_ids);
+
+    let config = DfxOrbitTestConfig {
+        canister_ids: vec![(String::from("test"), test_canister)],
+        ..Default::default()
+    };
+
+    let mut wasm = NamedTempFile::new().unwrap();
+    wasm.write_all(&module_bytes).unwrap();
+
+    let install_args = |wasm_memory_persistence| RequestCanisterInstallArgs {
+        canister: String::from("test"),
+        mode: CanisterInstallModeArgs::Upgrade,
+        wasm_memory_persistence,
+        skip_pre_upgrade: false,
+        wasm: wasm.path().as_os_str().to_str().unwrap().to_string(),
+        argument: None,
+        arg_file: None,
+        asset_canister: None,
+    };
+    let args_without_keep = install_args(None);
+    let args_with_keep = install_args(Some(WasmMemoryPersistenceArgs::Keep));
+
+    let (request_without_keep, request_with_keep) = dfx_orbit_test(&mut env, config, async {
+        let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+
+        let mut requests = Vec::new();
+        for args in [args_without_keep, args_with_keep] {
+            let request = RequestArgs {
+                title: None,
+                summary: None,
+                action: RequestArgsActions::Canister(RequestCanisterArgs {
+                    action: RequestCanisterActionArgs::Install(args),
+                }),
+            }
+            .into_request(&dfx_orbit)
+            .await
+            .unwrap();
+
+            let response = dfx_orbit.station.request(request).await.unwrap();
+            requests.push(response.request);
+        }
+
+        let with_keep = requests.pop().unwrap();
+        let without_keep = requests.pop().unwrap();
+        (without_keep, with_keep)
+    });
+
+    // Without `keep`, the IC refuses to drop the main memory of a canister
+    // running an Enhanced Orthogonal Persistence module, so the upgrade fails.
+    submit_request_approval(
+        &env,
+        other_user,
+        canister_ids.station,
+        request_without_keep.clone(),
+        RequestApprovalStatusDTO::Approved,
+    );
+    wait_for_request(&env, other_user, canister_ids.station, request_without_keep)
+        .expect_err("the IC must reject an EOP upgrade without wasm_memory_persistence = keep");
+
+    // With `keep`, the same upgrade executes successfully.
+    submit_request_approval(
+        &env,
+        other_user,
+        canister_ids.station,
+        request_with_keep.clone(),
+        RequestApprovalStatusDTO::Approved,
+    );
+    wait_for_request(&env, other_user, canister_ids.station, request_with_keep).unwrap();
+
+    // The canister still runs the (EOP-marked) module after the upgrade.
     let status = canister_status(&env, Some(canister_ids.station), test_canister);
     assert_eq!(status.module_hash, Some(module_hash));
 }

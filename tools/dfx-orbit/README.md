@@ -147,8 +147,9 @@ When upgrading, you can control what happens to the canister's Wasm main memory
 with `--wasm-memory-persistence`:
 
 - `keep` — preserve the main memory. This is **required** for Motoko canisters
-  that use [Enhanced Orthogonal Persistence](https://docs.internetcomputer.org/motoko/orthogonal-persistence/enhanced);
-  otherwise the IC clears their main memory on upgrade.
+  that use [Enhanced Orthogonal Persistence](https://docs.internetcomputer.org/motoko/orthogonal-persistence/enhanced#ic-main-memory-retention) —
+  the IC refuses to upgrade them otherwise, as a safety check against
+  accidentally dropping their main memory.
 - `replace` — clear the main memory (the IC default).
 
 You can also pass `--skip-pre-upgrade` to skip the canister's `pre_upgrade`
