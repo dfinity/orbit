@@ -339,22 +339,30 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
     // modules from the trailing bytes of the gzip stream, so bytes appended
     // after the stream would corrupt the module.
     let test_canister = create_canister(&env, canister_ids.station);
-    let mut module_bytes = Vec::new();
+    let mut installed_module_bytes = Vec::new();
     GzDecoder::new(get_canister_wasm("test_canister").as_slice())
-        .read_to_end(&mut module_bytes)
+        .read_to_end(&mut installed_module_bytes)
         .unwrap();
     append_wasm_custom_section(
-        &mut module_bytes,
+        &mut installed_module_bytes,
         "icp:private enhanced-orthogonal-persistence",
         &[],
     );
-    let module_hash = hash(&module_bytes);
+    let installed_module_hash = hash(&installed_module_bytes);
     env.install_canister(
         test_canister,
-        module_bytes.clone(),
+        installed_module_bytes.clone(),
         vec![],
         Some(canister_ids.station),
     );
+
+    // Upgrade to a *different* module — still EOP-marked, but carrying an extra
+    // marker section so its hash differs from the installed one. That lets the
+    // post-upgrade module hash distinguish "new code installed" from a no-op.
+    let mut upgraded_module_bytes = installed_module_bytes.clone();
+    append_wasm_custom_section(&mut upgraded_module_bytes, "orbit:upgrade-marker", &[1]);
+    let upgraded_module_hash = hash(&upgraded_module_bytes);
+    assert_ne!(installed_module_hash, upgraded_module_hash);
 
     permit_change_operation(&env, &canister_ids);
     set_four_eyes_on_change(&env, &canister_ids);
@@ -365,7 +373,7 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
     };
 
     let mut wasm = NamedTempFile::new().unwrap();
-    wasm.write_all(&module_bytes).unwrap();
+    wasm.write_all(&upgraded_module_bytes).unwrap();
 
     let install_args = |wasm_memory_persistence| RequestCanisterInstallArgs {
         canister: String::from("test"),
@@ -436,6 +444,10 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
         other => panic!("expected the upgrade to fail, got {other:?}"),
     }
 
+    // The failed upgrade must have left the originally installed module in place.
+    let status = canister_status(&env, Some(canister_ids.station), test_canister);
+    assert_eq!(status.module_hash, Some(installed_module_hash));
+
     // With `keep`, the same upgrade executes successfully.
     submit_request_approval(
         &env,
@@ -446,7 +458,8 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
     );
     wait_for_request(&env, other_user, canister_ids.station, request_with_keep).unwrap();
 
-    // The canister still runs the (EOP-marked) module after the upgrade.
+    // The canister now runs the upgraded module, confirming the `keep` upgrade
+    // actually installed the new code rather than being a no-op.
     let status = canister_status(&env, Some(canister_ids.station), test_canister);
-    assert_eq!(status.module_hash, Some(module_hash));
+    assert_eq!(status.module_hash, Some(upgraded_module_hash));
 }
