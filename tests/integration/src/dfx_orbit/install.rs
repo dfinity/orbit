@@ -20,7 +20,7 @@ use dfx_orbit::{
 };
 use flate2::read::GzDecoder;
 use sha2::{Digest, Sha256};
-use station_api::{GetRequestInput, RequestApprovalStatusDTO};
+use station_api::{GetRequestInput, RequestApprovalStatusDTO, RequestStatusDTO};
 use std::io::{Read, Write};
 use tempfile::NamedTempFile;
 
@@ -382,9 +382,9 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
 
     let (request_without_keep, request_with_keep) = dfx_orbit_test(&mut env, config, async {
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+        let dfx_orbit = &dfx_orbit;
 
-        let mut requests = Vec::new();
-        for args in [args_without_keep, args_with_keep] {
+        let submit_upgrade = move |args: RequestCanisterInstallArgs| async move {
             let request = RequestArgs {
                 title: None,
                 summary: None,
@@ -392,21 +392,23 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
                     action: RequestCanisterActionArgs::Install(args),
                 }),
             }
-            .into_request(&dfx_orbit)
+            .into_request(dfx_orbit)
             .await
             .unwrap();
 
-            let response = dfx_orbit.station.request(request).await.unwrap();
-            requests.push(response.request);
-        }
+            dfx_orbit.station.request(request).await.unwrap().request
+        };
 
-        let with_keep = requests.pop().unwrap();
-        let without_keep = requests.pop().unwrap();
-        (without_keep, with_keep)
+        let request_without_keep = submit_upgrade(args_without_keep).await;
+        let request_with_keep = submit_upgrade(args_with_keep).await;
+        (request_without_keep, request_with_keep)
     });
 
     // Without `keep`, the IC refuses to drop the main memory of a canister
-    // running an Enhanced Orthogonal Persistence module, so the upgrade fails.
+    // running an Enhanced Orthogonal Persistence module, so the upgrade fails
+    // during execution. Confirm it failed for that reason — the `install_code`
+    // call was rejected — rather than being rejected/cancelled at an earlier
+    // stage or timing out.
     submit_request_approval(
         &env,
         other_user,
@@ -414,8 +416,25 @@ fn canister_upgrade_with_wasm_memory_persistence_keep() {
         request_without_keep.clone(),
         RequestApprovalStatusDTO::Approved,
     );
-    wait_for_request(&env, other_user, canister_ids.station, request_without_keep)
-        .expect_err("the IC must reject an EOP upgrade without wasm_memory_persistence = keep");
+    let failed_status =
+        wait_for_request(&env, other_user, canister_ids.station, request_without_keep)
+            .expect_err("the IC must reject an EOP upgrade without wasm_memory_persistence = keep")
+            .expect("the request must reach a terminal failed state rather than time out");
+    match failed_status {
+        RequestStatusDTO::Failed { reason } => {
+            let reason = reason.expect("a failed upgrade must carry a reason");
+            // The station wraps the management-canister error in this prefix
+            // (see ChangeExternalCanisterRequestExecute), so its presence
+            // confirms the failure came from the rejected `install_code` call.
+            // The IC's own wording is surfaced in the panic message rather than
+            // asserted on, to avoid coupling the test to replica error strings.
+            assert!(
+                reason.contains("failed to install external canister"),
+                "upgrade failed for an unexpected reason: {reason}"
+            );
+        }
+        other => panic!("expected the upgrade to fail, got {other:?}"),
+    }
 
     // With `keep`, the same upgrade executes successfully.
     submit_request_approval(
