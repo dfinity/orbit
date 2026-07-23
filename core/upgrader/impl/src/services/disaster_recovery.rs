@@ -590,13 +590,16 @@ mod tests {
         let mut committee = mock_committee();
 
         committee.quorum = 0;
-        dr.set_committee(committee.clone())
+        let err = dr
+            .set_committee(committee.clone())
             .expect_err("quorum of 0 must be rejected");
+        assert_eq!(err.code, "INVALID_QUORUM".to_string());
 
         committee.quorum = committee.users.len() as u16 + 1;
-        dr.set_committee(committee.clone())
+        let err = dr
+            .set_committee(committee.clone())
             .expect_err("quorum greater than the number of members must be rejected");
-
+        assert_eq!(err.code, "INVALID_QUORUM".to_string());
         committee.quorum = committee.users.len() as u16;
         dr.set_committee(committee.clone())
             .expect("quorum equal to the number of members must be accepted");
