@@ -116,6 +116,12 @@ pub enum StationRecoveryRequestOperation {
 pub struct StationRecoveryRequestInstallCodeOperationFootprint {
     pub install_mode: InstallMode,
     pub wasm_sha256: Vec<u8>,
+    /// The module delivery is part of the agreement identity: for a chunked
+    /// install the assembled module is fetched from `store_canister`/`extra_chunks_key`,
+    /// and `wasm_sha256` is the caller-declared hash. Committee members must agree on
+    /// the exact delivery, otherwise a member could match another member's footprint
+    /// while sourcing the module from a canister of their choosing.
+    pub wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg_sha256: Vec<u8>,
 }
 
