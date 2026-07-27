@@ -856,6 +856,21 @@ impl ModelValidator<ValidationError> for CallExternalCanisterOperationInput {
             ));
         }
 
+        // The validation method must differ from the execution method: sharing a target would let a
+        // request approve itself by calling the same canister method for both validation and execution.
+        if let Some(validation_method) = &self.validation_method {
+            if validation_method.canister_id == self.execution_method.canister_id
+                && validation_method.method_name == self.execution_method.method_name
+            {
+                return Err(ValidationError::ExternalCanisterValidationError(
+                    ExternalCanisterValidationError::ValidationError {
+                        info: "The validation method cannot be the same as the execution method."
+                            .to_string(),
+                    },
+                ));
+            }
+        }
+
         // Validate both methods
         let validation_method_target: ValidationMethodResourceTarget =
             self.validation_method.clone().into();
@@ -1789,6 +1804,36 @@ mod test {
             err,
             ValidationError::ExternalCanisterValidationError(
                 ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+    }
+
+    #[test]
+    fn fail_call_external_canister_with_matching_validation_and_execution_method() {
+        let canister_id = candid::Principal::from_slice(&[42; 29]);
+
+        let err = crate::models::CallExternalCanisterOperationInput {
+            validation_method: Some(crate::models::CanisterMethod {
+                canister_id,
+                method_name: "transfer".to_string(),
+            }),
+            execution_method: crate::models::CanisterMethod {
+                canister_id,
+                method_name: "transfer".to_string(),
+            },
+            arg: None,
+            execution_method_cycles: None,
+        }
+        .validate()
+        .expect_err("validation method equal to execution method must be rejected");
+
+        // The same-method guard runs before canister-existence validation, so the error is the
+        // dedicated ValidationError rather than InvalidExternalCanister. Distinct validation and
+        // execution methods are exercised by `fail_request_operation_with_non_external_canister`.
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::ValidationError { .. }
             )
         ));
     }
