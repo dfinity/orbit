@@ -8,6 +8,7 @@ pub enum ValidationError {
     RecordValidationError(RecordValidationError),
     ExternalCanisterValidationError(ExternalCanisterValidationError),
     SystemInfoValidationError(SystemInfoValidationError),
+    RequestPolicyRuleValidationError(RequestPolicyRuleValidationError),
 }
 
 impl Display for ValidationError {
@@ -16,6 +17,7 @@ impl Display for ValidationError {
             ValidationError::RecordValidationError(err) => write!(f, "{err}"),
             ValidationError::ExternalCanisterValidationError(err) => write!(f, "{err}"),
             ValidationError::SystemInfoValidationError(err) => write!(f, "{err}"),
+            ValidationError::RequestPolicyRuleValidationError(err) => write!(f, "{err}"),
         }
     }
 }
@@ -26,6 +28,7 @@ impl DetailableError for ValidationError {
             ValidationError::RecordValidationError(err) => err.details(),
             ValidationError::ExternalCanisterValidationError(err) => err.details(),
             ValidationError::SystemInfoValidationError(err) => err.details(),
+            ValidationError::RequestPolicyRuleValidationError(err) => err.details(),
         }
     }
 }
@@ -45,6 +48,12 @@ impl From<ExternalCanisterValidationError> for ValidationError {
 impl From<SystemInfoValidationError> for ValidationError {
     fn from(err: SystemInfoValidationError) -> ValidationError {
         ValidationError::SystemInfoValidationError(err)
+    }
+}
+
+impl From<RequestPolicyRuleValidationError> for ValidationError {
+    fn from(err: RequestPolicyRuleValidationError) -> ValidationError {
+        ValidationError::RequestPolicyRuleValidationError(err)
     }
 }
 
@@ -105,6 +114,25 @@ impl DetailableError for SystemInfoValidationError {
     fn details(&self) -> Option<std::collections::HashMap<String, String>> {
         match self {
             SystemInfoValidationError::InvalidMaxBackupSnapshots { .. } => None,
+        }
+    }
+}
+
+#[derive(Debug, Error, Eq, PartialEq)]
+pub enum RequestPolicyRuleValidationError {
+    #[error(r#"{info}"#)]
+    InvalidRule { info: String },
+}
+
+impl DetailableError for RequestPolicyRuleValidationError {
+    fn details(&self) -> Option<std::collections::HashMap<String, String>> {
+        let mut details = std::collections::HashMap::new();
+
+        match self {
+            RequestPolicyRuleValidationError::InvalidRule { info } => {
+                details.insert("info".to_string(), info.to_string());
+                Some(details)
+            }
         }
     }
 }
