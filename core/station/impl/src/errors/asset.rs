@@ -35,6 +35,9 @@ pub enum AssetError {
     /// The asset is in use.
     #[error(r#"The asset is used by {resource} `{id}`"#)]
     AssetInUse { id: String, resource: String },
+    /// The ledger canister id of an existing asset cannot be changed.
+    #[error(r#"The ledger canister id of an existing asset cannot be changed."#)]
+    ImmutableLedgerCanisterId,
     /// The asset is not unique.
     #[error(r#"The asset already exists."#)]
     AlreadyExists {
@@ -104,6 +107,7 @@ impl DetailableError for AssetError {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
+            AssetError::ImmutableLedgerCanisterId => Some(details),
         }
     }
 }
