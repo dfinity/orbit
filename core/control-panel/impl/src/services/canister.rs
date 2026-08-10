@@ -3,11 +3,14 @@ use crate::core::{canister_config, write_canister_config, CallContext};
 use crate::errors::CanisterError;
 use crate::repositories::{UserRepository, USER_REPOSITORY};
 use crate::SYSTEM_VERSION;
+use canfund::errors::Error as CanfundError;
 use canfund::manager::options::{CyclesThreshold, FundManagerOptions, FundStrategy};
 use canfund::manager::RegisterOpts;
 use canfund::operations::fetch::{FetchCyclesBalance, FetchCyclesBalanceFromPrometheusMetrics};
 use canfund::FundManager;
 use control_panel_api::UploadCanisterModulesInput;
+use ic_cdk::api::call::RejectionCode;
+use ic_cdk::api::management_canister::main::CanisterId;
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
@@ -23,6 +26,48 @@ lazy_static! {
 thread_local! {
     /// Monitor the cycles of canisters and top up if necessary.
     pub static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
+}
+
+/// Upper bound on a station's self-reported cycles balance.
+///
+/// The balance is read from the station's own `/metrics`, so it is chosen by whoever controls that
+/// station's code. canfund derives a consumption rate from consecutive readings as
+/// `(previous - current) * 1_000_000_000 / elapsed`, and that multiplication is not saturating.
+/// Keeping every accepted reading at or below this bound keeps the product inside `u128` for any
+/// pair of readings, so a crafted balance cannot trap the shared monitoring round.
+const MAX_REPORTED_STATION_CYCLES: u128 = u128::MAX / 1_000_000_000;
+
+/// Rejects self-reported cycles balances large enough to break the arithmetic canfund performs on
+/// them.
+///
+/// A rejected reading is surfaced as a fetch failure, which canfund already records per canister
+/// without aborting the round, so one misbehaving station cannot stop the rest being funded.
+struct BoundedCyclesFetcher<T: FetchCyclesBalance> {
+    inner: T,
+}
+
+impl<T: FetchCyclesBalance> BoundedCyclesFetcher<T> {
+    fn new(inner: T) -> Self {
+        Self { inner }
+    }
+}
+
+#[async_trait::async_trait]
+impl<T: FetchCyclesBalance> FetchCyclesBalance for BoundedCyclesFetcher<T> {
+    async fn fetch_cycles_balance(&self, canister_id: CanisterId) -> Result<u128, CanfundError> {
+        let cycles = self.inner.fetch_cycles_balance(canister_id).await?;
+
+        if cycles > MAX_REPORTED_STATION_CYCLES {
+            return Err(CanfundError::MetricsHttpRequestFailed {
+                code: RejectionCode::CanisterError,
+                reason: format!(
+                    "canister {canister_id} reported an implausible cycles balance of {cycles}"
+                ),
+            });
+        }
+
+        Ok(cycles)
+    }
 }
 
 #[derive(Default, Debug)]
@@ -82,9 +127,11 @@ impl CanisterService {
     }
 
     pub fn create_station_cycles_fetcher(&self) -> Arc<dyn FetchCyclesBalance> {
-        Arc::new(FetchCyclesBalanceFromPrometheusMetrics::new(
-            "/metrics".to_string(),
-            "station_canister_cycles_balance".to_string(),
+        Arc::new(BoundedCyclesFetcher::new(
+            FetchCyclesBalanceFromPrometheusMetrics::new(
+                "/metrics".to_string(),
+                "station_canister_cycles_balance".to_string(),
+            ),
         ))
     }
 
@@ -141,5 +188,64 @@ impl CanisterService {
             }),
             Some(version) => print(format!("No migration for version: {version}")),
         };
+    }
+}
+
+#[cfg(test)]
+mod bounded_cycles_fetcher_tests {
+    use super::*;
+
+    struct StubFetcher(u128);
+
+    #[async_trait::async_trait]
+    impl FetchCyclesBalance for StubFetcher {
+        async fn fetch_cycles_balance(
+            &self,
+            _canister_id: CanisterId,
+        ) -> Result<u128, CanfundError> {
+            Ok(self.0)
+        }
+    }
+
+    #[tokio::test]
+    async fn accepts_a_plausible_balance() {
+        let fetcher = BoundedCyclesFetcher::new(StubFetcher(500_000_000_000));
+
+        assert_eq!(
+            fetcher
+                .fetch_cycles_balance(CanisterId::anonymous())
+                .await
+                .unwrap(),
+            500_000_000_000
+        );
+    }
+
+    #[tokio::test]
+    async fn accepts_a_balance_at_the_bound() {
+        let fetcher = BoundedCyclesFetcher::new(StubFetcher(MAX_REPORTED_STATION_CYCLES));
+
+        assert!(fetcher
+            .fetch_cycles_balance(CanisterId::anonymous())
+            .await
+            .is_ok());
+    }
+
+    #[tokio::test]
+    async fn rejects_a_balance_that_would_overflow_the_consumption_rate() {
+        let fetcher = BoundedCyclesFetcher::new(StubFetcher(u128::MAX));
+
+        assert!(fetcher
+            .fetch_cycles_balance(CanisterId::anonymous())
+            .await
+            .is_err());
+    }
+
+    /// The bound has to be tight enough that the largest difference between two accepted readings
+    /// still survives the `* 1_000_000_000` canfund applies to it.
+    #[test]
+    fn bound_keeps_the_consumption_rate_arithmetic_in_range() {
+        assert!(MAX_REPORTED_STATION_CYCLES
+            .checked_mul(1_000_000_000)
+            .is_some());
     }
 }
