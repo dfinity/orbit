@@ -15,7 +15,7 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 lazy_static! {
@@ -67,6 +67,110 @@ impl<T: FetchCyclesBalance> FetchCyclesBalance for BoundedCyclesFetcher<T> {
         }
 
         Ok(cycles)
+    }
+}
+
+/// How stale a cached reading may be before it stops being usable.
+///
+/// The monitoring round runs daily, so a reading is normally about a day old by the time it is
+/// used. This allows one missed refresh before a station stops being funded on old data.
+const MAX_CACHED_BALANCE_AGE_NS: u64 = 3 * 24 * 60 * 60 * 1_000_000_000;
+
+#[derive(Clone)]
+struct CachedBalance {
+    cycles: u128,
+    fetched_at: u64,
+}
+
+impl CachedBalance {
+    fn is_usable_at(&self, now: u64) -> bool {
+        now.saturating_sub(self.fetched_at) <= MAX_CACHED_BALANCE_AGE_NS
+    }
+}
+
+thread_local! {
+    /// Last successfully read balance per monitored canister.
+    static CYCLES_BALANCE_CACHE: RefCell<HashMap<CanisterId, CachedBalance>> =
+        RefCell::new(HashMap::new());
+
+    /// Canisters with a refresh already in flight. A canister that never replies stays here, which
+    /// is what stops the round from opening a new call to it every day.
+    static REFRESHES_IN_FLIGHT: RefCell<HashSet<CanisterId>> = RefCell::new(HashSet::new());
+}
+
+/// Serves balances from a local cache and refreshes them out of band.
+///
+/// The monitoring round awaits every registered canister's fetch inside one `join_all` while
+/// holding the process lock, so a canister that accepts the call and never replies stalls the
+/// round forever and the lock is never released. Nothing on the platform gets funded again.
+///
+/// Reading a balance is decoupled from the round instead: the fetch returns immediately from
+/// cache and the actual call happens in a spawned task. A canister that never replies only ever
+/// starves its own cache entry, and every other canister is funded as normal.
+struct CachedCyclesFetcher {
+    inner: Arc<dyn FetchCyclesBalance>,
+}
+
+impl CachedCyclesFetcher {
+    fn new(inner: Arc<dyn FetchCyclesBalance>) -> Self {
+        Self { inner }
+    }
+
+    fn spawn_refresh(&self, canister_id: CanisterId) {
+        let already_running =
+            REFRESHES_IN_FLIGHT.with(|running| !running.borrow_mut().insert(canister_id));
+
+        if already_running {
+            return;
+        }
+
+        let inner = Arc::clone(&self.inner);
+
+        crate::core::ic_cdk::spawn(async move {
+            let fetched = inner.fetch_cycles_balance(canister_id).await;
+
+            REFRESHES_IN_FLIGHT.with(|running| {
+                running.borrow_mut().remove(&canister_id);
+            });
+
+            match fetched {
+                Ok(cycles) => CYCLES_BALANCE_CACHE.with(|cache| {
+                    cache.borrow_mut().insert(
+                        canister_id,
+                        CachedBalance {
+                            cycles,
+                            fetched_at: time(),
+                        },
+                    );
+                }),
+                Err(err) => print(format!(
+                    "Failed to refresh the cycles balance of {canister_id}: {err}"
+                )),
+            }
+        });
+    }
+}
+
+#[async_trait::async_trait]
+impl FetchCyclesBalance for CachedCyclesFetcher {
+    async fn fetch_cycles_balance(&self, canister_id: CanisterId) -> Result<u128, CanfundError> {
+        self.spawn_refresh(canister_id);
+
+        let cached = CYCLES_BALANCE_CACHE
+            .with(|cache| cache.borrow().get(&canister_id).cloned())
+            .ok_or_else(|| CanfundError::MetricsHttpRequestFailed {
+                code: RejectionCode::CanisterError,
+                reason: format!("no cycles balance recorded yet for canister {canister_id}"),
+            })?;
+
+        if !cached.is_usable_at(time()) {
+            return Err(CanfundError::MetricsHttpRequestFailed {
+                code: RejectionCode::CanisterError,
+                reason: format!("cycles balance for canister {canister_id} is stale"),
+            });
+        }
+
+        Ok(cached.cycles)
     }
 }
 
@@ -127,12 +231,14 @@ impl CanisterService {
     }
 
     pub fn create_station_cycles_fetcher(&self) -> Arc<dyn FetchCyclesBalance> {
-        Arc::new(BoundedCyclesFetcher::new(
-            FetchCyclesBalanceFromPrometheusMetrics::new(
+        // Bounded rejects an implausible reading before it is cached; cached keeps a station that
+        // never replies from stalling the shared monitoring round.
+        Arc::new(CachedCyclesFetcher::new(Arc::new(
+            BoundedCyclesFetcher::new(FetchCyclesBalanceFromPrometheusMetrics::new(
                 "/metrics".to_string(),
                 "station_canister_cycles_balance".to_string(),
-            ),
-        ))
+            )),
+        )))
     }
 
     // Monitor the cycles of active canisters that have been deployed by the control panel
@@ -247,5 +353,67 @@ mod bounded_cycles_fetcher_tests {
         assert!(MAX_REPORTED_STATION_CYCLES
             .checked_mul(1_000_000_000)
             .is_some());
+    }
+
+    /// A canister with no reading yet must not be funded on invented data.
+    #[tokio::test]
+    async fn reports_a_failure_when_nothing_has_been_read_yet() {
+        let canister_id = CanisterId::from_slice(&[9; 29]);
+        CYCLES_BALANCE_CACHE.with(|cache| cache.borrow_mut().remove(&canister_id));
+
+        let fetcher = CachedCyclesFetcher::new(Arc::new(StubFetcher(1_000)));
+
+        assert!(fetcher.fetch_cycles_balance(canister_id).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn serves_a_fresh_cached_reading() {
+        let canister_id = CanisterId::from_slice(&[10; 29]);
+        CYCLES_BALANCE_CACHE.with(|cache| {
+            cache.borrow_mut().insert(
+                canister_id,
+                CachedBalance {
+                    cycles: 700_000_000_000,
+                    fetched_at: time(),
+                },
+            );
+        });
+
+        let fetcher = CachedCyclesFetcher::new(Arc::new(StubFetcher(1_000)));
+
+        assert_eq!(
+            fetcher.fetch_cycles_balance(canister_id).await.unwrap(),
+            700_000_000_000
+        );
+    }
+
+    /// A canister that stops replying goes stale rather than being funded forever on an old value.
+    #[test]
+    fn a_cached_reading_expires_once_it_passes_the_maximum_age() {
+        let reading = CachedBalance {
+            cycles: 700_000_000_000,
+            fetched_at: 1_000,
+        };
+
+        assert!(reading.is_usable_at(1_000));
+        assert!(reading.is_usable_at(1_000 + MAX_CACHED_BALANCE_AGE_NS));
+        assert!(!reading.is_usable_at(1_000 + MAX_CACHED_BALANCE_AGE_NS + 1));
+    }
+
+    /// Without this, a canister that never replies would accumulate one open call per round.
+    #[test]
+    fn does_not_start_a_second_refresh_while_one_is_in_flight() {
+        let canister_id = CanisterId::from_slice(&[12; 29]);
+        REFRESHES_IN_FLIGHT.with(|running| {
+            running.borrow_mut().insert(canister_id);
+        });
+
+        let fetcher = CachedCyclesFetcher::new(Arc::new(StubFetcher(1_000)));
+        fetcher.spawn_refresh(canister_id);
+
+        assert_eq!(
+            REFRESHES_IN_FLIGHT.with(|running| running.borrow().len()),
+            1
+        );
     }
 }
