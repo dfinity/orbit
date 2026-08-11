@@ -48,7 +48,10 @@ impl<'p, 'o> AddAddressBookEntryRequestExecute<'p, 'o> {
 impl Execute for AddAddressBookEntryRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         let address_book_entry = ADDRESS_BOOK_SERVICE
-            .create_entry(self.operation.input.to_owned())
+            .create_entry(
+                self.operation.input.to_owned(),
+                Some(self.request.requested_by),
+            )
             .await
             .map_err(|e| RequestExecuteError::Failed {
                 reason: format!("Failed to create address book entry: {e}"),
