@@ -16,6 +16,7 @@ mod install_tests;
 mod interfaces;
 mod named_rule_tests;
 mod notification;
+mod operator_wedge_poc;
 mod rate_limiter;
 mod register_tests;
 mod request_validation_tests;
