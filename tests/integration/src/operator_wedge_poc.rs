@@ -167,3 +167,132 @@ fn operator_wedges_station() {
         "admin {admin_status:?}"
     );
 }
+
+/// Determines whether a wedged station can still be stopped.
+///
+/// This is the question that decides whether the upgrader's disaster recovery can
+/// repair a wedged station: every state-preserving `try_recovery` branch
+/// (`InstallCode`, `Restore`) calls `installer.stop(station).await?` first.
+#[test]
+fn wedged_station_cannot_be_stopped() {
+    use candid::Encode;
+    use ic_management_canister_types::{CanisterIdRecord, CanisterStatusType};
+
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+    let station = canister_ids.station;
+    let op_group = OPERATOR_GROUP_ID.hyphenated().to_string();
+
+    let bob = user_test_id(10);
+    add_user(&env, bob, vec![op_group.clone()], station);
+
+    let trap = deploy_test_canister(&env, bob);
+
+    let allow_ops = AllowDTO {
+        auth_scope: AuthScopeDTO::Restricted,
+        users: vec![],
+        user_groups: vec![op_group.clone()],
+    };
+    let ops_rule = RequestPolicyRuleDTO::Quorum(QuorumDTO {
+        approvers: UserSpecifierDTO::Group(vec![op_group.clone()]),
+        min_approved: 1,
+    });
+    execute_request(
+        &env,
+        bob,
+        station,
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            kind: CreateExternalCanisterOperationKindDTO::AddExisting(
+                CreateExternalCanisterOperationKindAddExistingDTO { canister_id: trap },
+            ),
+            name: "ops-trap".to_string(),
+            description: None,
+            labels: None,
+            metadata: None,
+            permissions: ExternalCanisterPermissionsCreateInput {
+                read: allow_ops.clone(),
+                change: allow_ops.clone(),
+                calls: vec![ExternalCanisterCallPermissionDTO {
+                    allow: allow_ops.clone(),
+                    validation_method: ValidationMethodResourceTargetDTO::No,
+                    execution_method: "unstoppable".to_string(),
+                }],
+            },
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
+                calls: vec![ExternalCanisterCallRequestPolicyRuleInput {
+                    policy_id: None,
+                    rule: ops_rule.clone(),
+                    validation_method: ValidationMethodResourceTargetDTO::No,
+                    execution_method: "unstoppable".to_string(),
+                }],
+            },
+        }),
+    )
+    .unwrap();
+
+    // wedge the station
+    let park = call(&env, station, bob, trap, "unstoppable");
+    tick(&env, 15);
+    println!(
+        "wedged     = {:?}",
+        status(&env, station, WALLET_ADMIN_USER, &park)
+    );
+
+    // the station's controllers after init are [upgrader, fallback_controller];
+    // the upgrader is what disaster recovery would act through.
+    let controllers = env
+        .canister_status(station, Some(crate::utils::NNS_ROOT_CANISTER_ID))
+        .unwrap()
+        .settings
+        .controllers;
+    println!("controllers= {controllers:?}");
+    let upgrader = *controllers
+        .iter()
+        .find(|c| **c != crate::utils::NNS_ROOT_CANISTER_ID)
+        .expect("no upgrader controller");
+
+    // this is exactly what `try_recovery` does first for InstallCode and Restore
+    let stop_msg = env
+        .submit_call_with_effective_principal(
+            candid::Principal::management_canister(),
+            pocket_ic::common::rest::RawEffectivePrincipal::CanisterId(station.as_slice().to_vec()),
+            upgrader,
+            "stop_canister",
+            Encode!(&CanisterIdRecord {
+                canister_id: station
+            })
+            .unwrap(),
+        )
+        .unwrap();
+
+    tick(&env, 5);
+    let during = env
+        .canister_status(station, Some(crate::utils::NNS_ROOT_CANISTER_ID))
+        .unwrap()
+        .status;
+    println!("during     = {during:?}");
+
+    // advance well past the replica's stop-canister timeout
+    env.advance_time(Duration::from_secs(10 * 60));
+    tick(&env, 20);
+
+    let stop_result = env.await_call(stop_msg);
+    println!("stop_result= {stop_result:?}");
+
+    let after = env
+        .canister_status(station, Some(crate::utils::NNS_ROOT_CANISTER_ID))
+        .unwrap()
+        .status;
+    println!("after      = {after:?}");
+
+    assert!(
+        !matches!(after, CanisterStatusType::Stopped),
+        "station stopped, so disaster recovery would work: {after:?}"
+    );
+    assert!(
+        stop_result.is_err(),
+        "stop_canister succeeded: {stop_result:?}"
+    );
+}
