@@ -6,16 +6,19 @@
   },
   "main": "cli.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && mkdir -p dist/audit/generated && cp src/audit/generated/station.did.js dist/audit/generated/",
     "start": "node dist/cli.js",
     "expose": "pnpm link --global",
-    "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts"
+    "test": "vitest run",
+    "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts",
+    "generate-station-types": "didc bind --target ts ../core/station/api/spec.did > ./src/audit/generated/station.did.d.ts && didc bind --target js ../core/station/api/spec.did | sed -E 's/^export const ([a-zA-Z_]+)/exports.\\1/g' > ./src/audit/generated/station.did.js && cp ../core/station/api/spec.did ./src/audit/generated/station.did"
   },
   "devDependencies": {
     "commander": "12.1.0",
     "@dfinity/agent": "1.4.0",
     "@dfinity/candid": "1.4.0",
     "@dfinity/identity": "1.4.0",
-    "@dfinity/principal": "1.4.0"
+    "@dfinity/principal": "1.4.0",
+    "vitest": "1.6.1"
   }
 }

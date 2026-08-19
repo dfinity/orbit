@@ -33,6 +33,16 @@ export interface CanisterInstallModel {
   mode?: CanisterInstallMode;
 }
 
+// The optional upgrade-options record carried by the `upgrade` variant of
+// `CanisterInstallMode`. Derived from the generated type so it stays in sync.
+export type CanisterUpgradeOptions = NonNullable<
+  Extract<CanisterInstallMode, { upgrade: unknown }>['upgrade'][number]
+>;
+
+export type WasmMemoryPersistence = NonNullable<
+  CanisterUpgradeOptions['wasm_memory_persistence'][number]
+>;
+
 export interface CanisterMethodCallConfigurationModel {
   canisterId: Principal;
   alreadyConfiguredMethods: CanisterConfiguredMethodCall[];

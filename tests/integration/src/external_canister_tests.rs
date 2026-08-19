@@ -73,7 +73,7 @@ fn successful_four_eyes_upgrade() {
     let change_canister_operation =
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: None,
@@ -218,7 +218,7 @@ fn upgrade_reinstall_list_test() {
     let change_canister_operation =
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             module: base_chunk.clone(),
             module_extra_chunks: Some(module_extra_chunks.clone()),
             arg: None,

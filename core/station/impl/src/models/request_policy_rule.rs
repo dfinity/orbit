@@ -11,7 +11,7 @@ use crate::{
         utils::calculate_minimum_threshold,
         validation::{EnsureIdExists, EnsureNamedRule},
     },
-    errors::{MatchError, ValidationError},
+    errors::{MatchError, RequestPolicyRuleValidationError, ValidationError},
     repositories::{
         UserWhereClause, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NAMED_RULE_REPOSITORY,
         USER_REPOSITORY,
@@ -136,8 +136,33 @@ impl ModelValidator<ValidationError> for RequestPolicyRule {
             | RequestPolicyRule::AllowListedByMetadata(_)
             | RequestPolicyRule::AllowListed => Ok(()),
 
-            RequestPolicyRule::QuorumPercentage(user_specifier, _)
-            | RequestPolicyRule::Quorum(user_specifier, _) => user_specifier.validate(),
+            RequestPolicyRule::Quorum(user_specifier, min_approved) => {
+                if *min_approved == 0 {
+                    return Err(RequestPolicyRuleValidationError::InvalidRule {
+                        info: "Quorum requires at least 1 approval; use AutoApproved for a rule that needs no approvals.".to_string(),
+                    }
+                    .into());
+                }
+                user_specifier.validate()
+            }
+            RequestPolicyRule::QuorumPercentage(user_specifier, Percentage(percentage)) => {
+                if *percentage == 0 {
+                    return Err(RequestPolicyRuleValidationError::InvalidRule {
+                        info: "QuorumPercentage requires a percentage greater than 0; use AutoApproved for a rule that needs no approvals.".to_string(),
+                    }
+                    .into());
+                }
+                // The DTO carries a raw u16 and the mapper builds `Percentage` without the
+                // `TryFrom` bound, so a value > 100 can reach here and would violate
+                // `calculate_minimum_threshold`'s documented 0..=100 assumption.
+                if *percentage > 100 {
+                    return Err(RequestPolicyRuleValidationError::InvalidRule {
+                        info: "QuorumPercentage cannot exceed 100.".to_string(),
+                    }
+                    .into());
+                }
+                user_specifier.validate()
+            }
 
             RequestPolicyRule::Or(policy_rules) | RequestPolicyRule::And(policy_rules) => {
                 for rule in policy_rules {
@@ -320,6 +345,19 @@ impl RequestApprovalSummary {
     /// enough uncast approvals that could be cast to meet the minimum approvals required, then the evaluation
     /// is kept in the `Pending` state.
     fn evaluate(&self, min_approved: usize) -> EvaluationStatus {
+        // Fail closed on any zero approval requirement. This method is only reached for
+        // `Quorum`/`QuorumPercentage` rules, which always require at least one approval (enforced at
+        // validation), so neither an empty approver set nor a zero threshold can ever legitimately
+        // be satisfied. Without this guard the `cmp::min(min_approved, 0) == 0` clamp below would
+        // make `self.approved (0) >= 0` return `Approved`, auto-approving with zero votes. The
+        // `total_possible_approvers == 0` case covers `QuorumPercentage`, whose `min_approved`
+        // computes to 0 over an empty set (e.g. 100% of 0). The `min_approved == 0` case is
+        // defense-in-depth: validation is not re-run on evaluation, so a rule persisted before the
+        // validation guard existed (e.g. `Quorum(_, 0)`) would otherwise still auto-approve.
+        if min_approved == 0 || self.total_possible_approvers == 0 {
+            return EvaluationStatus::Rejected;
+        }
+
         let min_approved = cmp::min(min_approved, self.total_possible_approvers);
         let uncasted_approvals = self
             .total_possible_approvers
@@ -704,6 +742,69 @@ mod test {
         )])])
         .validate()
         .expect_err("Rule with non-existent user specifier should fail");
+    }
+
+    #[test]
+    fn positive_quorum_with_no_possible_approvers_is_rejected() {
+        // Regression guard: a positive approval requirement with zero eligible approvers must fail
+        // closed instead of auto-approving via the `cmp::min(min_approved, 0)` clamp.
+        let summary = RequestApprovalSummary {
+            total_possible_approvers: 0,
+            approvers: vec![],
+            approved: 0,
+            rejected: 0,
+        };
+
+        assert_eq!(summary.evaluate(5), EvaluationStatus::Rejected);
+        assert_eq!(summary.evaluate(1), EvaluationStatus::Rejected);
+        // `QuorumPercentage` over an empty set computes `min_approved == 0`; it must still reject.
+        assert_eq!(summary.evaluate(0), EvaluationStatus::Rejected);
+    }
+
+    #[test]
+    fn zero_requirement_with_possible_approvers_is_rejected() {
+        // Defense-in-depth: a zero approval requirement must fail closed even when eligible
+        // approvers exist, so a `Quorum(_, 0)` / `QuorumPercentage(_, 0%)` rule persisted before
+        // the validation guard existed cannot auto-approve on re-evaluation.
+        let summary = RequestApprovalSummary {
+            total_possible_approvers: 3,
+            approvers: vec![],
+            approved: 0,
+            rejected: 0,
+        };
+
+        assert_eq!(summary.evaluate(0), EvaluationStatus::Rejected);
+    }
+
+    #[test]
+    fn quorum_and_percentage_reject_zero_requirement_on_validation() {
+        RequestPolicyRule::Quorum(UserSpecifier::Any, 0)
+            .validate()
+            .expect_err("Quorum with 0 required approvals must be rejected");
+
+        RequestPolicyRule::QuorumPercentage(UserSpecifier::Any, Percentage(0))
+            .validate()
+            .expect_err("QuorumPercentage with 0% must be rejected");
+
+        RequestPolicyRule::QuorumPercentage(UserSpecifier::Any, Percentage(101))
+            .validate()
+            .expect_err("QuorumPercentage above 100% must be rejected");
+
+        RequestPolicyRule::QuorumPercentage(UserSpecifier::Any, Percentage(100))
+            .validate()
+            .expect("QuorumPercentage of exactly 100% should validate");
+
+        RequestPolicyRule::Quorum(UserSpecifier::Any, 1)
+            .validate()
+            .expect("Quorum with a positive requirement should validate");
+
+        RequestPolicyRule::QuorumPercentage(UserSpecifier::Any, Percentage(1))
+            .validate()
+            .expect("QuorumPercentage with a positive requirement should validate");
+
+        RequestPolicyRule::AutoApproved
+            .validate()
+            .expect("AutoApproved should validate");
     }
 
     #[test]

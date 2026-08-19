@@ -634,6 +634,75 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn quorum_with_no_possible_approvers_is_rejected() {
+        let mut request = mock_request();
+        let mut policy = mock_request_policy();
+        let user = user_test_utils::add_user(&[1; 16]);
+
+        request.operation = RequestOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "test".to_string(),
+            },
+        });
+        request.requested_by = user.id;
+        request.approvals = vec![];
+
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+
+        policy.specifier = RequestSpecifier::AddUserGroup;
+        // A group with no members: `total_possible_approvers` resolves to 0.
+        policy.rule = RequestPolicyRule::Quorum(UserSpecifier::Group(vec![[9; 16]]), 5);
+
+        REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        let evaluator = RequestEvaluator {
+            request: request.to_owned(),
+            policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
+        };
+
+        let result = evaluator.evaluate().unwrap();
+
+        assert_eq!(result.status, EvaluationStatus::Rejected);
+    }
+
+    #[tokio::test]
+    async fn quorum_percentage_with_no_possible_approvers_is_rejected() {
+        let mut request = mock_request();
+        let mut policy = mock_request_policy();
+        let user = user_test_utils::add_user(&[1; 16]);
+
+        request.operation = RequestOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "test".to_string(),
+            },
+        });
+        request.requested_by = user.id;
+        request.approvals = vec![];
+
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+
+        policy.specifier = RequestSpecifier::AddUserGroup;
+        // 100% of an empty approver set computes `min_approved == 0`; it must still reject.
+        policy.rule = RequestPolicyRule::QuorumPercentage(
+            UserSpecifier::Group(vec![[9; 16]]),
+            Percentage(100),
+        );
+
+        REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        let evaluator = RequestEvaluator {
+            request: request.to_owned(),
+            policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
+        };
+
+        let result = evaluator.evaluate().unwrap();
+
+        assert_eq!(result.status, EvaluationStatus::Rejected);
+    }
+
+    #[tokio::test]
     async fn returns_correct_evaluation_result() {
         let mut request = mock_request();
         request.status = RequestStatus::Created;
