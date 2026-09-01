@@ -1,0 +1,129 @@
+name: 'Deploy frontend'
+
+# Phase 3 of the release: deploy the built artifacts to the live canisters.
+#
+# Frontends only for now (wallet, marketing, docs). Pick any subset. The run
+# deploys the selection to playground first with no gate, then, if you asked to
+# promote, deploys the same selection to production behind the `production`
+# environment's approval. Backends (station, upgrader, control-panel) are a
+# separate follow-up.
+#
+# The signing key is read from the `DEPLOY_IDENTITY_PEM` secret. Scope it per
+# environment: put the playground key on the `playground` environment and the
+# production key on the `production` environment, so each job only ever sees its
+# own key. The production approval gate is configured in
+# Settings -> Environments -> production -> Required reviewers.
+
+on:
+  workflow_dispatch:
+    inputs:
+      wallet:
+        description: 'Deploy the wallet app (wallet-dapp).'
+        type: boolean
+        default: true
+      marketing:
+        description: 'Deploy the landing page (marketing-dapp).'
+        type: boolean
+        default: false
+      docs:
+        description: 'Deploy the docs site (docs-portal).'
+        type: boolean
+        default: false
+      promote_to_production:
+        description: 'After playground, promote the same selection to production behind the approval gate. Uncheck for a playground-only run.'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  playground:
+    name: 'playground'
+    runs-on: ubuntu-latest
+    environment: playground
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install dependencies'
+        run: pnpm install --frozen-lockfile
+      - name: 'Set up Docker'
+        uses: docker/setup-docker-action@v4
+      - name: 'Install icx-asset'
+        run: cargo install --locked icx-asset --version 0.29.0
+      - name: 'Deploy to playground'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_WALLET: ${{ inputs.wallet }}
+          DEPLOY_MARKETING: ${{ inputs.marketing }}
+          DEPLOY_DOCS: ${{ inputs.docs }}
+          DEPLOY_IDENTITY_PEM: ${{ secrets.DEPLOY_IDENTITY_PEM }}
+        run: |
+          set -euo pipefail
+
+          apps=()
+          if [ "$DEPLOY_WALLET" = "true" ]; then apps+=(wallet); fi
+          if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
+          if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
+          if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
+          if [ -z "${DEPLOY_IDENTITY_PEM:-}" ]; then echo "DEPLOY_IDENTITY_PEM secret is not set on the playground environment."; exit 1; fi
+
+          pem="$(mktemp)"; chmod 600 "$pem"
+          printf '%s\n' "$DEPLOY_IDENTITY_PEM" > "$pem"
+          trap 'rm -f "$pem"' EXIT
+
+          for app in "${apps[@]}"; do
+            echo "==> deploying $app to playground"
+            ./scripts/deploy-app --app "$app" --env playground --pem "$pem" --yes
+          done
+
+  production:
+    name: 'production'
+    needs: playground
+    if: ${{ inputs.promote_to_production }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install dependencies'
+        run: pnpm install --frozen-lockfile
+      - name: 'Install icx-asset'
+        run: cargo install --locked icx-asset --version 0.29.0
+      - name: 'Deploy to production'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_WALLET: ${{ inputs.wallet }}
+          DEPLOY_MARKETING: ${{ inputs.marketing }}
+          DEPLOY_DOCS: ${{ inputs.docs }}
+          DEPLOY_IDENTITY_PEM: ${{ secrets.DEPLOY_IDENTITY_PEM }}
+        run: |
+          set -euo pipefail
+
+          apps=()
+          if [ "$DEPLOY_WALLET" = "true" ]; then apps+=(wallet); fi
+          if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
+          if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
+          if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
+          if [ -z "${DEPLOY_IDENTITY_PEM:-}" ]; then echo "DEPLOY_IDENTITY_PEM secret is not set on the production environment."; exit 1; fi
+
+          pem="$(mktemp)"; chmod 600 "$pem"
+          printf '%s\n' "$DEPLOY_IDENTITY_PEM" > "$pem"
+          trap 'rm -f "$pem"' EXIT
+
+          # Production deploys the released tagged artifact (deploy-app defaults
+          # to --tag latest for production), not a local build.
+          for app in "${apps[@]}"; do
+            echo "==> deploying $app to production"
+            ./scripts/deploy-app --app "$app" --env production --pem "$pem" --yes
+          done
