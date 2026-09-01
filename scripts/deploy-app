@@ -78,8 +78,8 @@ done
 [[ "$ENV" == "playground" || "$ENV" == "production" ]] || { usage; die "--env must be playground or production"; }
 [[ -n "$PEM" || -n "$OP_REF" ]] || { usage; die "a key is required: pass --pem or --op"; }
 [[ -z "$PEM" || -z "$OP_REF" ]] || die "pass only one of --pem / --op"
+[[ -z "$BUILD" || -z "$TAG" ]] || die "pass only one of --build / --tag"
 [[ -z "$PEM" || -f "$PEM" ]] || die "pem file not found: $PEM"
-
 cd "$ROOT"
 
 # A temp pem, only created when reading from 1Password, always removed on exit.
