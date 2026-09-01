@@ -30,7 +30,7 @@ runs:
       shell: bash
       run: pnpm install --frozen-lockfile
     - name: 'Install dfx'
-      uses: dfinity/setup-dfx@main
+      uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
       with:
         dfx-version: '0.30.2'
     - name: 'Install icx-asset'
