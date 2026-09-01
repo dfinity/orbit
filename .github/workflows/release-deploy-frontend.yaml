@@ -85,7 +85,7 @@ jobs:
   production:
     name: 'production'
     needs: playground
-    if: ${{ inputs.promote_to_production }}
+    if: ${{ inputs.promote_to_production == 'true' }}
     runs-on: ubuntu-latest
     environment: production
     steps:
