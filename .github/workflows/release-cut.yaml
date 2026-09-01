@@ -11,16 +11,37 @@ name: 'Cut release'
 on:
   workflow_dispatch:
     inputs:
-      projects:
-        # The names are the fixed nx project keys (also the git tags), so they
-        # cannot be prettier here without a separate rename PR. Human names in
-        # parentheses for the form: wallet-dapp (wallet app), marketing-dapp
-        # (landing page), docs-portal (docs site), station, upgrader,
-        # control-panel, dfx-orbit (Orbit CLI).
-        description: 'Comma-separated project keys. Empty releases everything changed. Keys: wallet-dapp (wallet app), marketing-dapp (landing page), docs-portal (docs site), station, upgrader, control-panel, dfx-orbit (Orbit CLI).'
-        required: false
-        type: string
-        default: ''
+      # One checkbox per releasable project. Leave all unchecked to release
+      # everything that changed since the last release (nx works it out). The
+      # internal -api crates are not listed: they cascade automatically.
+      wallet_dapp:
+        description: 'Release wallet-dapp (wallet app).'
+        type: boolean
+        default: false
+      marketing_dapp:
+        description: 'Release marketing-dapp (landing page).'
+        type: boolean
+        default: false
+      docs_portal:
+        description: 'Release docs-portal (docs site).'
+        type: boolean
+        default: false
+      station:
+        description: 'Release station.'
+        type: boolean
+        default: false
+      upgrader:
+        description: 'Release upgrader.'
+        type: boolean
+        default: false
+      control_panel:
+        description: 'Release control-panel.'
+        type: boolean
+        default: false
+      dfx_orbit:
+        description: 'Release dfx-orbit (Orbit CLI).'
+        type: boolean
+        default: false
       version_specifier:
         description: 'Force the bump. "auto" lets the conventional commits decide.'
         required: true
@@ -78,7 +99,13 @@ jobs:
       - name: 'Cut release'
         env:
           GH_TOKEN: ${{ github.token }}
-          PROJECTS: ${{ inputs.projects }}
+          P_WALLET_DAPP: ${{ inputs.wallet_dapp }}
+          P_MARKETING_DAPP: ${{ inputs.marketing_dapp }}
+          P_DOCS_PORTAL: ${{ inputs.docs_portal }}
+          P_STATION: ${{ inputs.station }}
+          P_UPGRADER: ${{ inputs.upgrader }}
+          P_CONTROL_PANEL: ${{ inputs.control_panel }}
+          P_DFX_ORBIT: ${{ inputs.dfx_orbit }}
           SPECIFIER: ${{ inputs.version_specifier }}
           PRE_RELEASE: ${{ inputs.pre_release }}
           DRY_RUN: ${{ inputs.dry_run }}
@@ -89,8 +116,22 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Build the --projects list from the ticked boxes. None ticked means
+          # release everything that changed, so the flag is omitted entirely.
+          projects=()
+          if [ "$P_WALLET_DAPP" = "true" ]; then projects+=(wallet-dapp); fi
+          if [ "$P_MARKETING_DAPP" = "true" ]; then projects+=(marketing-dapp); fi
+          if [ "$P_DOCS_PORTAL" = "true" ]; then projects+=(docs-portal); fi
+          if [ "$P_STATION" = "true" ]; then projects+=(station); fi
+          if [ "$P_UPGRADER" = "true" ]; then projects+=(upgrader); fi
+          if [ "$P_CONTROL_PANEL" = "true" ]; then projects+=(control-panel); fi
+          if [ "$P_DFX_ORBIT" = "true" ]; then projects+=(dfx-orbit); fi
+
           args=()
-          if [ -n "$PROJECTS" ]; then args+=(--projects "$PROJECTS"); fi
+          if [ "${#projects[@]}" -gt 0 ]; then
+            joined="$(IFS=,; echo "${projects[*]}")"
+            args+=(--projects "$joined")
+          fi
           if [ "$SPECIFIER" != "auto" ]; then args+=(--version-specifier "$SPECIFIER"); fi
 
           if [ "$PRE_RELEASE" != "none" ] && [ "$SPECIFIER" != "auto" ] && [ "$SPECIFIER" != "prerelease" ]; then
