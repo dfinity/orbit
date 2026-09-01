@@ -1,0 +1,123 @@
+name: 'Cut release'
+
+# Phase 1 of the release: cut new versions and open the release PR.
+#
+# Runs `orbit-cli release prepare`, which bumps the versions from the
+# conventional commits, writes the changelogs, and updates `.release.json` in a
+# single commit. This workflow puts that commit on a branch and opens a PR.
+# Merging the PR to the base branch is what triggers `release.yaml` (phase 2,
+# publish): tags, artifacts, and GitHub releases. Deploy is a separate workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      projects:
+        # The names are the fixed nx project keys (also the git tags), so they
+        # cannot be prettier here without a separate rename PR. Human names in
+        # parentheses for the form: wallet-dapp (wallet app), marketing-dapp
+        # (landing page), docs-portal (docs site), station, upgrader,
+        # control-panel, dfx-orbit (Orbit CLI).
+        description: 'Comma-separated project keys. Empty releases everything changed. Keys: wallet-dapp (wallet app), marketing-dapp (landing page), docs-portal (docs site), station, upgrader, control-panel, dfx-orbit (Orbit CLI).'
+        required: false
+        type: string
+        default: ''
+      version_specifier:
+        description: 'Force the bump. "auto" lets the conventional commits decide.'
+        required: true
+        type: choice
+        default: 'auto'
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+      pre_release:
+        description: 'Pre-release channel. Only valid together with a prerelease bump.'
+        required: true
+        type: choice
+        default: 'none'
+        options:
+          - none
+          - alpha
+          - beta
+          - rc
+      dry_run:
+        description: 'Compute versions and changelogs only, do not open a PR.'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cut:
+    name: 'cut'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          # Full history and tags: nx computes the bumps from the commits since
+          # the last release tag.
+          fetch-depth: 0
+          fetch-tags: true
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install dependencies'
+        run: pnpm install --frozen-lockfile
+      - name: 'Configure Git'
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+      - name: 'Cut release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROJECTS: ${{ inputs.projects }}
+          SPECIFIER: ${{ inputs.version_specifier }}
+          PRE_RELEASE: ${{ inputs.pre_release }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          BASE: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          args=()
+          if [ -n "$PROJECTS" ]; then args+=(--projects "$PROJECTS"); fi
+          if [ "$SPECIFIER" != "auto" ]; then args+=(--version-specifier "$SPECIFIER"); fi
+          if [ "$PRE_RELEASE" != "none" ]; then args+=(--pre-release "$PRE_RELEASE"); fi
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run: computing versions and changelogs, no branch or PR."
+            orbit-cli release prepare --dry-run --verbose "${args[@]}"
+            exit 0
+          fi
+
+          BASE_SHA="$(git rev-parse HEAD)"
+          BRANCH="release/run-${RUN_ID}"
+          git checkout -b "$BRANCH"
+
+          orbit-cli release prepare "${args[@]}"
+
+          if [ "$(git rev-parse HEAD)" = "$BASE_SHA" ]; then
+            echo "Nothing to release: no projects changed since the last release."
+            exit 0
+          fi
+
+          released="$(jq -r '.changes // {} | to_entries[] | "- `\(.key)` \(.value.releaseVersion.rawVersion)"' .release.json)"
+          if [ -z "$released" ]; then released="(see the diff)"; fi
+
+          git push -u origin "$BRANCH"
+
+          body="$(printf 'Opened by the **Cut release** workflow.\n\nReleasing:\n\n%s\n\nMerging this into `%s` triggers the publish workflow, which tags each project, builds its artifact, and creates the GitHub release. Deploying the artifacts is a separate step in the Deploy workflow.' "$released" "$BASE")"
+
+          gh pr create \
+            --base "$BASE" \
+            --head "$BRANCH" \
+            --title 'chore(release): cut new versions' \
+            --body "$body"
