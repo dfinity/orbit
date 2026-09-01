@@ -1,0 +1,86 @@
+name: 'Deploy backend'
+
+# Phase 3 of the release, backend half: get a released backend wasm onto the
+# network. Pick any subset of station, upgrader, control-panel. The run does the
+# playground network first with no gate, then, if you asked to promote, the
+# production network behind the `production` environment's approval.
+#
+# Two different deploy paths, matching the architecture:
+#   - station / upgrader: `orbit-cli registry publish` loads the wasm into the
+#     control-panel registry. This only makes the version available. Each
+#     production station still self-upgrades on its own admins' approval.
+#     Publishing station also publishes upgrader, its dependency.
+#   - control-panel: a direct `dfx canister install --mode upgrade` of the one
+#     control-panel canister. No registry, no per-wallet buffer, so the approval
+#     gate is the only thing standing between this and every wallet.
+#
+# The signing key is read from the `BACKEND_IDENTITY_PEM` secret, scoped per
+# environment, and imported into dfx as a named identity. That identity must be
+# a registry admin on the control-panel (for registry publish) and a controller
+# of the control-panel canister (for the control-panel upgrade).
+
+on:
+  workflow_dispatch:
+    inputs:
+      station:
+        description: 'Publish station to the registry.'
+        type: boolean
+        default: false
+      upgrader:
+        description: 'Publish upgrader to the registry.'
+        type: boolean
+        default: false
+      control_panel:
+        description: 'Upgrade the control-panel canister in place.'
+        type: boolean
+        default: false
+      promote_to_production:
+        description: 'After the playground network, promote the same selection to the production network behind the approval gate. Uncheck for a playground-only run.'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  playground:
+    name: 'playground'
+    runs-on: ubuntu-latest
+    environment: playground
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: 'Deploy backend to playground'
+        uses: ./.github/actions/deploy-backend
+        with:
+          network: playground
+          station: ${{ inputs.station }}
+          upgrader: ${{ inputs.upgrader }}
+          control_panel: ${{ inputs.control_panel }}
+          identity_pem: ${{ secrets.BACKEND_IDENTITY_PEM }}
+          gh_token: ${{ github.token }}
+
+  production:
+    name: 'production'
+    needs: playground
+    if: ${{ inputs.promote_to_production }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: 'Deploy backend to production'
+        uses: ./.github/actions/deploy-backend
+        with:
+          network: production
+          station: ${{ inputs.station }}
+          upgrader: ${{ inputs.upgrader }}
+          control_panel: ${{ inputs.control_panel }}
+          identity_pem: ${{ secrets.BACKEND_IDENTITY_PEM }}
+          gh_token: ${{ github.token }}
