@@ -83,7 +83,9 @@ jobs:
           PRE_RELEASE: ${{ inputs.pre_release }}
           DRY_RUN: ${{ inputs.dry_run }}
           BASE: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
           RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           set -euo pipefail
 
