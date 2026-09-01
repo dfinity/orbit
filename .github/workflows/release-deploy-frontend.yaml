@@ -44,7 +44,7 @@ jobs:
     environment: playground
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -53,7 +53,7 @@ jobs:
       - name: 'Install dependencies'
         run: pnpm install --frozen-lockfile
       - name: 'Set up Docker'
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 # v4
       - name: 'Install icx-asset'
         run: cargo install --locked icx-asset --version 0.29.0
       - name: 'Deploy to playground'
@@ -90,7 +90,7 @@ jobs:
     environment: production
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           fetch-tags: true
