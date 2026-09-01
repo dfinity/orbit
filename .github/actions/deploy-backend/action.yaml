@@ -57,9 +57,9 @@ runs:
         if [ -z "${BACKEND_IDENTITY_PEM:-}" ]; then echo "BACKEND_IDENTITY_PEM secret is not set on the $NET environment."; exit 1; fi
 
         # Import the key into dfx as a named identity the CLI can resolve.
-        pem="$(mktemp)"; chmod 600 "$pem"
-        printf '%s\n' "$BACKEND_IDENTITY_PEM" > "$pem"
-        trap 'rm -f "$pem"' EXIT
+        dfx_root="$(mktemp -d)"; chmod 700 "$dfx_root"; export DFX_CONFIG_ROOT="$dfx_root"
+        pem="$(mktemp)"; chmod 600 "$pem"; printf '%s\n' "$BACKEND_IDENTITY_PEM" > "$pem"
+        trap 'rm -rf "$pem" "$dfx_root"' EXIT
         dfx identity import ci-backend "$pem" --storage-mode plaintext --force
 
         # Download a released wasm artifact into artifacts/<dir>/<file>, resolving
