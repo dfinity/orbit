@@ -71,7 +71,16 @@ runs:
           [ -n "$tag" ] || { echo "no release found for $key"; exit 1; }
           echo "==> $key: downloading $file from $tag"
           mkdir -p "artifacts/$dir"
-          gh release download "$tag" --repo "$REPO" --pattern "$file" --dir "artifacts/$dir" --clobber
+          gh release download "$tag" --repo "$REPO" \
+            --pattern "$file" --pattern "$file.sha256" --dir "artifacts/$dir" --clobber
+          # Verify the wasm against the checksum published beside it in the release.
+          local expected actual
+          expected="$(tr -d '[:space:]' < "artifacts/$dir/$file.sha256")"
+          actual="$(sha256sum "artifacts/$dir/$file" | awk '{ print $1 }')"
+          if [ "$expected" != "$actual" ]; then
+            echo "checksum mismatch for $file: expected $expected, got $actual"; exit 1
+          fi
+          echo "    checksum ok: $actual"
         }
 
         for target in "${targets[@]}"; do
