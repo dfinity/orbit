@@ -92,6 +92,11 @@ jobs:
           args=()
           if [ -n "$PROJECTS" ]; then args+=(--projects "$PROJECTS"); fi
           if [ "$SPECIFIER" != "auto" ]; then args+=(--version-specifier "$SPECIFIER"); fi
+
+          if [ "$PRE_RELEASE" != "none" ] && [ "$SPECIFIER" != "auto" ] && [ "$SPECIFIER" != "prerelease" ]; then
+            echo 'Invalid inputs: pre_release can only be used when version_specifier is "auto" or "prerelease".'
+            exit 1
+          fi
           if [ "$PRE_RELEASE" != "none" ]; then args+=(--pre-release "$PRE_RELEASE"); fi
 
           if [ "$DRY_RUN" = "true" ]; then
