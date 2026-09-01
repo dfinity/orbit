@@ -76,6 +76,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# One cut at a time. A second trigger queues instead of racing another run that
+# is bumping versions and opening a release PR. A running cut is never cancelled.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   cut:
     name: 'cut'
