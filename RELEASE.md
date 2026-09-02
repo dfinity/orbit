@@ -2,7 +2,7 @@
 
 A release has three phases: cut, publish, deploy. Cutting and publishing are one flow that ends in a GitHub release with the built artifact attached. Deploying is what puts that artifact on the live canisters. All of it runs from the Actions tab. This is the guide to what to click.
 
-Most of this used to be manual, run from a laptop with the production key. It is now three workflows: **Cut release**, **Deploy frontend**, **Deploy backend**. Publishing was already automated and has not changed.
+Most of this used to be manual. It is now three workflows: **Cut release**, **Deploy frontend**, **Deploy backend**. Publishing was already automated and has not changed.
 
 ## Components
 
@@ -74,13 +74,7 @@ The gate is native **GitHub Environments**. A `playground` environment that runs
 The deploy workflows need this in place before they can run:
 
 * Create the `playground` and `production` GitHub Environments.
-* Add the signing key as a secret on each: `DEPLOY_IDENTITY_PEM` for the frontend workflow, `BACKEND_IDENTITY_PEM` for the backend workflow, each scoped to the environment so a job only ever sees its own key. The backend identity must be both a registry admin on the control-panel and a controller of the control-panel canister.
+* Configure each environment with the deployment credentials its jobs expect. The required names are declared at the top of the deploy workflows, and the values are held by the team that administers releases.
 * Add required reviewers to `production`. That is the approval gate.
 * Fix the playground `derivationOrigin` so Internet Identity login works there, ideally by making it come from an env var.
 * Stand up a persistent test station so backend wasms published to the playground registry can be exercised by a real self-upgrade before production.
-
-One decision affects the frontend production job: whether the production key lives in the `production` environment as a secret, or stays off CI. In CI, production is a one-approval click. Off CI, production stays a local `scripts/deploy-app` run reading the key from 1Password, and the master key never touches GitHub. A reasonable start is production local, playground automated, and move production into the protected environment once the flow is trusted.
-
-## Release cadence
-
-We don't have a set release cadence today. I'd propose a bi-weekly one, every second Thursday. It would be best-effort, but it gives us a bit of urgency and a rhythm to work to. A recurring Google Calendar event can act as the soft reminder.
