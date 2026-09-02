@@ -42,6 +42,7 @@ on:
         description: 'Release dfx-orbit (Orbit CLI).'
         type: boolean
         default: false
+      # How big the bump is. Leave on auto and the commit messages decide.
       version_specifier:
         description: 'Force the bump. "auto" lets the conventional commits decide.'
         required: true
@@ -56,6 +57,9 @@ on:
           - preminor
           - premajor
           - prerelease
+      # Cuts a test version like 0.8.0-rc.0 instead of 0.8.0, flagged as a
+      # pre-release on GitHub. Good for trying a build on playground before the
+      # real one. Only works with auto or prerelease above.
       pre_release:
         description: 'Pre-release channel. Only valid together with a prerelease bump.'
         required: true
@@ -66,6 +70,7 @@ on:
           - alpha
           - beta
           - rc
+      # Preview only. Prints what would be released, then stops. No commit, no PR.
       dry_run:
         description: 'Compute versions and changelogs only, do not open a PR.'
         required: false
