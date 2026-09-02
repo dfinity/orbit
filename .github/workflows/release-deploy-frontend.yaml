@@ -8,6 +8,10 @@ name: 'Deploy frontend'
 # environment's approval. Backends (station, upgrader, control-panel) are a
 # separate follow-up.
 #
+# These jobs deliberately install as little as possible. deploy-app needs only
+# gh, jq, docker, icx-asset and curl, so there is no Node/pnpm install here and
+# the npm dependency tree never enters the job that handles the signing key.
+#
 # The signing key is read from the `DEPLOY_IDENTITY_PEM` secret. Scope it per
 # environment: put the playground key on the `playground` environment and the
 # production key on the `production` environment, so each job only ever sees its
@@ -57,10 +61,6 @@ jobs:
           # This job downloads via gh, never pushes, so it does not need the
           # GITHUB_TOKEN left in .git/config.
           persist-credentials: false
-      - name: 'Setup Node'
-        uses: ./.github/actions/setup-node
-      - name: 'Install dependencies'
-        run: pnpm install --frozen-lockfile
       - name: 'Set up Docker'
         uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 # v4
       - name: 'Install icx-asset'
@@ -106,10 +106,6 @@ jobs:
           # This job downloads via gh, never pushes, so it does not need the
           # GITHUB_TOKEN left in .git/config.
           persist-credentials: false
-      - name: 'Setup Node'
-        uses: ./.github/actions/setup-node
-      - name: 'Install dependencies'
-        run: pnpm install --frozen-lockfile
       - name: 'Install icx-asset'
         run: cargo install --locked icx-asset --version 0.29.0
       - name: 'Deploy to production'
