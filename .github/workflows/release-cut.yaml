@@ -157,8 +157,17 @@ jobs:
             exit 0
           fi
 
+          # gh pr create --base needs a branch. workflow_dispatch can also be
+          # fired from a tag, which would fail later and more confusingly.
+          if [ "$REF_TYPE" != "branch" ]; then
+            echo "Run this from a branch, not a $REF_TYPE. The release PR needs a branch to target."
+            exit 1
+          fi
+
           BASE_SHA="$(git rev-parse HEAD)"
-          BRANCH="release/run-${RUN_ID}"
+          # run_attempt is in the name so re-running a failed cut does not collide
+          # with the branch and PR the previous attempt already pushed.
+          BRANCH="release/run-${RUN_ID}-${RUN_ATTEMPT}"
           git checkout -b "$BRANCH"
 
           orbit-cli release prepare "${args[@]}"
