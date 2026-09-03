@@ -18,7 +18,7 @@ The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the a
 | `station` | `station` | Backend | Per-wallet backend, one deployed per org. Wasm to the control-panel registry, stations self-upgrade. | Yes |
 | `upgrader` | `upgrader` | Backend | Per-station helper that performs safe upgrades, paired one-to-one with a station. Wasm to the registry. | Yes |
 | `control-panel` | `control-panel` | Backend | The single global registry and directory. Deploys stations. Wasm, deployed as the control-panel canister. | Yes |
-| `dfx-orbit` | `orbit-cli` | CLI | The CLI we ship to users. Git tag and GitHub release, users install it themselves. | Yes |
+| `dfx-orbit` | `orbit-cli`, but see below | CLI | The CLI we ship to users. Git tag and GitHub release, users install it themselves. | Yes |
 | `*-api`, `orbit-essentials` | (unchanged) | Crates | Shared Candid and types. No artifact, deploys nowhere. | Bumped automatically |
 
 Things worth stating plainly, because they are the usual source of confusion:
@@ -26,14 +26,14 @@ Things worth stating plainly, because they are the usual source of confusion:
 * The three frontends are separate projects with separate versions and separate asset canisters. They are not one "wallet dapp" bundle.
 * Only the Control Panel is a singleton. There is one global instance. Station and Upgrader are multi-instance: the Control Panel deploys a fresh Station per org, and each Station comes paired with its own Upgrader. Station and Upgrader deploy and control each other, which is what makes a station upgrade safe.
 * The `station-api` / `upgrader-api` / `control-panel-api` crates are the contract, just the Candid interface and shared types. The bare name (`station`) is the canister that runs; the `-api` crate compiles to no canister. Bumping an api crate cascades a bump into whatever depends on it, which is why one small change can move several version numbers at once.
-* `dfx-orbit` and `orbit-cli` are not the same tool. `dfx-orbit` is the CLI we ship to users. `orbit-cli` is our internal tool that drives the release (`release prepare`, `release publish`, `registry publish`). Only `dfx-orbit` is a release target.
+* `dfx-orbit` and `orbit-cli` are not the same tool today. `dfx-orbit` is the CLI we ship to users. `orbit-cli` is our internal tool that drives the release (`release prepare`, `release publish`, `registry publish`). Only `dfx-orbit` is a release target. Which is why the rename in the table above has a catch: giving the user-facing CLI the name `orbit-cli` means renaming the internal one in the same change, or the name refers to two different tools. Every other row in that table is a straight rename; this one is the exception.
 
 ## Phase 1: cut a release
 
 Actions tab, run the **Cut release** workflow. The form:
 
 * **one checkbox per project**: tick `wallet-dapp`, `station`, and so on. Tick nothing and it releases everything that changed since the last release, which nx works out from the commits. This is where you pick the whole batch or a subset.
-* **version_specifier**: `auto` lets the conventional commits decide the bump. Override with `patch` / `minor` / `major` if you need to.
+* **version_specifier**: `auto` lets the conventional commits decide the bump. Override with `patch` / `minor` / `major`, or with `prepatch` / `preminor` / `premajor` / `prerelease` to move onto a pre-release version.
 * **pre_release**: `none`, or `alpha` / `beta` / `rc` to cut something like `0.8.0-rc.0` instead of `0.8.0`. Only valid with `auto` or `prerelease`.
 * **dry_run**: computes the versions and changelogs and opens nothing, so you can preview.
 
@@ -92,8 +92,8 @@ Ask the release administrators for the vault reference. Whoever holds it is who 
 
 The deploy workflows need this in place before they can run:
 
-* Create the `playground` GitHub Environment and give it the playground deployment credential. The name the jobs look for is declared at the top of each deploy workflow.
+* Create the `playground` GitHub Environment and add `DEPLOY_STAGING_IDENTITY_PEM` (frontends) and `BACKEND_STAGING_IDENTITY_PEM` (backends) to it.
 * Restrict that environment's deployment branches to `main`, so a job on some other branch cannot claim the credential.
-* Create the `production` environment but leave it without a key, which is what keeps the production job inert. If production deploys are ever moved into CI, that environment needs required reviewers and the same branch restriction first.
+* Create the `production` environment but leave it without a key, which is what keeps the production job inert. If production deploys are ever moved into CI, that environment needs `DEPLOY_PRODUCTION_IDENTITY_PEM` and `BACKEND_PRODUCTION_IDENTITY_PEM`, plus required reviewers and the same branch restriction, first.
 * Fix the playground `derivationOrigin` so Internet Identity login works there, ideally by making it come from an env var.
 * Stand up a persistent test station so backend wasms published to the playground registry can be exercised by a real self-upgrade before production.
