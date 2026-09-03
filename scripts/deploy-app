@@ -13,7 +13,7 @@ set -eEuo pipefail
 # The signing key can be a pem file (--pem) or read straight from 1Password
 # (--op op://Vault/Item/field), so nothing has to be saved to disk by hand.
 #
-# Needs: gh, jq, docker, icx-asset, curl (and op for --op).
+# Needs: gh, jq, docker, icx-asset, shasum, curl (and op for --op).
 
 REPO="dfinity/orbit"
 REPLICA="https://icp0.io"
@@ -141,7 +141,14 @@ fi
 mkdir -p "$DIR"
 if [[ -n "$TAG" ]]; then
   echo "==> downloading ${TARBALL[$APP]} from $TAG"
-  gh release download "$TAG" --repo "$REPO" --pattern "${TARBALL[$APP]}" --dir "$DIR" --clobber
+  gh release download "$TAG" --repo "$REPO" \
+    --pattern "${TARBALL[$APP]}" --pattern "${TARBALL[$APP]}.sha256" --dir "$DIR" --clobber
+  # Verify against the checksum published beside the tarball. This is the only
+  # check on a production deploy that does not come from CI, so it is not optional.
+  expected="$(tr -d '[:space:]' < "$TAR.sha256")"
+  actual="$(shasum -a 256 "$TAR" | awk '{ print $1 }')"
+  [[ "$expected" == "$actual" ]] || die "checksum mismatch for ${TARBALL[$APP]}: expected $expected, got $actual"
+  echo "    checksum ok: $actual"
 else
   echo "==> building for $ENV"
   BUILD_MODE="$ENV" ./scripts/docker-build.sh "${BUILD_TARGET[$APP]}"

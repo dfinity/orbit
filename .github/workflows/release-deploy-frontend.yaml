@@ -9,8 +9,8 @@ name: 'Deploy frontend'
 # separate follow-up.
 #
 # These jobs deliberately install as little as possible. deploy-app needs only
-# gh, jq, docker, icx-asset and curl, so there is no Node/pnpm install here and
-# the npm dependency tree never enters the job that handles the signing key.
+# gh, jq, docker, icx-asset, shasum and curl, so there is no Node/pnpm install
+# here and the npm dependency tree never enters the job that handles the key.
 #
 # The signing key is read from the `DEPLOY_IDENTITY_PEM` secret, scoped per
 # environment, so a job only ever sees its own key.
