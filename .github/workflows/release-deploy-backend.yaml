@@ -14,10 +14,10 @@ name: 'Deploy backend'
 #     control-panel canister. No registry, no per-wallet buffer, so the approval
 #     gate is the only thing standing between this and every wallet.
 #
-# The signing key is read from the `BACKEND_IDENTITY_PEM` secret, scoped per
-# environment. That identity must be a registry admin on the control-panel (for
-# registry publish) and a controller of the control-panel canister (for the
-# control-panel upgrade).
+# Each job reads its own secret, `BACKEND_STAGING_IDENTITY_PEM` on the
+# `playground` environment and `BACKEND_PRODUCTION_IDENTITY_PEM` on `production`.
+# That identity must be a registry admin on the control-panel (for registry
+# publish) and a controller of the control-panel canister (for the upgrade).
 #
 # Production is deliberately not wired up by default. The production key is not
 # held here; production is deployed from an operator machine with
@@ -81,13 +81,13 @@ jobs:
           station: ${{ inputs.station }}
           upgrader: ${{ inputs.upgrader }}
           control_panel: ${{ inputs.control_panel }}
-          identity_pem: ${{ secrets.BACKEND_IDENTITY_PEM }}
+          identity_pem: ${{ secrets.BACKEND_STAGING_IDENTITY_PEM }}
           gh_token: ${{ github.token }}
 
   production:
     name: 'production'
     needs: playground
-    if: ${{ inputs.promote_to_production == 'true' }}
+    if: ${{ inputs.promote_to_production }}
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -106,5 +106,5 @@ jobs:
           station: ${{ inputs.station }}
           upgrader: ${{ inputs.upgrader }}
           control_panel: ${{ inputs.control_panel }}
-          identity_pem: ${{ secrets.BACKEND_IDENTITY_PEM }}
+          identity_pem: ${{ secrets.BACKEND_PRODUCTION_IDENTITY_PEM }}
           gh_token: ${{ github.token }}

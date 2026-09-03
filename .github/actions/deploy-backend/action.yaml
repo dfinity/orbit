@@ -60,7 +60,7 @@ runs:
         if [ "${#targets[@]}" -eq 0 ]; then echo "No backend selected."; exit 1; fi
 
         if [ -z "${BACKEND_IDENTITY_PEM:-}" ]; then
-          echo "No BACKEND_IDENTITY_PEM on the $NET environment."
+          echo "No signing key on the $NET environment."
           echo "Production is deployed from an operator machine. See RELEASE.md:"
           echo "  ./scripts/deploy-backend --target <target> --network production --op <ref>"
           exit 1
