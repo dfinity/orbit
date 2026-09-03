@@ -12,11 +12,15 @@ name: 'Deploy frontend'
 # gh, jq, docker, icx-asset and curl, so there is no Node/pnpm install here and
 # the npm dependency tree never enters the job that handles the signing key.
 #
-# The signing key is read from the `DEPLOY_IDENTITY_PEM` secret. Scope it per
-# environment: put the playground key on the `playground` environment and the
-# production key on the `production` environment, so each job only ever sees its
-# own key. The production approval gate is configured in
-# Settings -> Environments -> production -> Required reviewers.
+# The signing key is read from the `DEPLOY_IDENTITY_PEM` secret, scoped per
+# environment, so a job only ever sees its own key.
+#
+# Production is deliberately not wired up by default. The production key is not
+# held here; production is deployed from an operator machine with
+# `scripts/deploy-app --op`, which keeps that key out of this repo entirely. See
+# RELEASE.md. The production job below is kept so the wiring exists if that
+# decision is ever revisited: without a key on the `production` environment it
+# fails fast with a message instead of doing anything surprising.
 
 on:
   workflow_dispatch:
@@ -33,10 +37,12 @@ on:
         description: 'Deploy the docs site (docs-portal).'
         type: boolean
         default: false
+      # Off by default: production is normally deployed from an operator machine,
+      # not from here. Only useful if a production key is put on the environment.
       promote_to_production:
-        description: 'After playground, promote the same selection to production behind the approval gate. Uncheck for a playground-only run.'
+        description: 'Also run the production job. Leave unchecked unless production deploys have been moved into CI.'
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: read
@@ -123,7 +129,12 @@ jobs:
           if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
           if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
           if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
-          if [ -z "${DEPLOY_IDENTITY_PEM:-}" ]; then echo "DEPLOY_IDENTITY_PEM secret is not set on the production environment."; exit 1; fi
+          if [ -z "${DEPLOY_IDENTITY_PEM:-}" ]; then
+            echo "No DEPLOY_IDENTITY_PEM on the production environment."
+            echo "Production is deployed from an operator machine. See RELEASE.md:"
+            echo "  ./scripts/deploy-app --app <app> --env production --tag latest --op <ref>"
+            exit 1
+          fi
 
           pem="$(mktemp)"; chmod 600 "$pem"
           printf '%s\n' "$DEPLOY_IDENTITY_PEM" > "$pem"
