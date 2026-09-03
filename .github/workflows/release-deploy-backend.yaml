@@ -15,9 +15,19 @@ name: 'Deploy backend'
 #     gate is the only thing standing between this and every wallet.
 #
 # The signing key is read from the `BACKEND_IDENTITY_PEM` secret, scoped per
-# environment, and imported into dfx as a named identity. That identity must be
-# a registry admin on the control-panel (for registry publish) and a controller
-# of the control-panel canister (for the control-panel upgrade).
+# environment. That identity must be a registry admin on the control-panel (for
+# registry publish) and a controller of the control-panel canister (for the
+# control-panel upgrade).
+#
+# Production is deliberately not wired up by default. The production key is not
+# held here; production is deployed from an operator machine with
+# `scripts/deploy-backend --op`, which keeps that key out of this repo entirely.
+# See RELEASE.md. The production job below is kept so the wiring exists if that
+# decision is ever revisited: without a key on the `production` environment it
+# fails fast with a message instead of doing anything surprising.
+#
+# Both jobs call scripts/deploy-backend, the same script an operator runs by
+# hand, so there is only one implementation of a backend deploy.
 
 on:
   workflow_dispatch:
@@ -34,10 +44,12 @@ on:
         description: 'Upgrade the control-panel canister in place.'
         type: boolean
         default: false
+      # Off by default: production is normally deployed from an operator machine,
+      # not from here. Only useful if a production key is put on the environment.
       promote_to_production:
-        description: 'After the playground network, promote the same selection to the production network behind the approval gate. Uncheck for a playground-only run.'
+        description: 'Also run the production job. Leave unchecked unless production deploys have been moved into CI.'
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: read

@@ -1,6 +1,10 @@
 name: 'Deploy backend'
 description: 'Publish station/upgrader to the control-panel registry, or upgrade the control-panel canister, on one network.'
 
+# All of the actual work lives in scripts/deploy-backend so that CI and an
+# operator on a laptop run the same code. This action only installs the
+# toolchain, materialises the key, and calls the script once per target.
+
 inputs:
   network:
     description: 'dfx network to target (playground or production).'
@@ -28,6 +32,7 @@ runs:
       uses: ./.github/actions/setup-node
     - name: 'Install dependencies'
       shell: bash
+      # Needed for orbit-cli, which performs the registry publish.
       run: pnpm install --frozen-lockfile
     - name: 'Install dfx'
       uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
@@ -39,7 +44,6 @@ runs:
     - name: 'Deploy'
       shell: bash
       env:
-        REPO: 'dfinity/orbit'
         NET: ${{ inputs.network }}
         DEPLOY_STATION: ${{ inputs.station }}
         DEPLOY_UPGRADER: ${{ inputs.upgrader }}
@@ -54,56 +58,18 @@ runs:
         if [ "$DEPLOY_UPGRADER" = "true" ]; then targets+=(upgrader); fi
         if [ "$DEPLOY_CONTROL_PANEL" = "true" ]; then targets+=(control-panel); fi
         if [ "${#targets[@]}" -eq 0 ]; then echo "No backend selected."; exit 1; fi
-        if [ -z "${BACKEND_IDENTITY_PEM:-}" ]; then echo "BACKEND_IDENTITY_PEM secret is not set on the $NET environment."; exit 1; fi
 
-        # Import the key into dfx as a named identity the CLI can resolve.
-        dfx_root="$(mktemp -d)"; chmod 700 "$dfx_root"; export DFX_CONFIG_ROOT="$dfx_root"
-        pem="$(mktemp)"; chmod 600 "$pem"; printf '%s\n' "$BACKEND_IDENTITY_PEM" > "$pem"
-        trap 'rm -rf "$pem" "$dfx_root"' EXIT
-        dfx identity import ci-backend "$pem" --storage-mode plaintext --force
+        if [ -z "${BACKEND_IDENTITY_PEM:-}" ]; then
+          echo "No BACKEND_IDENTITY_PEM on the $NET environment."
+          echo "Production is deployed from an operator machine. See RELEASE.md:"
+          echo "  ./scripts/deploy-backend --target <target> --network production --op <ref>"
+          exit 1
+        fi
 
-        # Download a released wasm artifact into artifacts/<dir>/<file>, resolving
-        # the newest tag for that project.
-        dl() {
-          local key="$1" dir="$2" file="$3" tag
-          tag="$(gh release list --repo "$REPO" --limit 200 \
-            | grep -oE "@orbit/${key}-v[0-9]+\.[0-9]+\.[0-9]+" | sort -V | tail -1)"
-          [ -n "$tag" ] || { echo "no release found for $key"; exit 1; }
-          echo "==> $key: downloading $file from $tag"
-          mkdir -p "artifacts/$dir"
-          gh release download "$tag" --repo "$REPO" \
-            --pattern "$file" --pattern "$file.sha256" --dir "artifacts/$dir" --clobber
-          # Verify the wasm against the checksum published beside it in the release.
-          local expected actual
-          expected="$(tr -d '[:space:]' < "artifacts/$dir/$file.sha256")"
-          actual="$(sha256sum "artifacts/$dir/$file" | awk '{ print $1 }')"
-          if [ "$expected" != "$actual" ]; then
-            echo "checksum mismatch for $file: expected $expected, got $actual"; exit 1
-          fi
-          echo "    checksum ok: $actual"
-        }
+        pem="$(mktemp)"; chmod 600 "$pem"
+        printf '%s\n' "$BACKEND_IDENTITY_PEM" > "$pem"
+        trap 'rm -f "$pem"' EXIT
 
         for target in "${targets[@]}"; do
-          case "$target" in
-            station)
-              # station publishes upgrader as its dependency, so both wasms are needed.
-              dl station station station.wasm.gz
-              dl upgrader upgrader upgrader.wasm.gz
-              echo "==> publishing station to the $NET registry"
-              orbit-cli registry publish --app station --network "$NET" --identity ci-backend
-              ;;
-            upgrader)
-              dl upgrader upgrader upgrader.wasm.gz
-              echo "==> publishing upgrader to the $NET registry"
-              orbit-cli registry publish --app upgrader --network "$NET" --identity ci-backend
-              ;;
-            control-panel)
-              dl control-panel control-panel control_panel.wasm.gz
-              echo "==> upgrading the control-panel canister on $NET"
-              dfx canister install control_panel \
-                --network "$NET" --identity ci-backend \
-                --wasm artifacts/control-panel/control_panel.wasm.gz \
-                --mode upgrade --yes
-              ;;
-          esac
+          ./scripts/deploy-backend --target "$target" --network "$NET" --pem "$pem" --yes
         done
