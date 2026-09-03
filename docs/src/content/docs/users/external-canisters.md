@@ -53,9 +53,12 @@ Regularly review canister permissions to prevent unauthorized access. The permis
    - **Install:** Install a new WASM file into the canister
    - **Upgrade:** Replace the existing canister code with a new version.
    - **Reinstall:** Reinstall the canister with the same code.
-3. Upload the WASM file and submit the request.
-4. Wait for the approval process (if multi-signature policies are enabled).
-5. Monitor the canister status to ensure the upgrade completes successfully.
+3. For the **Upgrade** mode, review the additional upgrade options:
+   - **Wasm Memory Persistence:** Controls whether the canister's main memory is kept or replaced during the upgrade. Leave it on _Default (replace)_ for most canisters. Motoko canisters that use [Enhanced Orthogonal Persistence](https://docs.internetcomputer.org/motoko/orthogonal-persistence/enhanced) must use **Keep**, otherwise the Internet Computer rejects the upgrade to protect their memory.
+   - **Skip pre-upgrade hook:** Skips the canister's `pre_upgrade` hook. Only useful for recovery when the existing hook traps.
+4. Upload the WASM file and submit the request.
+5. Wait for the approval process (if multi-signature policies are enabled).
+6. Monitor the canister status to ensure the upgrade completes successfully.
 
 :::caution[Important]
 Always test new versions in a staging environment before upgrading production canisters.
