@@ -12,8 +12,10 @@ name: 'Deploy frontend'
 # gh, jq, docker, icx-asset, shasum and curl, so there is no Node/pnpm install
 # here and the npm dependency tree never enters the job that handles the key.
 #
-# The signing key is read from the `DEPLOY_IDENTITY_PEM` secret, scoped per
-# environment, so a job only ever sees its own key.
+# Each job reads its own secret, `DEPLOY_STAGING_IDENTITY_PEM` on the
+# `playground` environment and `DEPLOY_PRODUCTION_IDENTITY_PEM` on `production`,
+# so which key a job holds is obvious from the job and not from environment
+# scoping alone.
 #
 # Production is deliberately not wired up by default. The production key is not
 # held here; production is deployed from an operator machine with
@@ -77,7 +79,7 @@ jobs:
           DEPLOY_WALLET: ${{ inputs.wallet }}
           DEPLOY_MARKETING: ${{ inputs.marketing }}
           DEPLOY_DOCS: ${{ inputs.docs }}
-          DEPLOY_IDENTITY_PEM: ${{ secrets.DEPLOY_IDENTITY_PEM }}
+          IDENTITY_PEM: ${{ secrets.DEPLOY_STAGING_IDENTITY_PEM }}
         run: |
           set -euo pipefail
 
@@ -86,10 +88,10 @@ jobs:
           if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
           if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
           if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
-          if [ -z "${DEPLOY_IDENTITY_PEM:-}" ]; then echo "DEPLOY_IDENTITY_PEM secret is not set on the playground environment."; exit 1; fi
+          if [ -z "${IDENTITY_PEM:-}" ]; then echo "DEPLOY_STAGING_IDENTITY_PEM is not set on the playground environment."; exit 1; fi
 
           pem="$(mktemp)"; chmod 600 "$pem"
-          printf '%s\n' "$DEPLOY_IDENTITY_PEM" > "$pem"
+          printf '%s\n' "$IDENTITY_PEM" > "$pem"
           trap 'rm -f "$pem"' EXIT
 
           for app in "${apps[@]}"; do
@@ -100,7 +102,7 @@ jobs:
   production:
     name: 'production'
     needs: playground
-    if: ${{ inputs.promote_to_production == 'true' }}
+    if: ${{ inputs.promote_to_production }}
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -120,7 +122,7 @@ jobs:
           DEPLOY_WALLET: ${{ inputs.wallet }}
           DEPLOY_MARKETING: ${{ inputs.marketing }}
           DEPLOY_DOCS: ${{ inputs.docs }}
-          DEPLOY_IDENTITY_PEM: ${{ secrets.DEPLOY_IDENTITY_PEM }}
+          IDENTITY_PEM: ${{ secrets.DEPLOY_PRODUCTION_IDENTITY_PEM }}
         run: |
           set -euo pipefail
 
@@ -129,15 +131,15 @@ jobs:
           if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
           if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
           if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
-          if [ -z "${DEPLOY_IDENTITY_PEM:-}" ]; then
-            echo "No DEPLOY_IDENTITY_PEM on the production environment."
+          if [ -z "${IDENTITY_PEM:-}" ]; then
+            echo "No DEPLOY_PRODUCTION_IDENTITY_PEM on the production environment."
             echo "Production is deployed from an operator machine. See RELEASE.md:"
             echo "  ./scripts/deploy-app --app <app> --env production --tag latest --op <ref>"
             exit 1
           fi
 
           pem="$(mktemp)"; chmod 600 "$pem"
-          printf '%s\n' "$DEPLOY_IDENTITY_PEM" > "$pem"
+          printf '%s\n' "$IDENTITY_PEM" > "$pem"
           trap 'rm -f "$pem"' EXIT
 
           # Production deploys the released tagged artifact (deploy-app defaults
