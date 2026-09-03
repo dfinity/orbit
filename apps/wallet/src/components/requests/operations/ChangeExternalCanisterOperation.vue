@@ -112,7 +112,13 @@ const wasmMemoryPersistence = computed<WasmMemoryPersistence | undefined>(
   () => upgradeOptions.value?.wasm_memory_persistence[0],
 );
 
-const skipPreUpgrade = computed<boolean>(() => upgradeOptions.value?.skip_pre_upgrade[0] ?? false);
+// `undefined` when the request does not set the option, which differs from an
+// explicit `false`.
+const skipPreUpgradeOption = computed<boolean | undefined>(
+  () => upgradeOptions.value?.skip_pre_upgrade[0],
+);
+
+const skipPreUpgrade = computed<boolean>(() => skipPreUpgradeOption.value ?? false);
 
 // The compact list view only surfaces the upgrade options when they were
 // explicitly set on the request, while the detail view always shows the
@@ -122,7 +128,7 @@ const showWasmMemoryPersistence = computed(
 );
 
 const showSkipPreUpgrade = computed(
-  () => isUpgrade.value && (!isListMode.value || skipPreUpgrade.value),
+  () => isUpgrade.value && (!isListMode.value || skipPreUpgradeOption.value !== undefined),
 );
 
 const wasmMemoryPersistenceLabel = computed(() => {
@@ -152,8 +158,12 @@ const canisterLabel = computed(() => {
 
 const loadCanisterName = async (): Promise<void> => {
   try {
+    // The name is shown to approvers next to the canister id as the target of the
+    // change, so it is fetched with a verified (certified) call like the request
+    // itself rather than a plain query.
     const result = await station.service.getExternalCanisterByCanisterId(
       props.operation.canister_id,
+      true,
     );
 
     canisterName.value = result.canister.name;

@@ -117,6 +117,20 @@ describe('ChangeExternalCanisterOperation', () => {
     expect(wrapper.find('[data-test-id="change-canister-skip-pre-upgrade"]').text()).toBe('Yes');
   });
 
+  it('shows an explicitly disabled skip pre-upgrade flag in list mode', () => {
+    const wrapper = mountOperation(
+      operationWithMode({
+        upgrade: [{ wasm_memory_persistence: [], skip_pre_upgrade: [false] }],
+      }),
+      'list',
+    );
+
+    expect(wrapper.find('[data-test-id="change-canister-skip-pre-upgrade"]').text()).toBe('No');
+    expect(wrapper.find('[data-test-id="change-canister-wasm-memory-persistence"]').exists()).toBe(
+      false,
+    );
+  });
+
   it('hides the upgrade options in list mode when the upgrade does not set them', () => {
     const wrapper = mountOperation(operationWithMode({ upgrade: [] }), 'list');
 
@@ -166,7 +180,8 @@ describe('ChangeExternalCanisterOperation', () => {
     const wrapper = mountOperation(operationWithMode(keepUpgrade), 'detail');
     await flushPromises();
 
-    expect(lookup).toHaveBeenCalledWith(canisterId);
+    // The name is resolved with a verified call, like the request itself.
+    expect(lookup).toHaveBeenCalledWith(canisterId, true);
     expect(wrapper.find('[data-test-id="change-canister-target"]').text()).toBe(
       `Backend (${canisterId.toText()})`,
     );
