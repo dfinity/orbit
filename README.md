@@ -1,26 +1,30 @@
-> This project is **still in Alpha**. We are happy to answer questions if they are raised as issues in this github repo.
+> This project is **still in Alpha**. We are happy to answer questions if they are raised as issues in this GitHub repo.
 
 [![Internet Computer portal](https://img.shields.io/badge/InternetComputer-grey?logo=internet%20computer&style=for-the-badge)](https://internetcomputer.org)
 [![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg?logo=apache&style=for-the-badge)](LICENSE)
-[![Tests Status](https://img.shields.io/github/actions/workflow/status/dfinity/orbit/tests.yaml?logo=githubactions&logoColor=white&style=for-the-badge&label=tests)](./actions/workflows/tests.yaml)
+[![Tests Status](https://img.shields.io/github/actions/workflow/status/dfinity/orbit/tests.yaml?logo=githubactions&logoColor=white&style=for-the-badge&label=tests)](https://github.com/dfinity/orbit/actions/workflows/tests.yaml)
 
 <div style="display:flex;flex-direction:column;">
   <img src="docs/old/orbit-header.png" alt="Orbit logo" role="presentation"/><br />
 </div>
 
-Check out the [Orbit Wallet](https://orbit.global) to see the platform in action.
+Try [Orbit Wallet](https://app.orbit.global) to see the platform running.
 
 ## Overview
 
-Orbit is an innovative platform layer built for the Internet Computer Protocol (ICP) and designed to extend to other blockchains. Inspired by the evolutionary leap from IaaS to PaaS in cloud computing, Orbit aims to simplify the development of blockchain applications, enabling developers from both Web2 and Web3 backgrounds to build future-proof applications where they can focus on their business logic and not the underlying blockchain integrations.
+Orbit runs multi-approval asset management on the Internet Computer Protocol (ICP). Each organization gets a Station, a canister that holds its assets and moves them only after the required number of approvals. Applications call the Station instead of signing chain transactions themselves, so a team can add treasury operations without writing ledger integrations.
 
-## Vision 
+Support for chains beyond ICP is planned and not built yet.
 
-Our vision with Orbit is to emulate the transformation that Cloud providers brought to computing, by providing a platform that significantly lowers the entry barrier for blockchain application development. The institutional wallet started as our "demo app", demonstrating the potential of ICP’s Chain Fusion. However, the core of our innovation lies in the platform itself, which enables developers to build diverse applications, from simple single-user wallets to complex multi-approval Enterprise Systems, all with the same ease of use.
+## Vision
+
+The institutional wallet started as a demo app for ICP's Chain Fusion, but the platform under it is the product. The same Station and the same approval rules cover a single-user wallet and an enterprise setup that needs several sign-offs, so a developer chooses an approval policy rather than building one.
+
+We want building on Orbit to take about as much work as building on a cloud platform, with the chain integrations already handled.
 
 ## User facing applications
 
-The [orbit.global](https://orbit.global) is the main entry point for users to interact with the Orbit platform. It provides access to the Orbit Wallet application, which is a dapp that allows users to manage their digital assets tailored for multi-approval scenarios. The wallet supports user management, transaction history, permissions management, and other features that are essential for managing digital assets in a secure and user-friendly way.
+[orbit.global](https://orbit.global) is the landing page. Orbit Wallet itself runs at [app.orbit.global](https://app.orbit.global), where a user signs in to manage an organization's assets: adding and removing users, setting permissions and approval policies, submitting and approving transfers, and reading the transaction history.
 
 ## System Overview
 
@@ -34,18 +38,18 @@ flowchart LR
     Upgrader[(Upgrader)] -- deploys & controls --> Station;
 ```
 
-Orbit is composed of several components, each with its own role and responsibilities. Here is a brief overview of each component:
+The components:
 
-- **Wallet (App)**: The initial showcase application we've built on top of Orbit Core Services. It is responsible for managing users, transactions, and other wallet-related operations.
-- **Control Panel**: The control panel is a canister that facilitates common operations for accessing and managing Orbit Stations.
-- **Station**: A station is the core canister component of Orbit. It is a trustless multi-custody canister that allows users to manage their digital assets and operations.
-- **Upgrader**: The upgrader is responsible for managing the lifecycle of the station canister. It allows for seamless and secure upgrades of the station canister.
+- **Wallet (App)**: The frontend users log into. It reads and writes through a Station, and it was the first application built on Orbit.
+- **Control Panel**: One global canister. It deploys a new Station when someone asks for one, stores the Station and Upgrader wasms that stations upgrade to, and lists the stations a user belongs to.
+- **Station**: One canister per organization, holding the assets, the users and their permissions, and the approval policies. It carries out an operation only once that operation's policy is satisfied, so no single Orbit operator can move funds.
+- **Upgrader**: One per Station, paired with it. The Station and its Upgrader control each other, so the Upgrader installs a new Station wasm and can restore the Station if an upgrade goes wrong.
 
-For detailed information on orbit components and terminology, please refer to the [Orbit Glossary](docs/old/GLOSSARY.md).
+The [Orbit Glossary](docs/old/GLOSSARY.md) defines these components and the rest of the terminology.
 
 ## Target Architecture
 
-The Orbit platform is designed to be modular and extensible, allowing developers to build a wide range of applications on top of it. The platform consists of several components, including the Orbit Station canisters, UI canisters and Control Panel. Developers can build custom applications using the Orbit SDK and CDK, and extend the platform with third-party integrations from the Extensions Marketplace for additional functionality. The highlighted components are part of the current release. The remaining components will be developed in future iterations.
+The diagram below shows where Orbit is heading. The highlighted boxes ship today: the Station canisters, the UI canisters, and the Control Panel. The rest is planned and not built yet: a CDK for writing canisters against a Station, an SDK for client apps, and an extensions marketplace for third-party integrations.
 
 ```mermaid
 block-beta
@@ -81,7 +85,7 @@ block-beta
 
 ### Requirements
 
-Please make sure you have the following installed:
+Install these first:
 
 - [Rust](https://www.rust-lang.org/learn/get-started)
 - [DFX](https://internetcomputer.org/docs/current/developer-docs/setup/install)
@@ -97,15 +101,15 @@ dfx start --clean --system-canisters --host 127.0.0.1:4943
 
 Note that PocketIC should be stopped using `dfx stop` rather than by CTRL^C.
 
-Then the following steps can be used to setup the Orbit canister ecosystem for local development.
+Then set up the Orbit canisters for local development:
 
 ```bash
 ./orbit --init
 ```
 
-This will build the canisters, install the required node modules and deploy the canisters to your local replica. All the canisters will be deployed to the `local` network with their fixed canister ids.
+The script builds the canisters, installs the node modules, and deploys everything to the `local` network with fixed canister ids.
 
-You can access the wallet interface at [http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943](http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943).
+The wallet interface is then at [http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943](http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943).
 
 ### Local development
 
@@ -117,10 +121,8 @@ This project is licensed under the [Apache 2.0](./LICENSE) license.
 
 ## Contributing
 
-This project is currenly in alpha and is not yet open for contributions. We are working on a roadmap to open them up in the future.
+This project is in alpha and not yet open for contributions. We are working on a roadmap to open them up.
 
 ## Show your support
 
 If you find this project as exciting as we do, let us know by starring this repository ⭐️
-
-Your support encourages us to keep innovating and striving to deliver the best possible blockchain platform for developers.
