@@ -96,7 +96,9 @@ Ask the release administrators for the vault reference. Whoever holds it is who 
 
 The playground network, its canisters and the live site all exist already. What is missing is the GitHub Actions plumbing to reach them:
 
-* Create the `playground` GitHub Environment and add `DEPLOY_PLAYGROUND_IDENTITY_PEM` (frontends) and `BACKEND_PLAYGROUND_IDENTITY_PEM` (backends) to it.
+* Mint an identity for CI that can reach playground and nothing else, then create the `playground` GitHub Environment and add it as `DEPLOY_PLAYGROUND_IDENTITY_PEM` (frontends) and `BACKEND_PLAYGROUND_IDENTITY_PEM` (backends).
+
+  Do not reuse the identity that deploys today. It controls the production canisters as well as the playground ones, so putting it here would give CI production access and undo the reason production is deployed by hand. The playground canisters already trust several principals that production does not, so a playground-only controller is a shape they already support. The new identity needs to be a controller of the playground canisters, authorized on the playground asset canister, and a registry admin on the playground control-panel.
 * Restrict that environment's deployment branches to `main`, so a job on some other branch cannot claim the credential.
 * Create the `production` environment but leave it without a key, which is what keeps the production job inert. If production deploys are ever moved into CI, that environment needs `DEPLOY_PRODUCTION_IDENTITY_PEM` and `BACKEND_PRODUCTION_IDENTITY_PEM`, plus required reviewers and the same branch restriction, first.
 * Fix the playground `derivationOrigin` so Internet Identity login works there, ideally by making it come from an env var.
