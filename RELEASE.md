@@ -57,7 +57,9 @@ Both halves run the same two scripts, `scripts/deploy-app` and `scripts/deploy-b
 
 ### Frontends to playground
 
-Actions tab, run **Deploy frontend**. Tick the apps you want (wallet on by default, marketing and docs off) and run it. It builds each app for playground and uploads it. Go test at the playground URL.
+Actions tab, run **Deploy frontend**. Tick **wallet** and run it. It builds the wallet for playground and uploads it to `bxkhk-6yaaa-aaaal-ai6va-cai`. Go test at https://playground.orbitwallet.io.
+
+Only the wallet has a playground canister. `marketing-dapp` and `docs-portal` exist on production only, so ticking them here fails on purpose, with a message telling you to deploy them to production instead. The backends are unaffected: all three targets work on playground, since the registry publish path needs only the control-panel and the wasm chunk store, both of which exist there.
 
 Leave **promote_to_production** unchecked. It is off by default and only does anything if a production key has been put on the environment, which is not how this is set up.
 
@@ -92,9 +94,9 @@ Ask the release administrators for the vault reference. Whoever holds it is who 
 
 ## One-time setup
 
-The deploy workflows need this in place before they can run:
+The playground network, its canisters and the live site all exist already. What is missing is the GitHub Actions plumbing to reach them:
 
-* Create the `playground` GitHub Environment and add `DEPLOY_STAGING_IDENTITY_PEM` (frontends) and `BACKEND_STAGING_IDENTITY_PEM` (backends) to it.
+* Create the `playground` GitHub Environment and add `DEPLOY_PLAYGROUND_IDENTITY_PEM` (frontends) and `BACKEND_PLAYGROUND_IDENTITY_PEM` (backends) to it.
 * Restrict that environment's deployment branches to `main`, so a job on some other branch cannot claim the credential.
 * Create the `production` environment but leave it without a key, which is what keeps the production job inert. If production deploys are ever moved into CI, that environment needs `DEPLOY_PRODUCTION_IDENTITY_PEM` and `BACKEND_PRODUCTION_IDENTITY_PEM`, plus required reviewers and the same branch restriction, first.
 * Fix the playground `derivationOrigin` so Internet Identity login works there, ideally by making it come from an env var.
