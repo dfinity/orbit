@@ -12,6 +12,8 @@ The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the a
 
 Prose here says station. The identifiers still say wallet for historical reasons: the `wallet-dapp` project, the `wallet` checkbox on the deploy form, `--app wallet`, the `app_wallet` key in `canister_ids.json`. Renaming those is a lot of work for a wording change. It splits the release tag series in two, so the scripts that resolve `latest` have to know both names, and every published release keeps the old one. It needs its own PR.
 
+So backticked names below are the current ones, matching what you see in the repo and on the workflow forms. The table above maps each to its proposed name.
+
 | Current name | Proposed name | Type | Role and where it deploys | Ships alone |
 | --- | --- | --- | --- | --- |
 | `wallet-dapp` | `station-frontend` | Frontend | The station UI users log into. Asset tarball to its asset canister (`5fu67`, app.orbit.global). | Yes |
@@ -35,7 +37,7 @@ The usual points of confusion:
 
 Actions tab, run the **Cut release** workflow. The form:
 
-* **one checkbox per project**: tick `wallet-dapp`, `station`, and so on. Tick nothing and it releases everything that changed since the last release, which nx works out from the commits. This is where you pick the whole batch or a subset.
+* **one checkbox per project**, named as in the table above. Tick nothing and it releases everything that changed since the last release, which nx works out from the commits. This is where you pick the whole batch or a subset.
 * **version_specifier**: `auto` lets the conventional commits decide the bump. Override with `patch` / `minor` / `major`, or with `prepatch` / `preminor` / `premajor` / `prerelease` to move onto a pre-release version.
 * **pre_release**: `none`, or `alpha` / `beta` / `rc` to cut something like `0.8.0-rc.0` instead of `0.8.0`. Only valid with `auto` or `prerelease`.
 * **dry_run**: computes the versions and changelogs and opens nothing, so you can preview.
@@ -60,7 +62,7 @@ Both halves run the same two scripts, `scripts/deploy-app` and `scripts/deploy-b
 
 ### Frontends to playground
 
-Actions tab, run **Deploy frontend**. Tick **wallet** and run it. It builds the station frontend for playground and uploads it to `bxkhk-6yaaa-aaaal-ai6va-cai`. Go test at https://playground.orbitwallet.io.
+Actions tab, run **Deploy frontend**. Tick the station frontend, which the form still calls **wallet**, and run it. It builds for playground and uploads to `bxkhk-6yaaa-aaaal-ai6va-cai`. Go test at https://playground.orbitwallet.io.
 
 Only the station frontend has a playground canister. `marketing-dapp` and `docs-portal` exist on production only, so ticking them here fails on purpose, with a message telling you to deploy them to production instead. All three backend targets do work on playground. Publishing to the registry needs only the control-panel and the wasm chunk store, and both exist there.
 
