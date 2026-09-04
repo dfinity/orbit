@@ -7,7 +7,7 @@ import registry from './registry';
 program
   .storeOptionsAsProperties(false)
   .version(version)
-  .name('orbit-cli')
+  .name('orbit-release-cli')
   .description('The Orbit CLI includes tools for managing projects in the workspace')
   .command('path')
   .description('Print the path to the Orbit CLI')
