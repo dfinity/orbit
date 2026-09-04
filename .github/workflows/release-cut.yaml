@@ -15,7 +15,7 @@ on:
       # everything that changed since the last release (nx works it out). The
       # internal -api crates are not listed: they cascade automatically.
       wallet_dapp:
-        description: 'Release wallet-dapp (wallet app).'
+        description: 'Release wallet-dapp (the station frontend).'
         type: boolean
         default: false
       marketing_dapp:
