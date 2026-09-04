@@ -12,10 +12,12 @@ name: 'Deploy frontend'
 # gh, jq, docker, icx-asset, shasum and curl, so there is no Node/pnpm install
 # here and the npm dependency tree never enters the job that handles the key.
 #
-# Each job reads its own secret, `DEPLOY_STAGING_IDENTITY_PEM` on the
+# Each job reads its own secret, `DEPLOY_PLAYGROUND_IDENTITY_PEM` on the
 # `playground` environment and `DEPLOY_PRODUCTION_IDENTITY_PEM` on `production`,
 # so which key a job holds is obvious from the job and not from environment
-# scoping alone.
+# scoping alone. The names track the networks in dfx.json. Note that `staging`
+# is a different network there, declared but with no canisters, so it is not a
+# synonym for playground and is deliberately not used here.
 #
 # Production is deliberately not wired up by default. The production key is not
 # held here; production is deployed from an operator machine with
@@ -81,7 +83,7 @@ jobs:
           DEPLOY_WALLET: ${{ inputs.wallet }}
           DEPLOY_MARKETING: ${{ inputs.marketing }}
           DEPLOY_DOCS: ${{ inputs.docs }}
-          IDENTITY_PEM: ${{ secrets.DEPLOY_STAGING_IDENTITY_PEM }}
+          IDENTITY_PEM: ${{ secrets.DEPLOY_PLAYGROUND_IDENTITY_PEM }}
         run: |
           set -euo pipefail
 
@@ -100,7 +102,7 @@ jobs:
               exit 1
             fi
           done
-          if [ -z "${IDENTITY_PEM:-}" ]; then echo "DEPLOY_STAGING_IDENTITY_PEM is not set on the playground environment."; exit 1; fi
+          if [ -z "${IDENTITY_PEM:-}" ]; then echo "DEPLOY_PLAYGROUND_IDENTITY_PEM is not set on the playground environment."; exit 1; fi
 
           pem="$(mktemp)"; chmod 600 "$pem"
           printf '%s\n' "$IDENTITY_PEM" > "$pem"
