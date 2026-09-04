@@ -107,11 +107,16 @@ elif [[ -z "$BUILD" && -z "$TAG" ]]; then
   TAG="latest"
 fi
 
-# Resolve "latest" to the newest tag for this app.
+# Resolve "latest" to the newest stable release for this app. Pre-releases are
+# excluded twice: on the release flag, and by anchoring the version pattern,
+# because an unanchored match reads "-v0.8.0-rc.0" as "-v0.8.0" and yields a tag
+# that does not exist. Pass --tag explicitly to deploy a pre-release on purpose.
 if [[ "$TAG" == "latest" ]]; then
-  TAG="$(gh release list --repo "$REPO" --limit 200 \
-    | grep -oE "${TAG_PREFIX[$APP]}[0-9]+\.[0-9]+\.[0-9]+" | sort -V | tail -1)"
-  [[ -n "$TAG" ]] || die "could not resolve the latest ${TAG_PREFIX[$APP]} release"
+  TAG="$(gh release list --repo "$REPO" --limit 500 \
+    --json tagName,isPrerelease,isDraft \
+    --jq '.[] | select(.isPrerelease == false and .isDraft == false) | .tagName' \
+    | grep -E "^${TAG_PREFIX[$APP]}[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)"
+  [[ -n "$TAG" ]] || die "could not resolve the latest stable ${TAG_PREFIX[$APP]} release"
 fi
 
 SOURCE="build (BUILD_MODE=$ENV)"; [[ -n "$TAG" ]] && SOURCE="download $TAG"
