@@ -84,6 +84,8 @@ Backends. One target per run, and `station` publishes `upgrader` with it:
 ./scripts/deploy-backend --target station --network production --op "op://<vault>/<item>/identity.pem"
 ```
 
+Both resolve to the newest stable release and skip pre-releases, so an rc sitting at the top of the list will not be picked up by accident. To deploy one on purpose, pass the tag: `deploy-app --tag @orbit/wallet-dapp-v0.8.0-rc.0`.
+
 Both print what they are about to do and ask for confirmation. Both verify the artifact's published checksum before shipping it. `deploy-backend` also refuses to run if your checkout is not the release you are deploying, because the registry labels the entry with the version from your working tree rather than from the artifact, so a stale checkout would publish the right wasm under the wrong version. If it stops for that reason, check out the tag it names and run it again.
 
 Ask the release administrators for the vault reference. Whoever holds it is who can deploy production, which is the point.
