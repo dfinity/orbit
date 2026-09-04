@@ -1,0 +1,191 @@
+name: 'Cut release'
+
+# Phase 1 of the release: cut new versions and open the release PR.
+#
+# Runs `orbit-cli release prepare`, which bumps the versions from the
+# conventional commits, writes the changelogs, and updates `.release.json` in a
+# single commit. This workflow puts that commit on a branch and opens a PR.
+# Merging the PR to the base branch is what triggers `release.yaml` (phase 2,
+# publish): tags, artifacts, and GitHub releases. Deploy is a separate workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      # One checkbox per releasable project. Leave all unchecked to release
+      # everything that changed since the last release (nx works it out). The
+      # internal -api crates are not listed: they cascade automatically.
+      wallet_dapp:
+        description: 'Release wallet-dapp (the station frontend).'
+        type: boolean
+        default: false
+      marketing_dapp:
+        description: 'Release marketing-dapp (landing page).'
+        type: boolean
+        default: false
+      docs_portal:
+        description: 'Release docs-portal (docs site).'
+        type: boolean
+        default: false
+      station:
+        description: 'Release station.'
+        type: boolean
+        default: false
+      upgrader:
+        description: 'Release upgrader.'
+        type: boolean
+        default: false
+      control_panel:
+        description: 'Release control-panel.'
+        type: boolean
+        default: false
+      dfx_orbit:
+        description: 'Release dfx-orbit (Orbit CLI).'
+        type: boolean
+        default: false
+      # How big the bump is. Leave on auto and the commit messages decide.
+      version_specifier:
+        description: 'Force the bump. "auto" lets the conventional commits decide.'
+        required: true
+        type: choice
+        default: 'auto'
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+      # Cuts a test version like 0.8.0-rc.0 instead of 0.8.0, flagged as a
+      # pre-release on GitHub. Good for trying a build on playground before the
+      # real one. Only works with auto or prerelease above.
+      pre_release:
+        description: 'Pre-release channel. Only valid together with a prerelease bump.'
+        required: true
+        type: choice
+        default: 'none'
+        options:
+          - none
+          - alpha
+          - beta
+          - rc
+      # Preview only. Prints what would be released, then stops. No commit, no PR.
+      dry_run:
+        description: 'Compute versions and changelogs only, do not open a PR.'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# One cut at a time. A second trigger queues instead of racing another run that
+# is bumping versions and opening a release PR. A running cut is never cancelled.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  cut:
+    name: 'cut'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Full history and tags: nx computes the bumps from the commits since
+          # the last release tag.
+          fetch-depth: 0
+          fetch-tags: true
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install dependencies'
+        run: pnpm install --frozen-lockfile
+      - name: 'Configure Git'
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+      - name: 'Cut release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          P_WALLET_DAPP: ${{ inputs.wallet_dapp }}
+          P_MARKETING_DAPP: ${{ inputs.marketing_dapp }}
+          P_DOCS_PORTAL: ${{ inputs.docs_portal }}
+          P_STATION: ${{ inputs.station }}
+          P_UPGRADER: ${{ inputs.upgrader }}
+          P_CONTROL_PANEL: ${{ inputs.control_panel }}
+          P_DFX_ORBIT: ${{ inputs.dfx_orbit }}
+          SPECIFIER: ${{ inputs.version_specifier }}
+          PRE_RELEASE: ${{ inputs.pre_release }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          BASE: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+
+          # Build the --projects list from the ticked boxes. None ticked means
+          # release everything that changed, so the flag is omitted entirely.
+          projects=()
+          if [ "$P_WALLET_DAPP" = "true" ]; then projects+=(wallet-dapp); fi
+          if [ "$P_MARKETING_DAPP" = "true" ]; then projects+=(marketing-dapp); fi
+          if [ "$P_DOCS_PORTAL" = "true" ]; then projects+=(docs-portal); fi
+          if [ "$P_STATION" = "true" ]; then projects+=(station); fi
+          if [ "$P_UPGRADER" = "true" ]; then projects+=(upgrader); fi
+          if [ "$P_CONTROL_PANEL" = "true" ]; then projects+=(control-panel); fi
+          if [ "$P_DFX_ORBIT" = "true" ]; then projects+=(dfx-orbit); fi
+
+          args=()
+          if [ "${#projects[@]}" -gt 0 ]; then
+            joined="$(IFS=,; echo "${projects[*]}")"
+            args+=(--projects "$joined")
+          fi
+          if [ "$SPECIFIER" != "auto" ]; then args+=(--version-specifier "$SPECIFIER"); fi
+
+          if [ "$PRE_RELEASE" != "none" ] && [ "$SPECIFIER" != "auto" ] && [ "$SPECIFIER" != "prerelease" ]; then
+            echo 'Invalid inputs: pre_release can only be used when version_specifier is "auto" or "prerelease".'
+            exit 1
+          fi
+          if [ "$PRE_RELEASE" != "none" ]; then args+=(--pre-release "$PRE_RELEASE"); fi
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run: computing versions and changelogs, no branch or PR."
+            orbit-cli release prepare --dry-run --verbose "${args[@]}"
+            exit 0
+          fi
+
+          # gh pr create --base needs a branch. workflow_dispatch can also be
+          # fired from a tag, which would fail later and more confusingly.
+          if [ "$REF_TYPE" != "branch" ]; then
+            echo "Run this from a branch, not a $REF_TYPE. The release PR needs a branch to target."
+            exit 1
+          fi
+
+          BASE_SHA="$(git rev-parse HEAD)"
+          # run_attempt is in the name so re-running a failed cut does not collide
+          # with the branch and PR the previous attempt already pushed.
+          BRANCH="release/run-${RUN_ID}-${RUN_ATTEMPT}"
+          git checkout -b "$BRANCH"
+
+          orbit-cli release prepare "${args[@]}"
+
+          if [ "$(git rev-parse HEAD)" = "$BASE_SHA" ]; then
+            echo "Nothing to release: no projects changed since the last release."
+            exit 0
+          fi
+
+          released="$(jq -r '.changes // {} | to_entries[] | "- `\(.key)` \(.value.releaseVersion.rawVersion)"' .release.json)"
+          if [ -z "$released" ]; then released="(see the diff)"; fi
+
+          git push -u origin "$BRANCH"
+
+          body="$(printf 'Opened by the **Cut release** workflow.\n\nReleasing:\n\n%s\n\nMerging this into `%s` triggers the publish workflow, which tags each project, builds its artifact, and creates the GitHub release. Deploying the artifacts is a separate step in the Deploy workflow.' "$released" "$BASE")"
+
+          gh pr create \
+            --base "$BASE" \
+            --head "$BRANCH" \
+            --title 'chore(release): cut new versions' \
+            --body "$body"
