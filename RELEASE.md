@@ -10,7 +10,7 @@ There is no single "Orbit release". There are independently versioned projects, 
 
 The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the artifact name, and the build target, so renaming it is a real change, not a label. The proposed name is what we would rename it to in a separate PR. That rename has not been decided yet.
 
-Prose here says station, not wallet. Identifiers still say wallet, because that is what they literally are: the `wallet-dapp` project, the `wallet` checkbox on the deploy form, `--app wallet`, the `app_wallet` key in `canister_ids.json`. Changing those is the rename PR, not a wording fix.
+Prose here says station. The identifiers still say wallet for historical reasons: the `wallet-dapp` project, the `wallet` checkbox on the deploy form, `--app wallet`, the `app_wallet` key in `canister_ids.json`. Renaming those is a lot of work for a wording change. It splits the release tag series in two, so the scripts that resolve `latest` have to know both names, and every published release keeps the old one. It needs its own PR.
 
 | Current name | Proposed name | Type | Role and where it deploys | Ships alone |
 | --- | --- | --- | --- | --- |
