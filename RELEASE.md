@@ -1,6 +1,6 @@
 # Orbit release process
 
-A release has three phases: cut, publish, deploy. Cutting and publishing are one flow that ends in a GitHub release with the built artifact attached. Deploying is what puts that artifact on the live canisters. Everything up to and including a playground deploy runs from the Actions tab; production is a command an operator runs. This is the guide to both.
+A release has three phases: cut, publish, deploy. Cutting and publishing are one flow that ends in a GitHub release with the built artifact attached. Deploying is what puts that artifact on the live canisters. Everything up to and including a playground deploy runs from the Actions tab. Production is a command an operator runs.
 
 Most of this used to be manual. It is now three workflows: **Cut release**, **Deploy frontend**, **Deploy backend**. Publishing was already automated and has not changed.
 
@@ -8,7 +8,7 @@ Most of this used to be manual. It is now three workflows: **Cut release**, **De
 
 There is no single "Orbit release". There are independently versioned projects, and nx bumps each one on its own from the conventional commits that touched it. Six produce a deployable artifact. The rest are internal crates that only exist to cascade a version bump.
 
-The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the artifact name, and the build target, so renaming it is a real change, not a label. The proposed name is the clearer one we would move to in a separate PR if we decide to.
+The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the artifact name, and the build target, so renaming it is a real change, not a label. The proposed name is what we would rename it to in a separate PR. That rename has not been decided yet.
 
 Prose here says station, not wallet. Identifiers still say wallet, because that is what they literally are: the `wallet-dapp` project, the `wallet` checkbox on the deploy form, `--app wallet`, the `app_wallet` key in `canister_ids.json`. Changing those is the rename PR, not a wording fix.
 
@@ -23,12 +23,12 @@ Prose here says station, not wallet. Identifiers still say wallet, because that 
 | `dfx-orbit` | `orbit-cli`, but see below | CLI | The CLI we ship to users. Git tag and GitHub release, users install it themselves. | Yes |
 | `*-api`, `orbit-essentials` | (unchanged) | Crates | Shared Candid and types. No artifact, deploys nowhere. | Bumped automatically |
 
-Things worth stating plainly, because they are the usual source of confusion:
+The usual points of confusion:
 
 * The three frontends are separate projects with separate versions and separate asset canisters. They are not a single bundle.
 * Only the Control Panel is a singleton. There is one global instance. Station and Upgrader are multi-instance: the Control Panel deploys a fresh Station per org, and each Station comes paired with its own Upgrader. Station and Upgrader deploy and control each other, which is what makes a station upgrade safe.
 * The `station-api` / `upgrader-api` / `control-panel-api` crates are the contract, just the Candid interface and shared types. The bare name (`station`) is the canister that runs; the `-api` crate compiles to no canister. Bumping an api crate cascades a bump into whatever depends on it, which is why one small change can move several version numbers at once.
-* `dfx-orbit` and `orbit-cli` are not the same tool today. `dfx-orbit` is the CLI we ship to users. `orbit-cli` is our internal tool that drives the release (`release prepare`, `release publish`, `registry publish`). Only `dfx-orbit` is a release target. Which is why the rename in the table above has a catch: giving the user-facing CLI the name `orbit-cli` means renaming the internal one in the same change, or the name refers to two different tools. Every other row in that table is a straight rename; this one is the exception.
+* `dfx-orbit` and `orbit-cli` are not the same tool today. `dfx-orbit` is the CLI we ship to users. `orbit-cli` is our internal tool that drives the release (`release prepare`, `release publish`, `registry publish`). Only `dfx-orbit` is a release target. So the rename in the table has a catch: giving the user-facing CLI the name `orbit-cli` means renaming the internal one in the same change, or the name means two different tools. Every other row is a straight rename.
 
 ## Phase 1: cut a release
 
@@ -51,9 +51,9 @@ This stops at the GitHub release. Nothing is on a live canister yet. That is pha
 
 Playground and production are deployed differently on purpose.
 
-**Playground is a workflow.** Two of them, same shape: tick what you want, run it, done. No gate, because nothing user-facing is behind it.
+**Playground is a workflow.** **Deploy frontend** and **Deploy backend** both work the same way: tick what you want and run it. Neither asks for approval, because no user sees playground.
 
-**Production is a command you run.** The key that signs a production deploy is not a repo secret, so there is no button for it. You run one script from a machine that can read the key. The reason is blast radius: a production frontend sync is live to every user the moment it finishes, and a control-panel upgrade has no buffer either, so we would rather the credential not sit somewhere a merged pull request can reach it.
+**Production is a command you run.** The key that signs a production deploy is not a repo secret, so there is no button for it. You run one script from a machine that can read the key. A production frontend sync reaches every user the moment it finishes, and a control-panel upgrade reaches every station, so the key that does either should not sit where a merged pull request can read it.
 
 Both halves run the same two scripts, `scripts/deploy-app` and `scripts/deploy-backend`. The workflows are wrappers around them, so CI and a laptop do the same thing.
 
@@ -61,9 +61,9 @@ Both halves run the same two scripts, `scripts/deploy-app` and `scripts/deploy-b
 
 Actions tab, run **Deploy frontend**. Tick **wallet** and run it. It builds the station frontend for playground and uploads it to `bxkhk-6yaaa-aaaal-ai6va-cai`. Go test at https://playground.orbitwallet.io.
 
-Only the station frontend has a playground canister. `marketing-dapp` and `docs-portal` exist on production only, so ticking them here fails on purpose, with a message telling you to deploy them to production instead. The backends are unaffected: all three targets work on playground, since the registry publish path needs only the control-panel and the wasm chunk store, both of which exist there.
+Only the station frontend has a playground canister. `marketing-dapp` and `docs-portal` exist on production only, so ticking them here fails on purpose, with a message telling you to deploy them to production instead. All three backend targets do work on playground. Publishing to the registry needs only the control-panel and the wasm chunk store, and both exist there.
 
-Leave **promote_to_production** unchecked. It is off by default and only does anything if a production key has been put on the environment, which is not how this is set up.
+Leave **promote_to_production** unchecked. It is off by default, and the `production` environment holds no key, so ticking it just fails the second job.
 
 ### Backends to playground
 
@@ -90,18 +90,20 @@ Backends. One target per run, and `station` publishes `upgrader` with it:
 
 Both resolve to the newest stable release and skip pre-releases, so an rc sitting at the top of the list will not be picked up by accident. To deploy one on purpose, pass the tag: `deploy-app --tag @orbit/wallet-dapp-v0.8.0-rc.0`.
 
-Both print what they are about to do and ask for confirmation. Both verify the artifact's published checksum before shipping it. `deploy-backend` also refuses to run if your checkout is not the release you are deploying, because the registry labels the entry with the version from your working tree rather than from the artifact, so a stale checkout would publish the right wasm under the wrong version. If it stops for that reason, check out the tag it names and run it again.
+Both print what they are about to do and wait for you to confirm, and both check the artifact against the checksum published beside it.
 
-Ask the release administrators for the vault reference. Whoever holds it is who can deploy production, which is the point.
+`deploy-backend` also stops if your checkout is not the release you are deploying. The registry takes the version label from your working tree instead of from the artifact, so a stale checkout would publish the right wasm under the wrong version. Check out the tag it names and run it again.
+
+Ask the release administrators for the vault reference. Whoever holds it can deploy production, and nobody else can.
 
 ## One-time setup
 
-The playground network, its canisters and the live site all exist already. What is missing is the GitHub Actions plumbing to reach them:
+The playground network, its canisters and the live site all exist already. What is missing is the GitHub Actions configuration to reach them:
 
 * Mint an identity for CI that can reach playground and nothing else, then create the `playground` GitHub Environment and add it as `DEPLOY_PLAYGROUND_IDENTITY_PEM` (frontends) and `BACKEND_PLAYGROUND_IDENTITY_PEM` (backends).
 
-  Do not reuse the identity that deploys today. It controls the production canisters as well as the playground ones, so putting it here would give CI production access and undo the reason production is deployed by hand. The playground canisters already trust several principals that production does not, so a playground-only controller is a shape they already support. The new identity needs to be a controller of the playground canisters, authorized on the playground asset canister, and a registry admin on the playground control-panel.
+  Do not reuse the identity that deploys today. It controls the production canisters as well as the playground ones, so putting it here would hand CI production access and cancel out the reason production is deployed by hand. The playground canisters already trust several principals that production does not, so this is nothing new for them. The new identity needs to be a controller of the playground canisters, authorized on the playground asset canister, and a registry admin on the playground control-panel.
 * Restrict that environment's deployment branches to `main`, so a job on some other branch cannot claim the credential.
 * Create the `production` environment but leave it without a key, which is what keeps the production job inert. If production deploys are ever moved into CI, that environment needs `DEPLOY_PRODUCTION_IDENTITY_PEM` and `BACKEND_PRODUCTION_IDENTITY_PEM`, plus required reviewers and the same branch restriction, first.
 * Fix the playground `derivationOrigin` so Internet Identity login works there, ideally by making it come from an env var.
-* Stand up a persistent test station so backend wasms published to the playground registry can be exercised by a real self-upgrade before production.
+* Stand up a test station that stays up, so someone can run a real self-upgrade against a wasm in the playground registry before it goes to production.
