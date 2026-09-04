@@ -14,7 +14,7 @@ The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the a
 | --- | --- | --- | --- | --- |
 | `wallet-dapp` | `station-frontend` | Frontend | The wallet UI users log into. Asset tarball to the wallet canister (`5fu67`, app.orbit.global). | Yes |
 | `marketing-dapp` | `landing-page` | Frontend | The public marketing site. Asset tarball to the marketing canister (orbit.global). | Yes |
-| `docs-portal` | `docs-site` | Frontend | The documentation site. Asset tarball to the docs canister (docs.orbit.global). | Yes |
+| `docs-portal` | `docs-portal` | Frontend | The documentation site. Asset tarball to the docs canister (docs.orbit.global). | Yes |
 | `station` | `station` | Backend | Per-wallet backend, one deployed per org. Wasm to the control-panel registry, stations self-upgrade. | Yes |
 | `upgrader` | `upgrader` | Backend | Per-station helper that performs safe upgrades, paired one-to-one with a station. Wasm to the registry. | Yes |
 | `control-panel` | `control-panel` | Backend | The single global registry and directory. Deploys stations. Wasm, deployed as the control-panel canister. | Yes |
