@@ -112,9 +112,14 @@ targets=("$TARGET")
 CARGO_META="$(cargo metadata --format-version 1 --no-deps)"
 crate_version() { jq -r --arg n "$1" '.packages[] | select(.name == $n) | .version' <<<"$CARGO_META"; }
 
+# Newest stable release for a project. Pre-releases are excluded twice: on the
+# release flag, and by anchoring the version pattern, because an unanchored match
+# reads "-v0.8.0-rc.0" as "-v0.8.0" and yields a tag that does not exist.
 resolve_tag() {
-  gh release list --repo "$REPO" --limit 200 \
-    | grep -oE "${TAG_PREFIX[$1]}[0-9]+\.[0-9]+\.[0-9]+" | sort -V | tail -1
+  gh release list --repo "$REPO" --limit 500 \
+    --json tagName,isPrerelease,isDraft \
+    --jq '.[] | select(.isPrerelease == false and .isDraft == false) | .tagName' \
+    | grep -E "^${TAG_PREFIX[$1]}[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1
 }
 
 echo "-------------------------------------------------------------"
@@ -126,7 +131,7 @@ echo "  identity   : $IDENTITY"
 declare -A TAGS=()
 for t in "${targets[@]}"; do
   tag="$(resolve_tag "$t")"
-  [[ -n "$tag" ]] || die "could not resolve the latest ${TAG_PREFIX[$t]} release"
+  [[ -n "$tag" ]] || die "could not resolve the latest stable ${TAG_PREFIX[$t]} release"
   TAGS[$t]="$tag"
   echo "  artifact   : $tag (${WASM[$t]})"
 done
