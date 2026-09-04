@@ -10,12 +10,14 @@ There is no single "Orbit release". There are independently versioned projects, 
 
 The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the artifact name, and the build target, so renaming it is a real change, not a label. The proposed name is the clearer one we would move to in a separate PR if we decide to.
 
+Prose here says station, not wallet. Identifiers still say wallet, because that is what they literally are: the `wallet-dapp` project, the `wallet` checkbox on the deploy form, `--app wallet`, the `app_wallet` key in `canister_ids.json`. Changing those is the rename PR, not a wording fix.
+
 | Current name | Proposed name | Type | Role and where it deploys | Ships alone |
 | --- | --- | --- | --- | --- |
-| `wallet-dapp` | `station-frontend` | Frontend | The wallet UI users log into. Asset tarball to the wallet canister (`5fu67`, app.orbit.global). | Yes |
+| `wallet-dapp` | `station-frontend` | Frontend | The station UI users log into. Asset tarball to its asset canister (`5fu67`, app.orbit.global). | Yes |
 | `marketing-dapp` | `landing-page` | Frontend | The public marketing site. Asset tarball to the marketing canister (orbit.global). | Yes |
 | `docs-portal` | `docs-portal` | Frontend | The documentation site. Asset tarball to the docs canister (docs.orbit.global). | Yes |
-| `station` | `station` | Backend | Per-wallet backend, one deployed per org. Wasm to the control-panel registry, stations self-upgrade. | Yes |
+| `station` | `station` | Backend | The backend, one instance deployed per org. Wasm to the control-panel registry, stations self-upgrade. | Yes |
 | `upgrader` | `upgrader` | Backend | Per-station helper that performs safe upgrades, paired one-to-one with a station. Wasm to the registry. | Yes |
 | `control-panel` | `control-panel` | Backend | The single global registry and directory. Deploys stations. Wasm, deployed as the control-panel canister. | Yes |
 | `dfx-orbit` | `orbit-cli`, but see below | CLI | The CLI we ship to users. Git tag and GitHub release, users install it themselves. | Yes |
@@ -23,7 +25,7 @@ The current name is fixed. It is the git tag (`@orbit/{name}-v{version}`), the a
 
 Things worth stating plainly, because they are the usual source of confusion:
 
-* The three frontends are separate projects with separate versions and separate asset canisters. They are not one "wallet dapp" bundle.
+* The three frontends are separate projects with separate versions and separate asset canisters. They are not a single bundle.
 * Only the Control Panel is a singleton. There is one global instance. Station and Upgrader are multi-instance: the Control Panel deploys a fresh Station per org, and each Station comes paired with its own Upgrader. Station and Upgrader deploy and control each other, which is what makes a station upgrade safe.
 * The `station-api` / `upgrader-api` / `control-panel-api` crates are the contract, just the Candid interface and shared types. The bare name (`station`) is the canister that runs; the `-api` crate compiles to no canister. Bumping an api crate cascades a bump into whatever depends on it, which is why one small change can move several version numbers at once.
 * `dfx-orbit` and `orbit-cli` are not the same tool today. `dfx-orbit` is the CLI we ship to users. `orbit-cli` is our internal tool that drives the release (`release prepare`, `release publish`, `registry publish`). Only `dfx-orbit` is a release target. Which is why the rename in the table above has a catch: giving the user-facing CLI the name `orbit-cli` means renaming the internal one in the same change, or the name refers to two different tools. Every other row in that table is a straight rename; this one is the exception.
@@ -57,9 +59,9 @@ Both halves run the same two scripts, `scripts/deploy-app` and `scripts/deploy-b
 
 ### Frontends to playground
 
-Actions tab, run **Deploy frontend**. Tick **wallet** and run it. It builds the wallet for playground and uploads it to `bxkhk-6yaaa-aaaal-ai6va-cai`. Go test at https://playground.orbitwallet.io.
+Actions tab, run **Deploy frontend**. Tick **wallet** and run it. It builds the station frontend for playground and uploads it to `bxkhk-6yaaa-aaaal-ai6va-cai`. Go test at https://playground.orbitwallet.io.
 
-Only the wallet has a playground canister. `marketing-dapp` and `docs-portal` exist on production only, so ticking them here fails on purpose, with a message telling you to deploy them to production instead. The backends are unaffected: all three targets work on playground, since the registry publish path needs only the control-panel and the wasm chunk store, both of which exist there.
+Only the station frontend has a playground canister. `marketing-dapp` and `docs-portal` exist on production only, so ticking them here fails on purpose, with a message telling you to deploy them to production instead. The backends are unaffected: all three targets work on playground, since the registry publish path needs only the control-panel and the wasm chunk store, both of which exist there.
 
 Leave **promote_to_production** unchecked. It is off by default and only does anything if a production key has been put on the environment, which is not how this is set up.
 
@@ -68,7 +70,7 @@ Leave **promote_to_production** unchecked. It is off by default and only does an
 Actions tab, run **Deploy backend**. Tick station, upgrader, or control-panel and run it. Same as above: leave promote unchecked. The two backend types deploy differently:
 
 * **station / upgrader**: `orbit-cli registry publish` loads the wasm into the control-panel registry. This only makes the version available. Each production station still upgrades itself, or its upgrader, only when that station's own admins submit and approve the request (finance being 2-of-N). Publishing station also publishes upgrader, its dependency.
-* **control-panel**: a direct `dfx canister install --mode upgrade` of the one canister. There is no registry and no per-wallet buffer, so nothing stands between this and every wallet. Handle with care.
+* **control-panel**: a direct `dfx canister install --mode upgrade` of the one canister. There is no registry and no per-station buffer, so nothing stands between this and every station. Handle with care.
 
 ### Production
 
