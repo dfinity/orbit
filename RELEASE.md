@@ -26,7 +26,7 @@ Prose here says station. The identifiers still say wallet for historical reasons
 The usual points of confusion:
 
 * The three frontends are separate projects with separate versions and separate asset canisters. They are not a single bundle.
-* Only the Control Panel is a singleton. There is one global instance. Station and Upgrader are multi-instance: the Control Panel deploys a fresh Station per org, and each Station comes paired with its own Upgrader. Station and Upgrader deploy and control each other, which is what makes a station upgrade safe.
+* Apart from the three frontends, only the Control Panel is a singleton. There is one global instance. Station and Upgrader are multi-instance: the Control Panel deploys a fresh Station per org, and each Station comes paired with its own Upgrader. Station and Upgrader deploy and control each other, which is what makes a station upgrade safe.
 * The `station-api` / `upgrader-api` / `control-panel-api` crates are the contract, just the Candid interface and shared types. The bare name (`station`) is the canister that runs; the `-api` crate compiles to no canister. Bumping an api crate cascades a bump into whatever depends on it, which is why one small change can move several version numbers at once.
 * `dfx-orbit` and `orbit-cli` are not the same tool today. `dfx-orbit` is the CLI we ship to users. `orbit-cli` is our internal tool that drives the release (`release prepare`, `release publish`, `registry publish`). Only `dfx-orbit` is a release target. So the rename in the table has a catch: giving the user-facing CLI the name `orbit-cli` means renaming the internal one in the same change, or the name means two different tools. Every other row is a straight rename.
 
