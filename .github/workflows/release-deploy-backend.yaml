@@ -14,7 +14,7 @@ name: 'Deploy backend'
 #     control-panel canister. No registry, no per-wallet buffer, so the approval
 #     gate is the only thing standing between this and every wallet.
 #
-# Each job reads its own secret, `BACKEND_STAGING_IDENTITY_PEM` on the
+# Each job reads its own secret, `BACKEND_PLAYGROUND_IDENTITY_PEM` on the
 # `playground` environment and `BACKEND_PRODUCTION_IDENTITY_PEM` on `production`.
 # That identity must be a registry admin on the control-panel (for registry
 # publish) and a controller of the control-panel canister (for the upgrade).
@@ -81,7 +81,7 @@ jobs:
           station: ${{ inputs.station }}
           upgrader: ${{ inputs.upgrader }}
           control_panel: ${{ inputs.control_panel }}
-          identity_pem: ${{ secrets.BACKEND_STAGING_IDENTITY_PEM }}
+          identity_pem: ${{ secrets.BACKEND_PLAYGROUND_IDENTITY_PEM }}
           gh_token: ${{ github.token }}
 
   production:
