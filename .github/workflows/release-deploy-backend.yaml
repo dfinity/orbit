@@ -11,8 +11,8 @@ name: 'Deploy backend'
 #     production station still self-upgrades on its own admins' approval.
 #     Publishing station also publishes upgrader, its dependency.
 #   - control-panel: a direct `dfx canister install --mode upgrade` of the one
-#     control-panel canister. No registry, no per-wallet buffer, so the approval
-#     gate is the only thing standing between this and every wallet.
+#     control-panel canister. No registry, no per-station buffer, so nothing
+#     stands between this and every station.
 #
 # Each job reads its own secret, `BACKEND_PLAYGROUND_IDENTITY_PEM` on the
 # `playground` environment and `BACKEND_PRODUCTION_IDENTITY_PEM` on `production`.
