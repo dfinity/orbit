@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+set -eEuo pipefail
+
+# Deploy a single Orbit backend to a network, end to end:
+#   resolve the newest release tag -> download the wasm -> verify its checksum ->
+#   check it against the working tree -> sign with an isolated identity -> ship.
+#
+# Two very different destinations, picked by --target:
+#   station / upgrader  publish the wasm into the control-panel registry. This
+#                       only makes the version available. Each station still
+#                       upgrades itself when its own admins approve it.
+#   control-panel       install the wasm onto the one control-panel canister.
+#                       There is no registry and no buffer, it is live at once.
+#
+# The signing key can be a pem file (--pem) or read straight from 1Password
+# (--op op://Vault/Item/field), so nothing has to be saved to disk by hand.
+#
+# Needs: gh, jq, cargo, dfx, icx-asset, orbit-cli (and op for --op).
+
+REPO="dfinity/orbit"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# target -> release tag prefix, wasm file name, artifacts subdir, cargo package
+declare -A TAG_PREFIX=(
+  [station]="@orbit/station-v"
+  [upgrader]="@orbit/upgrader-v"
+  [control-panel]="@orbit/control-panel-v"
+)
+declare -A WASM=(
+  [station]="station.wasm.gz"
+  [upgrader]="upgrader.wasm.gz"
+  [control-panel]="control_panel.wasm.gz"
+)
+declare -A CRATE=(
+  [station]="station"
+  [upgrader]="upgrader"
+  [control-panel]="control-panel"
+)
+
+TARGET="" NETWORK="" PEM="" OP_REF="" IDENTITY="orbit-deploy" YES="" DRY=""
+
+usage() {
+  cat <<EOF
+Usage: $0 --target <station|upgrader|control-panel> --network <playground|production> (--pem <file> | --op <ref>) [options]
+
+Signing key (one is required). The identity must be a registry admin on the
+control-panel to publish, and a controller of the control-panel canister to
+upgrade it.
+  --pem <file>       Path to the identity pem on disk.
+  --op <ref>         1Password secret reference, e.g. "op://Orbit Mgmt/orbit-mgmt/identity.pem".
+                     Read via the op CLI into a temp file that is deleted on exit.
+
+Other:
+  --identity <name>  Name to import the key under. Default: $IDENTITY.
+  --yes              Skip the confirmation prompt.
+  --dry-run          Download and verify the artifact, then stop. Ships nothing.
+
+Examples:
+  $0 --target station --network playground --op "op://Orbit Mgmt/orbit-mgmt/identity.pem"
+  $0 --target control-panel --network production --op "op://Orbit Mgmt/orbit-mgmt/identity.pem"
+EOF
+}
+
+die() { echo "error: $*" >&2; exit 1; }
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target) TARGET="$2"; shift 2 ;;
+    --network) NETWORK="$2"; shift 2 ;;
+    --pem) PEM="$2"; shift 2 ;;
+    --op) OP_REF="$2"; shift 2 ;;
+    --identity) IDENTITY="$2"; shift 2 ;;
+    --yes) YES=1; shift ;;
+    --dry-run) DRY=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage; die "unknown argument: $1" ;;
+  esac
+done
+
+[[ -n "${TAG_PREFIX[$TARGET]:-}" ]] || { usage; die "--target must be one of: station upgrader control-panel"; }
+[[ "$NETWORK" == "playground" || "$NETWORK" == "production" ]] || { usage; die "--network must be playground or production"; }
+[[ -n "$PEM" || -n "$OP_REF" ]] || { usage; die "a key is required: pass --pem or --op"; }
+[[ -z "$PEM" || -z "$OP_REF" ]] || die "pass only one of --pem / --op"
+[[ -z "$PEM" || -f "$PEM" ]] || die "pem file not found: $PEM"
+cd "$ROOT"
+
+# A dry run only resolves and verifies artifacts, so it needs neither dfx nor
+# orbit-cli. Do not make people install a toolchain to check a checksum.
+for c in gh jq cargo; do command -v "$c" >/dev/null || die "$c not found"; done
+if [[ -z "$DRY" ]]; then
+  command -v dfx >/dev/null || die "dfx not found"
+  if [[ "$TARGET" != "control-panel" ]]; then
+    command -v orbit-cli >/dev/null || die "orbit-cli not found: run pnpm install at the repo root"
+  fi
+fi
+
+# A temp pem (only when reading from 1Password) and an isolated dfx home, both
+# always removed on exit so a production key never outlives the run.
+TMP_PEM="" DFX_HOME=""
+cleanup() {
+  [[ -n "$TMP_PEM" ]] && rm -f "$TMP_PEM"
+  [[ -n "$DFX_HOME" ]] && rm -rf "$DFX_HOME"
+  return 0
+}
+trap cleanup EXIT
+
+# Publishing station also publishes upgrader, its declared dependency, so that
+# wasm has to be on disk too.
+targets=("$TARGET")
+[[ "$TARGET" == "station" ]] && targets=(station upgrader)
+
+CARGO_META="$(cargo metadata --format-version 1 --no-deps)"
+crate_version() { jq -r --arg n "$1" '.packages[] | select(.name == $n) | .version' <<<"$CARGO_META"; }
+
+# Newest stable release for a project. Pre-releases are excluded twice: on the
+# release flag, and by anchoring the version pattern, because an unanchored match
+# reads "-v0.8.0-rc.0" as "-v0.8.0" and yields a tag that does not exist.
+resolve_tag() {
+  gh release list --repo "$REPO" --limit 500 \
+    --json tagName,isPrerelease,isDraft \
+    --jq '.[] | select(.isPrerelease == false and .isDraft == false) | .tagName' \
+    | grep -E "^${TAG_PREFIX[$1]}[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1
+}
+
+echo "-------------------------------------------------------------"
+echo "  target     : $TARGET"
+echo "  network    : $NETWORK"
+echo "  key        : ${PEM:-$OP_REF}"
+echo "  identity   : $IDENTITY"
+
+declare -A TAGS=()
+for t in "${targets[@]}"; do
+  tag="$(resolve_tag "$t")"
+  [[ -n "$tag" ]] || die "could not resolve the latest stable ${TAG_PREFIX[$t]} release"
+  TAGS[$t]="$tag"
+  echo "  artifact   : $tag (${WASM[$t]})"
+done
+echo "-------------------------------------------------------------"
+
+# The registry entry's version label comes from the working tree via `cargo
+# metadata`, not from the artifact, so a stale checkout would publish the right
+# wasm under the wrong version. Refuse rather than mislabel it.
+for t in "${targets[@]}"; do
+  tag_version="${TAGS[$t]#"${TAG_PREFIX[$t]}"}"
+  tree_version="$(crate_version "${CRATE[$t]}")"
+  [[ -n "$tree_version" ]] || die "no cargo package named ${CRATE[$t]}"
+  if [[ "$tag_version" != "$tree_version" ]]; then
+    die "checkout mismatch for $t: the release is $tag_version but this working tree is $tree_version.
+       Deploy from a checkout of the release, for example: git checkout ${TAGS[$t]}"
+  fi
+done
+
+if [[ -z "$YES" && -z "$DRY" ]]; then
+  read -r -p "Deploy $TARGET to $NETWORK? [y/N]: " ok
+  [[ "$ok" =~ ^[yY] ]] || { echo "cancelled."; exit 1; }
+fi
+
+# 1. Download each wasm and verify it against the checksum published beside it.
+#    Done before the key is touched, so nothing privileged is loaded if this fails.
+for t in "${targets[@]}"; do
+  dir="artifacts/$t" file="${WASM[$t]}"
+  echo "==> downloading $file from ${TAGS[$t]}"
+  mkdir -p "$dir"
+  gh release download "${TAGS[$t]}" --repo "$REPO" \
+    --pattern "$file" --pattern "$file.sha256" --dir "$dir" --clobber
+  expected="$(tr -d '[:space:]' < "$dir/$file.sha256")"
+  actual="$(shasum -a 256 "$dir/$file" | awk '{ print $1 }')"
+  [[ "$expected" == "$actual" ]] || die "checksum mismatch for $file: expected $expected, got $actual"
+  echo "    checksum ok: $actual"
+done
+
+if [[ -n "$DRY" ]]; then echo "dry run: artifacts verified, nothing shipped."; exit 0; fi
+
+# 2. Load the key into a throwaway dfx home.
+#
+#    HOME and DFX_CONFIG_ROOT both have to point at it: dfx honours
+#    DFX_CONFIG_ROOT, but orbit-cli resolves the pem from homedir() directly. Set
+#    only one and `registry publish` cannot find the identity dfx just imported.
+#    Doing this after the downloads keeps the real HOME in place for gh.
+if [[ -n "$OP_REF" ]]; then
+  command -v op >/dev/null || die "1Password CLI (op) not found"
+  echo "==> reading key from 1Password"
+  TMP_PEM="$(mktemp)"; chmod 600 "$TMP_PEM"
+  op read "$OP_REF" > "$TMP_PEM" || die "could not read the key from 1Password ($OP_REF)"
+  PEM="$TMP_PEM"
+fi
+
+DFX_HOME="$(mktemp -d)"; chmod 700 "$DFX_HOME"
+export HOME="$DFX_HOME" DFX_CONFIG_ROOT="$DFX_HOME"
+dfx identity import "$IDENTITY" "$PEM" --storage-mode plaintext --force
+
+# 3. Ship it.
+case "$TARGET" in
+  station|upgrader)
+    echo "==> publishing $TARGET to the $NETWORK registry"
+    orbit-cli registry publish --app "$TARGET" --network "$NETWORK" --identity "$IDENTITY"
+    ;;
+  control-panel)
+    echo "==> upgrading the control-panel canister on $NETWORK"
+    dfx canister install control_panel \
+      --network "$NETWORK" --identity "$IDENTITY" \
+      --wasm "artifacts/control-panel/${WASM[control-panel]}" \
+      --mode upgrade --yes
+    ;;
+esac
+
+echo "done."
