@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -eEuo pipefail
+
+# Deploy a single Orbit frontend app to an environment, end to end:
+#   resolve the canister -> get the artifact (download a tagged release, or build
+#   it per-network) -> unpack -> upload the assets -> verify the live version.
+#
+# One command in place of the manual download / build / unpack / icx-asset /
+# check-the-version dance. The wallet frontend bakes its environment config in at
+# build time, so playground is always built locally and production defaults to
+# the deterministic tagged artifact.
+#
+# The signing key can be a pem file (--pem) or read straight from 1Password
+# (--op op://Vault/Item/field), so nothing has to be saved to disk by hand.
+#
+# Needs: gh, jq, docker, icx-asset, shasum, curl (and op for --op).
+
+REPO="dfinity/orbit"
+REPLICA="https://icp0.io"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# app -> docker-build target, release tarball, canister_ids.json key, tag prefix
+declare -A BUILD_TARGET=([wallet]="--wallet-dapp" [marketing]="--marketing-dapp" [docs]="--docs-portal")
+declare -A TARBALL=([wallet]="wallet-dapp.tar.gz" [marketing]="marketing-dapp.tar.gz" [docs]="docs-portal.tar.gz")
+declare -A CANISTER_KEY=([wallet]="app_wallet" [marketing]="app_marketing" [docs]="docs_portal")
+declare -A TAG_PREFIX=([wallet]="@orbit/wallet-dapp-v" [marketing]="@orbit/marketing-dapp-v" [docs]="@orbit/docs-portal-v")
+# app:env -> public URL, for the post-deploy version check
+declare -A URL=(
+  [wallet:playground]="https://playground.orbitwallet.io"
+  [wallet:production]="https://app.orbit.global"
+  [marketing:production]="https://orbit.global"
+  [docs:production]="https://docs.orbit.global"
+)
+
+APP="" ENV="" PEM="" OP_REF="" TAG="" BUILD="" YES="" DRY=""
+
+usage() {
+  cat <<EOF
+Usage: $0 --app <wallet|marketing|docs> --env <playground|production> (--pem <file> | --op <ref>) [options]
+
+Signing key (one is required):
+  --pem <file>    Path to the identity pem on disk.
+  --op <ref>      1Password secret reference, e.g. "op://Orbit Mgmt/orbit-mgmt/identity.pem".
+                  Read via the op CLI into a temp file that is deleted on exit.
+
+Where the build comes from (default: build for playground, download the tag for production):
+  --build         Build the artifact locally for --env (required for playground).
+  --tag <tag>     Download this release's artifact (production only). "latest" auto-resolves.
+
+Other:
+  --yes           Skip the confirmation prompt.
+  --dry-run       Show what would happen; upload nothing.
+
+Examples:
+  $0 --app wallet --env playground --op "op://Orbit Mgmt/orbit-mgmt/identity.pem"
+  $0 --app wallet --env production --tag latest --op "op://Orbit Mgmt/orbit-mgmt/identity.pem"
+EOF
+}
+
+die() { echo "error: $*" >&2; exit 1; }
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --app) APP="$2"; shift 2 ;;
+    --env) ENV="$2"; shift 2 ;;
+    --pem) PEM="$2"; shift 2 ;;
+    --op) OP_REF="$2"; shift 2 ;;
+    --tag) TAG="$2"; shift 2 ;;
+    --build) BUILD=1; shift ;;
+    --yes) YES=1; shift ;;
+    --dry-run) DRY=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage; die "unknown argument: $1" ;;
+  esac
+done
+
+[[ -n "${BUILD_TARGET[$APP]:-}" ]] || { usage; die "--app must be one of: wallet marketing docs"; }
+[[ "$ENV" == "playground" || "$ENV" == "production" ]] || { usage; die "--env must be playground or production"; }
+[[ -n "$PEM" || -n "$OP_REF" ]] || { usage; die "a key is required: pass --pem or --op"; }
+[[ -z "$PEM" || -z "$OP_REF" ]] || die "pass only one of --pem / --op"
+[[ -z "$BUILD" || -z "$TAG" ]] || die "pass only one of --build / --tag"
+[[ -z "$PEM" || -f "$PEM" ]] || die "pem file not found: $PEM"
+cd "$ROOT"
+
+# Scratch paths, always removed on exit: the pem (only when read from 1Password)
+# and the directory the tarball is unpacked into.
+TMP_PEM="" TMP_DIST=""
+cleanup() {
+  if [[ -n "$TMP_PEM" ]]; then rm -f "$TMP_PEM"; fi
+  if [[ -n "$TMP_DIST" ]]; then rm -rf "$TMP_DIST"; fi
+  return 0
+}
+trap cleanup EXIT
+
+CANISTER="$(jq -r ".${CANISTER_KEY[$APP]}.${ENV} // empty" canister_ids.json)"
+[[ -n "$CANISTER" ]] || die "no canister id for ${CANISTER_KEY[$APP]}.${ENV} in canister_ids.json"
+SITE="${URL[$APP:$ENV]:-}"
+DIR="artifacts/${TARBALL[$APP]%.tar.gz}"
+TAR="$DIR/${TARBALL[$APP]}"
+
+# Decide the source. Playground must be built (its config is baked in and differs
+# from the released production artifact); production defaults to the tag.
+if [[ "$ENV" == "playground" ]]; then
+  [[ -z "$TAG" ]] || die "--tag is production-only: the released artifact is a production build. Use --build for playground."
+  BUILD=1
+elif [[ -z "$BUILD" && -z "$TAG" ]]; then
+  TAG="latest"
+fi
+
+# Resolve "latest" to the newest stable release for this app. Pre-releases are
+# excluded twice: on the release flag, and by anchoring the version pattern,
+# because an unanchored match reads "-v0.8.0-rc.0" as "-v0.8.0" and yields a tag
+# that does not exist. Pass --tag explicitly to deploy a pre-release on purpose.
+if [[ "$TAG" == "latest" ]]; then
+  TAG="$(gh release list --repo "$REPO" --limit 500 \
+    --json tagName,isPrerelease,isDraft \
+    --jq '.[] | select(.isPrerelease == false and .isDraft == false) | .tagName' \
+    | grep -E "^${TAG_PREFIX[$APP]}[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)"
+  [[ -n "$TAG" ]] || die "could not resolve the latest stable ${TAG_PREFIX[$APP]} release"
+fi
+
+SOURCE="build (BUILD_MODE=$ENV)"; [[ -n "$TAG" ]] && SOURCE="download $TAG"
+KEY_DESC="${PEM:-$OP_REF}"
+
+echo "-------------------------------------------------------------"
+echo "  app        : $APP"
+echo "  environment: $ENV"
+echo "  canister   : $CANISTER"
+echo "  site       : ${SITE:-<none>}"
+echo "  source     : $SOURCE"
+echo "  key        : $KEY_DESC"
+echo "-------------------------------------------------------------"
+
+if [[ -n "$DRY" ]]; then echo "dry run: nothing uploaded."; exit 0; fi
+
+if [[ -z "$YES" ]]; then
+  read -r -p "Deploy to $ENV? [y/N]: " ok
+  [[ "$ok" =~ ^[yY] ]] || { echo "cancelled."; exit 1; }
+fi
+
+# Read the key from 1Password if asked, into a locked-down temp file.
+if [[ -n "$OP_REF" ]]; then
+  command -v op >/dev/null || die "1Password CLI (op) not found"
+  echo "==> reading key from 1Password"
+  TMP_PEM="$(mktemp)"; chmod 600 "$TMP_PEM"
+  op read "$OP_REF" > "$TMP_PEM" || die "could not read the key from 1Password ($OP_REF)"
+  PEM="$TMP_PEM"
+fi
+
+# 1. Get the artifact.
+mkdir -p "$DIR"
+if [[ -n "$TAG" ]]; then
+  echo "==> downloading ${TARBALL[$APP]} from $TAG"
+  gh release download "$TAG" --repo "$REPO" \
+    --pattern "${TARBALL[$APP]}" --pattern "${TARBALL[$APP]}.sha256" --dir "$DIR" --clobber
+  # Verify against the checksum published beside the tarball. This is the only
+  # check on a production deploy that does not come from CI, so it is not optional.
+  expected="$(tr -d '[:space:]' < "$TAR.sha256")"
+  actual="$(shasum -a 256 "$TAR" | awk '{ print $1 }')"
+  [[ "$expected" == "$actual" ]] || die "checksum mismatch for ${TARBALL[$APP]}: expected $expected, got $actual"
+  echo "    checksum ok: $actual"
+else
+  echo "==> building for $ENV"
+  BUILD_MODE="$ENV" ./scripts/docker-build.sh "${BUILD_TARGET[$APP]}"
+fi
+
+# 2. Unpack somewhere of our own. Unpacking beside the tarball would mean
+#    clearing artifacts/<app>/dist first, which is a real build output that
+#    something else may have put there.
+echo "==> unpacking"
+TMP_DIST="$(mktemp -d)"
+tar -xf "$TAR" -C "$TMP_DIST"
+
+# 3. Upload the assets (never deletes existing ones).
+echo "==> uploading to $CANISTER"
+icx-asset --pem "$PEM" --replica "$REPLICA" sync --no-delete "$CANISTER" "$TMP_DIST"
+
+# 4. Verify the live version.
+if [[ -n "$SITE" ]]; then
+  echo "==> deployed version at $SITE:"
+  curl -s --compressed "$SITE/" | tr '>' '\n' | grep -i 'app:build-version' || echo "  (no version meta tag found)"
+fi
+
+echo "done."

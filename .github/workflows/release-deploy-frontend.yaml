@@ -1,0 +1,164 @@
+name: 'Deploy frontend'
+
+# Phase 3 of the release: deploy the built artifacts to the live canisters.
+#
+# Frontends only for now (wallet, marketing, docs). Pick any subset. The run
+# deploys the selection to playground first with no gate, then, if you asked to
+# promote, deploys the same selection to production behind the `production`
+# environment's approval. Backends (station, upgrader, control-panel) are a
+# separate follow-up.
+#
+# These jobs deliberately install as little as possible. deploy-app needs only
+# gh, jq, docker, icx-asset, shasum and curl, so there is no Node/pnpm install
+# here and the npm dependency tree never enters the job that handles the key.
+#
+# Each job reads its own secret, `DEPLOY_PLAYGROUND_IDENTITY_PEM` on the
+# `playground` environment and `DEPLOY_PRODUCTION_IDENTITY_PEM` on `production`,
+# so which key a job holds is obvious from the job and not from environment
+# scoping alone. The names track the networks in dfx.json. Note that `staging`
+# is a different network there, declared but with no canisters, so it is not a
+# synonym for playground and is deliberately not used here.
+#
+# Production is deliberately not wired up by default. The production key is not
+# held here; production is deployed from an operator machine with
+# `scripts/deploy-app --op`, which keeps that key out of this repo entirely. See
+# RELEASE.md. The production job below is kept so the wiring exists if that
+# decision is ever revisited: without a key on the `production` environment it
+# fails fast with a message instead of doing anything surprising.
+
+on:
+  workflow_dispatch:
+    inputs:
+      wallet:
+        description: 'Deploy the station frontend (wallet-dapp).'
+        type: boolean
+        default: true
+      # marketing and docs have no playground canister, they exist on production
+      # only, so they are not valid for a run of this workflow.
+      marketing:
+        description: 'Deploy the landing page (marketing-dapp). Production only, see RELEASE.md.'
+        type: boolean
+        default: false
+      docs:
+        description: 'Deploy the docs site (docs-portal). Production only, see RELEASE.md.'
+        type: boolean
+        default: false
+      # Off by default: production is normally deployed from an operator machine,
+      # not from here. Only useful if a production key is put on the environment.
+      promote_to_production:
+        description: 'Also run the production job. Leave unchecked unless production deploys have been moved into CI.'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One deploy run at a time. A second trigger queues instead of racing an
+# in-flight deploy of the same apps, and a running deploy is never cancelled.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  playground:
+    name: 'playground'
+    runs-on: ubuntu-latest
+    environment: playground
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          # This job downloads via gh, never pushes, so it does not need the
+          # GITHUB_TOKEN left in .git/config.
+          persist-credentials: false
+      - name: 'Set up Docker'
+        uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 # v4
+      - name: 'Install icx-asset'
+        run: cargo install --locked icx-asset --version 0.29.0
+      - name: 'Deploy to playground'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_WALLET: ${{ inputs.wallet }}
+          DEPLOY_MARKETING: ${{ inputs.marketing }}
+          DEPLOY_DOCS: ${{ inputs.docs }}
+          IDENTITY_PEM: ${{ secrets.DEPLOY_PLAYGROUND_IDENTITY_PEM }}
+        run: |
+          set -euo pipefail
+
+          apps=()
+          if [ "$DEPLOY_WALLET" = "true" ]; then apps+=(wallet); fi
+          if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
+          if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
+          if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
+
+          # Only the station frontend has a playground canister. Reject the others
+          # here, rather than after the signing key has been written to disk.
+          for app in "${apps[@]}"; do
+            if [ "$app" != "wallet" ]; then
+              echo "$app has no playground canister, it exists on production only."
+              echo "Untick it, or deploy it with: ./scripts/deploy-app --app $app --env production --op <ref>"
+              exit 1
+            fi
+          done
+          if [ -z "${IDENTITY_PEM:-}" ]; then echo "DEPLOY_PLAYGROUND_IDENTITY_PEM is not set on the playground environment."; exit 1; fi
+
+          pem="$(mktemp)"; chmod 600 "$pem"
+          printf '%s\n' "$IDENTITY_PEM" > "$pem"
+          trap 'rm -f "$pem"' EXIT
+
+          for app in "${apps[@]}"; do
+            echo "==> deploying $app to playground"
+            ./scripts/deploy-app --app "$app" --env playground --pem "$pem" --yes
+          done
+
+  production:
+    name: 'production'
+    needs: playground
+    if: ${{ inputs.promote_to_production }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          # This job downloads via gh, never pushes, so it does not need the
+          # GITHUB_TOKEN left in .git/config.
+          persist-credentials: false
+      - name: 'Install icx-asset'
+        run: cargo install --locked icx-asset --version 0.29.0
+      - name: 'Deploy to production'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_WALLET: ${{ inputs.wallet }}
+          DEPLOY_MARKETING: ${{ inputs.marketing }}
+          DEPLOY_DOCS: ${{ inputs.docs }}
+          IDENTITY_PEM: ${{ secrets.DEPLOY_PRODUCTION_IDENTITY_PEM }}
+        run: |
+          set -euo pipefail
+
+          apps=()
+          if [ "$DEPLOY_WALLET" = "true" ]; then apps+=(wallet); fi
+          if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
+          if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
+          if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
+          if [ -z "${IDENTITY_PEM:-}" ]; then
+            echo "No DEPLOY_PRODUCTION_IDENTITY_PEM on the production environment."
+            echo "Production is deployed from an operator machine. See RELEASE.md:"
+            echo "  ./scripts/deploy-app --app <app> --env production --tag latest --op <ref>"
+            exit 1
+          fi
+
+          pem="$(mktemp)"; chmod 600 "$pem"
+          printf '%s\n' "$IDENTITY_PEM" > "$pem"
+          trap 'rm -f "$pem"' EXIT
+
+          # Production deploys the released tagged artifact (deploy-app defaults
+          # to --tag latest for production), not a local build.
+          for app in "${apps[@]}"; do
+            echo "==> deploying $app to production"
+            ./scripts/deploy-app --app "$app" --env production --pem "$pem" --yes
+          done
