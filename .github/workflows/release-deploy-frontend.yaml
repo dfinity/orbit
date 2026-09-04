@@ -30,7 +30,7 @@ on:
   workflow_dispatch:
     inputs:
       wallet:
-        description: 'Deploy the wallet app (wallet-dapp).'
+        description: 'Deploy the station frontend (wallet-dapp).'
         type: boolean
         default: true
       # marketing and docs have no playground canister, they exist on production
@@ -93,8 +93,8 @@ jobs:
           if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
           if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
 
-          # Only the wallet has a playground canister. Reject the others here
-          # rather than after the signing key has been written to disk.
+          # Only the station frontend has a playground canister. Reject the others
+          # here, rather than after the signing key has been written to disk.
           for app in "${apps[@]}"; do
             if [ "$app" != "wallet" ]; then
               echo "$app has no playground canister, it exists on production only."
