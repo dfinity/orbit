@@ -31,12 +31,14 @@ on:
         description: 'Deploy the wallet app (wallet-dapp).'
         type: boolean
         default: true
+      # marketing and docs have no playground canister, they exist on production
+      # only, so they are not valid for a run of this workflow.
       marketing:
-        description: 'Deploy the landing page (marketing-dapp).'
+        description: 'Deploy the landing page (marketing-dapp). Production only, see RELEASE.md.'
         type: boolean
         default: false
       docs:
-        description: 'Deploy the docs site (docs-portal).'
+        description: 'Deploy the docs site (docs-portal). Production only, see RELEASE.md.'
         type: boolean
         default: false
       # Off by default: production is normally deployed from an operator machine,
@@ -88,6 +90,16 @@ jobs:
           if [ "$DEPLOY_MARKETING" = "true" ]; then apps+=(marketing); fi
           if [ "$DEPLOY_DOCS" = "true" ]; then apps+=(docs); fi
           if [ "${#apps[@]}" -eq 0 ]; then echo "No app selected."; exit 1; fi
+
+          # Only the wallet has a playground canister. Reject the others here
+          # rather than after the signing key has been written to disk.
+          for app in "${apps[@]}"; do
+            if [ "$app" != "wallet" ]; then
+              echo "$app has no playground canister, it exists on production only."
+              echo "Untick it, or deploy it with: ./scripts/deploy-app --app $app --env production --op <ref>"
+              exit 1
+            fi
+          done
           if [ -z "${IDENTITY_PEM:-}" ]; then echo "DEPLOY_STAGING_IDENTITY_PEM is not set on the playground environment."; exit 1; fi
 
           pem="$(mktemp)"; chmod 600 "$pem"
