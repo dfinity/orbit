@@ -82,9 +82,14 @@ done
 [[ -z "$PEM" || -f "$PEM" ]] || die "pem file not found: $PEM"
 cd "$ROOT"
 
-# A temp pem, only created when reading from 1Password, always removed on exit.
-TMP_PEM=""
-cleanup() { [[ -n "$TMP_PEM" ]] && rm -f "$TMP_PEM"; }
+# Scratch paths, always removed on exit: the pem (only when read from 1Password)
+# and the directory the tarball is unpacked into.
+TMP_PEM="" TMP_DIST=""
+cleanup() {
+  if [[ -n "$TMP_PEM" ]]; then rm -f "$TMP_PEM"; fi
+  if [[ -n "$TMP_DIST" ]]; then rm -rf "$TMP_DIST"; fi
+  return 0
+}
 trap cleanup EXIT
 
 CANISTER="$(jq -r ".${CANISTER_KEY[$APP]}.${ENV} // empty" canister_ids.json)"
@@ -154,14 +159,16 @@ else
   BUILD_MODE="$ENV" ./scripts/docker-build.sh "${BUILD_TARGET[$APP]}"
 fi
 
-# 2. Unpack.
+# 2. Unpack somewhere of our own. Unpacking beside the tarball would mean
+#    clearing artifacts/<app>/dist first, which is a real build output that
+#    something else may have put there.
 echo "==> unpacking"
-rm -rf "$DIR/dist" && mkdir -p "$DIR/dist"
-tar -xf "$TAR" -C "$DIR/dist"
+TMP_DIST="$(mktemp -d)"
+tar -xf "$TAR" -C "$TMP_DIST"
 
 # 3. Upload the assets (never deletes existing ones).
 echo "==> uploading to $CANISTER"
-icx-asset --pem "$PEM" --replica "$REPLICA" sync --no-delete "$CANISTER" "$DIR/dist"
+icx-asset --pem "$PEM" --replica "$REPLICA" sync --no-delete "$CANISTER" "$TMP_DIST"
 
 # 4. Verify the live version.
 if [[ -n "$SITE" ]]; then
