@@ -34,6 +34,13 @@ pub struct AddressBookEntry {
     pub labels: Vec<String>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
+    /// The user that last created or edited this entry.
+    ///
+    /// `AllowListed` treats presence in the address book as approval for a transfer, so this is
+    /// used to stop the same user both listing an address and spending to it. `None` on entries
+    /// written before this field existed.
+    #[serde(default)]
+    pub last_modified_by: Option<UUID>,
 }
 
 #[storable]
@@ -159,6 +166,45 @@ mod tests {
     use super::address_book_entry_test_utils::mock_address_book_entry;
     use super::*;
 
+    /// `last_modified_by` was added after entries were already in stable memory. Entries are
+    /// stored as CBOR, so a record written without the field must still decode, with the field
+    /// defaulting to `None` rather than trapping the upgrade.
+    #[test]
+    fn decodes_entries_stored_before_last_modified_by_existed() {
+        use ic_stable_structures::Storable;
+
+        #[derive(serde::Serialize)]
+        struct LegacyAddressBookEntry {
+            id: AddressBookEntryId,
+            address_owner: String,
+            address: String,
+            blockchain: Blockchain,
+            address_format: AddressFormat,
+            metadata: Metadata,
+            labels: Vec<String>,
+            last_modification_timestamp: Timestamp,
+        }
+
+        let legacy = LegacyAddressBookEntry {
+            id: [7; 16],
+            address_owner: "Alice".to_string(),
+            address: "0x1234".to_string(),
+            blockchain: Blockchain::InternetComputer,
+            address_format: AddressFormat::ICPAccountIdentifier,
+            metadata: Metadata::default(),
+            labels: vec!["counterparty".to_string()],
+            last_modification_timestamp: 42,
+        };
+
+        let bytes = serde_cbor::to_vec(&legacy).expect("Failed to encode legacy entry");
+        let decoded = AddressBookEntry::from_bytes(std::borrow::Cow::Owned(bytes));
+
+        assert_eq!(decoded.last_modified_by, None);
+        assert_eq!(decoded.address, "0x1234");
+        assert_eq!(decoded.labels, vec!["counterparty".to_string()]);
+        assert_eq!(decoded.last_modification_timestamp, 42);
+    }
+
     #[test]
     fn test_address_book_entry_validation() {
         let address_book_entry = mock_address_book_entry();
@@ -274,6 +320,7 @@ pub mod address_book_entry_test_utils {
             blockchain: Blockchain::InternetComputer,
             metadata: Metadata::mock(),
             last_modification_timestamp: 0,
+            last_modified_by: None,
         }
     }
 

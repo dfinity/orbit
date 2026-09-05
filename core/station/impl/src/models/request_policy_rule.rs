@@ -564,10 +564,19 @@ impl
                                     continue;
                                 };
 
-                                let is_in_address_book = ADDRESS_BOOK_REPOSITORY
-                                    .exists(asset.blockchain, transfer.input.to.clone());
+                                // An entry the requester listed themselves is not independent
+                                // evidence that the destination is trusted: address book writes
+                                // sit at a lower approval tier than transfers by default, so
+                                // honouring them would let one user both allow-list an address
+                                // and spend to it. Entries written before this was tracked have
+                                // no author and are still honoured.
+                                let listed_independently = ADDRESS_BOOK_REPOSITORY
+                                    .find_by_address(asset.blockchain, transfer.input.to.clone())
+                                    .is_some_and(|entry| {
+                                        entry.last_modified_by != Some(request.requested_by)
+                                    });
 
-                                if is_in_address_book {
+                                if listed_independently {
                                     return Ok(RequestPolicyRuleResult {
                                         status: EvaluationStatus::Approved,
                                         evaluated_rule: EvaluatedRequestPolicyRule::AllowListed,
@@ -971,5 +980,105 @@ mod test {
             RequestPolicyRule::NamedRule(rule1_id).to_string(),
             "NamedRule(NamedRule(NamedRule(CIRCULAR_REFERENCE)))"
         );
+    }
+}
+
+#[cfg(test)]
+mod allow_listed_tests {
+    use super::*;
+    use crate::core::test_utils::init_canister_system;
+    use crate::models::{
+        account_test_utils::mock_account,
+        address_book_entry_test_utils::mock_address_book_entry,
+        asset_test_utils::mock_asset,
+        request_specifier::{AddressBookMetadataMatcher, UserMatcher},
+        request_test_utils::mock_request,
+        AccountAsset, Metadata, RequestOperation, TokenStandard, TransferOperation,
+        TransferOperationInput,
+    };
+    use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY};
+    use orbit_essentials::repository::Repository;
+    use orbit_essentials::types::UUID;
+
+    const DESTINATION: &str = "0xdeadbeef";
+
+    fn evaluator() -> RequestPolicyRuleEvaluator {
+        RequestPolicyRuleEvaluator {
+            user_matcher: Arc::new(UserMatcher),
+            address_book_metadata_matcher: Arc::new(AddressBookMetadataMatcher),
+        }
+    }
+
+    /// Lists `DESTINATION` in the address book as `listed_by`, then returns a transfer request to
+    /// that destination submitted by `requested_by`.
+    fn transfer_to_listed_address(listed_by: Option<UUID>, requested_by: UUID) -> Request {
+        init_canister_system();
+
+        let asset = mock_asset();
+        ASSET_REPOSITORY.insert(asset.id, asset.clone());
+
+        let mut account = mock_account();
+        account.assets = vec![AccountAsset {
+            asset_id: asset.id,
+            balance: None,
+        }];
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+
+        let mut entry = mock_address_book_entry();
+        entry.blockchain = asset.blockchain.clone();
+        entry.address = DESTINATION.to_string();
+        entry.last_modified_by = listed_by;
+        ADDRESS_BOOK_REPOSITORY.insert(entry.to_key(), entry);
+
+        let mut request = mock_request();
+        request.requested_by = requested_by;
+        request.operation = RequestOperation::Transfer(TransferOperation {
+            fee: None,
+            transfer_id: None,
+            asset: asset.clone(),
+            input: TransferOperationInput {
+                from_account_id: account.id,
+                from_asset_id: asset.id,
+                with_standard: TokenStandard::InternetComputerNative,
+                to: DESTINATION.to_string(),
+                amount: 100u64.into(),
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                fee: None,
+            },
+        });
+
+        request
+    }
+
+    fn evaluate(request: Request) -> EvaluationStatus {
+        evaluator()
+            .evaluate((Arc::new(request), Arc::new(RequestPolicyRule::AllowListed)))
+            .expect("Failed to evaluate AllowListed")
+            .status
+    }
+
+    #[test]
+    fn approves_an_address_listed_by_someone_else() {
+        let request = transfer_to_listed_address(Some([1; 16]), [2; 16]);
+
+        assert_eq!(evaluate(request), EvaluationStatus::Approved);
+    }
+
+    /// Address book writes sit at a lower approval tier than transfers by default, so a user must
+    /// not be able to both list a destination and spend to it.
+    #[test]
+    fn rejects_an_address_the_requester_listed_themselves() {
+        let requester = [2; 16];
+        let request = transfer_to_listed_address(Some(requester), requester);
+
+        assert_eq!(evaluate(request), EvaluationStatus::Rejected);
+    }
+
+    #[test]
+    fn approves_entries_that_predate_authorship_tracking() {
+        let request = transfer_to_listed_address(None, [2; 16]);
+
+        assert_eq!(evaluate(request), EvaluationStatus::Approved);
     }
 }
