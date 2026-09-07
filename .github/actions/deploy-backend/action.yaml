@@ -1,0 +1,75 @@
+name: 'Deploy backend'
+description: 'Publish station/upgrader to the control-panel registry, or upgrade the control-panel canister, on one network.'
+
+# All of the actual work lives in scripts/deploy-backend so that CI and an
+# operator on a laptop run the same code. This action only installs the
+# toolchain, materialises the key, and calls the script once per target.
+
+inputs:
+  network:
+    description: 'dfx network to target (playground or production).'
+    required: true
+  station:
+    description: 'Publish station ("true"/"false").'
+    required: true
+  upgrader:
+    description: 'Publish upgrader ("true"/"false").'
+    required: true
+  control_panel:
+    description: 'Upgrade the control-panel canister ("true"/"false").'
+    required: true
+  identity_pem:
+    description: 'The signing identity pem. Must be a registry admin and a control-panel controller.'
+    required: true
+  gh_token:
+    description: 'Token used to download release artifacts.'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Setup Node'
+      uses: ./.github/actions/setup-node
+    - name: 'Install dependencies'
+      shell: bash
+      # Needed for orbit-cli, which performs the registry publish.
+      run: pnpm install --frozen-lockfile
+    - name: 'Install dfx'
+      uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
+      with:
+        dfx-version: '0.30.2'
+    - name: 'Install icx-asset'
+      shell: bash
+      run: cargo install --locked icx-asset --version 0.29.0
+    - name: 'Deploy'
+      shell: bash
+      env:
+        NET: ${{ inputs.network }}
+        DEPLOY_STATION: ${{ inputs.station }}
+        DEPLOY_UPGRADER: ${{ inputs.upgrader }}
+        DEPLOY_CONTROL_PANEL: ${{ inputs.control_panel }}
+        BACKEND_IDENTITY_PEM: ${{ inputs.identity_pem }}
+        GH_TOKEN: ${{ inputs.gh_token }}
+      run: |
+        set -euo pipefail
+
+        targets=()
+        if [ "$DEPLOY_STATION" = "true" ]; then targets+=(station); fi
+        if [ "$DEPLOY_UPGRADER" = "true" ]; then targets+=(upgrader); fi
+        if [ "$DEPLOY_CONTROL_PANEL" = "true" ]; then targets+=(control-panel); fi
+        if [ "${#targets[@]}" -eq 0 ]; then echo "No backend selected."; exit 1; fi
+
+        if [ -z "${BACKEND_IDENTITY_PEM:-}" ]; then
+          echo "No signing key on the $NET environment."
+          echo "Production is deployed from an operator machine. See RELEASE.md:"
+          echo "  ./scripts/deploy-backend --target <target> --network production --op <ref>"
+          exit 1
+        fi
+
+        pem="$(mktemp)"; chmod 600 "$pem"
+        printf '%s\n' "$BACKEND_IDENTITY_PEM" > "$pem"
+        trap 'rm -f "$pem"' EXIT
+
+        for target in "${targets[@]}"; do
+          ./scripts/deploy-backend --target "$target" --network "$NET" --pem "$pem" --yes
+        done

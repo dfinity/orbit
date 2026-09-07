@@ -1,0 +1,110 @@
+name: 'Deploy backend'
+
+# Phase 3 of the release, backend half: get a released backend wasm onto the
+# network. Pick any subset of station, upgrader, control-panel. The run does the
+# playground network first with no gate, then, if you asked to promote, the
+# production network behind the `production` environment's approval.
+#
+# Two different deploy paths, matching the architecture:
+#   - station / upgrader: `orbit-cli registry publish` loads the wasm into the
+#     control-panel registry. This only makes the version available. Each
+#     production station still self-upgrades on its own admins' approval.
+#     Publishing station also publishes upgrader, its dependency.
+#   - control-panel: a direct `dfx canister install --mode upgrade` of the one
+#     control-panel canister. No registry, no per-station buffer, so nothing
+#     stands between this and every station.
+#
+# Each job reads its own secret, `BACKEND_PLAYGROUND_IDENTITY_PEM` on the
+# `playground` environment and `BACKEND_PRODUCTION_IDENTITY_PEM` on `production`.
+# That identity must be a registry admin on the control-panel (for registry
+# publish) and a controller of the control-panel canister (for the upgrade).
+#
+# Production is deliberately not wired up by default. The production key is not
+# held here; production is deployed from an operator machine with
+# `scripts/deploy-backend --op`, which keeps that key out of this repo entirely.
+# See RELEASE.md. The production job below is kept so the wiring exists if that
+# decision is ever revisited: without a key on the `production` environment it
+# fails fast with a message instead of doing anything surprising.
+#
+# Both jobs call scripts/deploy-backend, the same script an operator runs by
+# hand, so there is only one implementation of a backend deploy.
+
+on:
+  workflow_dispatch:
+    inputs:
+      station:
+        description: 'Publish station to the registry.'
+        type: boolean
+        default: false
+      upgrader:
+        description: 'Publish upgrader to the registry.'
+        type: boolean
+        default: false
+      control_panel:
+        description: 'Upgrade the control-panel canister in place.'
+        type: boolean
+        default: false
+      # Off by default: production is normally deployed from an operator machine,
+      # not from here. Only useful if a production key is put on the environment.
+      promote_to_production:
+        description: 'Also run the production job. Leave unchecked unless production deploys have been moved into CI.'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One deploy run at a time. A second trigger queues instead of racing an
+# in-flight deploy of the same targets, and a running deploy is never cancelled.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  playground:
+    name: 'playground'
+    runs-on: ubuntu-latest
+    environment: playground
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          # This job downloads via gh, never pushes, so it does not need the
+          # GITHUB_TOKEN left in .git/config.
+          persist-credentials: false
+      - name: 'Deploy backend to playground'
+        uses: ./.github/actions/deploy-backend
+        with:
+          network: playground
+          station: ${{ inputs.station }}
+          upgrader: ${{ inputs.upgrader }}
+          control_panel: ${{ inputs.control_panel }}
+          identity_pem: ${{ secrets.BACKEND_PLAYGROUND_IDENTITY_PEM }}
+          gh_token: ${{ github.token }}
+
+  production:
+    name: 'production'
+    needs: playground
+    if: ${{ inputs.promote_to_production }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          # This job downloads via gh, never pushes, so it does not need the
+          # GITHUB_TOKEN left in .git/config.
+          persist-credentials: false
+      - name: 'Deploy backend to production'
+        uses: ./.github/actions/deploy-backend
+        with:
+          network: production
+          station: ${{ inputs.station }}
+          upgrader: ${{ inputs.upgrader }}
+          control_panel: ${{ inputs.control_panel }}
+          identity_pem: ${{ secrets.BACKEND_PRODUCTION_IDENTITY_PEM }}
+          gh_token: ${{ github.token }}
