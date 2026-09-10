@@ -1,3 +1,39 @@
+## 0.3.0 (2026-09-10)
+
+
+### 🚀 Features
+
+- **station:** configurable station initialization ([#482](https://github.com/dfinity/orbit/pull/482))
+
+- **upgrader:** new endpoint to list station snapshots ([#545](https://github.com/dfinity/orbit/pull/545))
+
+- **station:** update Request::last_modification_timestamp on adding approval ([#576](https://github.com/dfinity/orbit/pull/576))
+
+- **wallet:** DR UI ([#557](https://github.com/dfinity/orbit/pull/557))
+
+- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))
+
+- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))
+
+- **wallet:** show wasm_memory_persistence upgrade options on change canister requests ([#660](https://github.com/dfinity/orbit/pull/660))
+
+
+### 🩹 Fixes
+
+- **CI:** use rustup 1.27.1 for docker build ([#532](https://github.com/dfinity/orbit/pull/532))
+
+- **station:** bump ic-cdk to fix canister_status parsing ([#538](https://github.com/dfinity/orbit/pull/538))
+
+
+### ❤️  Thank You
+
+- Arshavir Ter-Gabrielyan @aterga
+- Jan Hrubes @jedna
+- Kepler Vital
+- Mario Ruci @MRmarioruci
+- mraszyk @mraszyk
+- olaszakos
+
 ## 0.2.0 (2025-03-03)
 
 
