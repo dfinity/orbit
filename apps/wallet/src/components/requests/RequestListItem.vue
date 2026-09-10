@@ -51,6 +51,7 @@ import AddRequestPolicyOperation from './operations/AddRequestPolicyOperation.vu
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
 import AddUserOperation from './operations/AddUserOperation.vue';
 import CallExternalCanisterOperation from './operations/CallExternalCanisterOperation.vue';
+import ChangeExternalCanisterOperation from './operations/ChangeExternalCanisterOperation.vue';
 import EditAccountOperation from './operations/EditAccountOperation.vue';
 import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
 import EditPermissionOperation from './operations/EditPermissionOperation.vue';
@@ -108,6 +109,7 @@ const componentsMap: {
   EditPermission: EditPermissionOperation,
   ManageSystemInfo: ManageSystemInfoOperation,
   CallExternalCanister: CallExternalCanisterOperation,
+  ChangeExternalCanister: ChangeExternalCanisterOperation,
   AddAsset: AddAssetOperation,
   EditAsset: EditAssetOperation,
   RemoveAsset: RemoveAssetOperation,
@@ -117,7 +119,6 @@ const componentsMap: {
   SetDisasterRecovery: SetDisasterRecoveryOperation,
 
   // below variants are not supported yet
-  ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
   ConfigureExternalCanister: UnsupportedOperation,
   FundExternalCanister: UnsupportedOperation,

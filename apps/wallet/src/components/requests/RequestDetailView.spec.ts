@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { Principal } from '@dfinity/principal';
+import { describe, expect, it, vi } from 'vitest';
 import { mount } from '~/test.utils';
 import RequestDetailView from './RequestDetailView.vue';
+import ChangeExternalCanisterOperation from './operations/ChangeExternalCanisterOperation.vue';
 import { variantIs } from '~/utils/helper.utils';
 import { useStationStore } from '~/stores/station.store';
+import { services } from '~/plugins/services.plugin';
 import { flushPromises } from '@vue/test-utils';
 
 type RequestDetailViewProps = InstanceType<typeof RequestDetailView>['$props'];
@@ -250,7 +253,40 @@ const cancelledProps: RequestDetailViewProps = {
   },
 };
 
+const changeCanisterProps: RequestDetailViewProps = {
+  details: pendingProps.details,
+  request: {
+    ...pendingProps.request,
+    operation: {
+      ChangeExternalCanister: {
+        canister_id: Principal.fromText('rrkah-fqaaa-aaaaa-aaaaq-cai'),
+        mode: {
+          upgrade: [{ wasm_memory_persistence: [{ keep: null }], skip_pre_upgrade: [] }],
+        },
+        module_checksum: 'a'.repeat(64),
+        arg_checksum: [],
+      },
+    },
+  },
+};
+
 describe('RequestDetailView', () => {
+  it('renders change canister requests with their upgrade options', async () => {
+    vi.spyOn(services().station, 'getExternalCanisterByCanisterId').mockRejectedValueOnce(
+      new Error('not found'),
+    );
+
+    const wrapper = mount(RequestDetailView, {
+      props: changeCanisterProps,
+    });
+    await flushPromises();
+
+    expect(wrapper.findComponent(ChangeExternalCanisterOperation).exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="change-canister-wasm-memory-persistence"]').text()).toBe(
+      'Keep',
+    );
+  });
+
   it('renders properly', () => {
     const wrapper = mount(RequestDetailView, {
       props: pendingProps,
