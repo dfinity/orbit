@@ -1,4 +1,7 @@
 {
+  "app_marketing": {
+    "production": "kguhj-fyaaa-aaaaa-qad6a-cai"
+  },
   "app_wallet": {
     "playground": "bxkhk-6yaaa-aaaal-ai6va-cai",
     "production": "5fu67-giaaa-aaaal-ajbla-cai",
@@ -9,10 +12,8 @@
     "production": "5mxvd-qaaaa-aaaal-ajbkq-cai",
     "testing": "lotbt-qqaaa-aaaal-aduzq-cai"
   },
-  "app_marketing": {
-    "production": "kguhj-fyaaa-aaaaa-qad6a-cai"
-  },
   "docs_portal": {
+    "playground": "d537j-aaaaa-aaaal-asz5q-cai",
     "production": "bp6mw-eqaaa-aaaac-ahroq-cai"
   },
   "wasm_chunk_store": {

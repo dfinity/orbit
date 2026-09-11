@@ -1,5 +1,5 @@
 Dockerfile
-node_modules
+**/node_modules
 docs/old
 dist
 target
