@@ -19,6 +19,6 @@
     "@dfinity/candid": "1.4.0",
     "@dfinity/identity": "1.4.0",
     "@dfinity/principal": "1.4.0",
-    "vitest": "1.6.1"
+    "vitest": "3.2.6"
   }
 }
