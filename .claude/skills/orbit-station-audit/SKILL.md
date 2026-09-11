@@ -1,23 +1,23 @@
 ---
 name: orbit-station-audit
 description: >-
-  Build and run the Orbit station configuration audit (`orbit-cli audit`)
+  Build and run the Orbit station configuration audit (`orbit-release-cli audit`)
   end-to-end against a live station, including the icp-cli Internet Identity
   setup that reliably trips people up. Use this whenever the user wants to
   audit, sanity-check, or security-review an Orbit station or wallet — e.g.
-  "audit my Orbit wallet", "run orbit-cli audit on station <canister-id>",
+  "audit my Orbit wallet", "run orbit-release-cli audit on station <canister-id>",
   "check my Orbit station for misconfigured approval policies / empty quorums",
   or any time they pair an Orbit station canister id with auditing, approval
   quorum, or permission checks. Reach for this even if they don't say
-  "orbit-cli" by name. It covers building the CLI from source (the globally
-  installed orbit-cli is usually too old to have the `audit` subcommand),
+  "orbit-release-cli" by name. It covers building the CLI from source (the globally
+  installed orbit-release-cli is usually too old to have the `audit` subcommand),
   obtaining an identity the station recognizes as a member, and reading the
   report.
 ---
 
 # Orbit station audit
 
-`orbit-cli audit` runs read-only sanity checks against a live station and
+`orbit-release-cli audit` runs read-only sanity checks against a live station and
 prints a severity-sorted report — safe to run any time, since it only issues
 `list_*` queries and mutates nothing. Flags, exit codes, and report format are
 documented in [`cli/src/audit/README.md`](../../../cli/src/audit/README.md);
@@ -27,7 +27,7 @@ actually derail a first one.
 
 ## The three gotchas (read these first)
 
-1. **Don't rely on the global `orbit-cli`.** A global on `PATH` may be from an
+1. **Don't rely on the global `orbit-release-cli`.** A global on `PATH` may be from an
    older checkout that predates the `audit` subcommand (unknown-command error).
    Build and run this repo's `cli/dist/cli.js` instead — what the helper script
    does — so there's no doubt about which version you're invoking.
@@ -68,7 +68,7 @@ Equivalent by hand, if you'd rather see each step:
 
 ```bash
 pnpm install                       # once, if node_modules is missing
-pnpm --filter orbit-cli build      # emits cli/dist/cli.js
+pnpm --filter orbit-release-cli build      # emits cli/dist/cli.js
 node cli/dist/cli.js audit --help
 ```
 
@@ -126,7 +126,7 @@ is the fallback to try if the station predates that derivation origin.
   --output ~/Downloads/orbit-audit-$(date +%F).txt
 ```
 
-Every flag after the script name is forwarded verbatim to `orbit-cli audit`, so
+Every flag after the script name is forwarded verbatim to `orbit-release-cli audit`, so
 swap in whichever identity matched in Step 2. `--network` defaults to `ic` (pass
 `--network local` for a local replica), and dropping `--output` prints to
 stdout. `--output` writes internal station metadata (principals, policy ids) —
