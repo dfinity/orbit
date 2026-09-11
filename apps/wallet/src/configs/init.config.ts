@@ -20,17 +20,23 @@ const getHttpGatewayUrl =
       : new URL(`http://localhost:4943?canisterId=${canisterId}`);
   };
 
+const buildMode = import.meta.env.APP_BUILD_MODE || 'production';
+
 const appInitConfig: AppInitConfig = {
   name: import.meta.env.APP_TITLE || 'Orbit',
   version: import.meta.env.APP_VERSION || '0.0.0',
   logLevel: import.meta.env.APP_LOG_LEVEL || 'info',
   baseUrl: import.meta.env.BASE_URL || '/',
   versionedBaseUrl,
-  buildMode: import.meta.env.APP_BUILD_MODE || 'production',
+  buildMode,
   isProduction: !!import.meta.env.PROD,
   apiGatewayUrl: new URL(import.meta.env.PROD ? 'https://icp-api.io' : 'http://localhost:4943'),
   httpGatewayUrl: getHttpGatewayUrl(import.meta.env.PROD),
-  derivationOrigin: import.meta.env.PROD ? 'https://orbitwallet.io' : undefined,
+  // Keyed off the build mode rather than PROD, because a playground build is
+  // also a production Vite build. Pinning playground to orbitwallet.io breaks
+  // Internet Identity login there, since that origin's ii-alternative-origins
+  // lists only app.orbit.global.
+  derivationOrigin: buildMode === 'production' ? 'https://orbitwallet.io' : undefined,
   marketingSiteUrl: import.meta.env.APP_MARKETING_SITE_URL,
   locale: {
     default: defaultLocale,
