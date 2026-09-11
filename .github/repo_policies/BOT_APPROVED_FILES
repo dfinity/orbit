@@ -1,0 +1,33 @@
+# Files the release automation is allowed to change.
+#
+# The Cut release workflow opens its pull request as github-actions, so every
+# file in that pull request has to match a pattern below or the Check Bot
+# Policies job blocks it. `release prepare` writes a version and a changelog per
+# released project and nothing else, so this list is those paths.
+#
+# Patterns are fnmatch, not glob, so `*` also matches `/`.
+#
+# Deliberately absent: .github/**. A bot pull request must not be able to change
+# a workflow, an action, or this file.
+
+.release.json
+Cargo.lock
+
+# Version and changelog per released project.
+apps/*/CHANGELOG.md
+apps/*/package.json
+core/*/*/CHANGELOG.md
+core/*/*/Cargo.toml
+docs/CHANGELOG.md
+docs/package.json
+libs/*/CHANGELOG.md
+libs/*/Cargo.toml
+tools/*/CHANGELOG.md
+tools/*/Cargo.toml
+
+# Test crates are not released, but their dependency versions bump with the
+# crates above. The pattern spans nested paths because fnmatch `*` matches `/`.
+tests/*/Cargo.toml
+
+# The station API versions the wallet declares support for.
+apps/wallet/public/compat.json
