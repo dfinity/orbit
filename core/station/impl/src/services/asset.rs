@@ -6,7 +6,7 @@ use crate::{
     models::{
         resource::{Resource, ResourceAction, ResourceId},
         AddAssetOperationInput, Asset, AssetCallerPrivileges, AssetId, EditAssetOperationInput,
-        RemoveAssetOperationInput,
+        RemoveAssetOperationInput, TokenStandard,
     },
     repositories::{AssetRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
 };
@@ -81,6 +81,9 @@ impl AssetService {
 
     pub fn edit(&self, input: EditAssetOperationInput) -> ServiceResult<Asset> {
         let mut asset = self.get(&input.asset_id)?;
+        let ledger_canister_id_before = asset
+            .metadata
+            .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID);
 
         if let Some(name) = input.name {
             asset.name = name;
@@ -100,6 +103,19 @@ impl AssetService {
 
         if let Some(standards) = input.standards {
             asset.standards = standards.into_iter().collect();
+        }
+
+        // Transfers, balance reads and fee lookups all resolve the ledger from this field at call
+        // time, so repointing it on an existing asset silently changes which token an
+        // already-approved transfer moves. To point at a different ledger, detach the asset from
+        // its accounts, remove it, and create a new one.
+        let ledger_canister_id_after = asset
+            .metadata
+            .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID);
+        if ledger_canister_id_before.is_some()
+            && ledger_canister_id_before != ledger_canister_id_after
+        {
+            Err(AssetError::ImmutableLedgerCanisterId)?;
         }
 
         asset.validate()?;
@@ -182,6 +198,7 @@ impl AssetService {
 mod tests {
     use orbit_essentials::repository::Repository;
     use station_api::ListAssetsInput;
+    use std::collections::BTreeMap;
 
     use crate::{
         models::{
@@ -239,6 +256,82 @@ mod tests {
 
         assert_eq!(assets.len(), 1);
         assert_eq!(assets[0].name, "Internet Computer");
+    }
+
+    #[tokio::test]
+    async fn test_asset_edit_cannot_repoint_ledger_canister_id() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        let result = service.edit(crate::models::EditAssetOperationInput {
+            asset_id: mock_asset.id,
+            name: None,
+            symbol: None,
+            change_metadata: Some(crate::models::ChangeMetadata::OverrideSpecifiedBy(
+                BTreeMap::from([(
+                    TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                    "mxzaz-hqaaa-aaaar-qaada-cai".to_string(),
+                )]),
+            )),
+            blockchain: None,
+            standards: None,
+        });
+
+        assert!(result.is_err());
+        assert_eq!(
+            ASSET_REPOSITORY
+                .get(&mock_asset.id)
+                .unwrap()
+                .metadata
+                .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID),
+            mock_asset
+                .metadata
+                .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
+        );
+    }
+
+    #[tokio::test]
+    async fn test_asset_edit_cannot_remove_ledger_canister_id() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        let result = service.edit(crate::models::EditAssetOperationInput {
+            asset_id: mock_asset.id,
+            name: None,
+            symbol: None,
+            change_metadata: Some(crate::models::ChangeMetadata::RemoveKeys(vec![
+                TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+            ])),
+            blockchain: None,
+            standards: None,
+        });
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_asset_edit_allows_other_metadata_changes() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        service
+            .edit(crate::models::EditAssetOperationInput {
+                asset_id: mock_asset.id,
+                name: None,
+                symbol: None,
+                change_metadata: Some(crate::models::ChangeMetadata::OverrideSpecifiedBy(
+                    BTreeMap::from([(
+                        "index_canister_id".to_string(),
+                        "mxzaz-hqaaa-aaaar-qaada-cai".to_string(),
+                    )]),
+                )),
+                blockchain: None,
+                standards: None,
+            })
+            .expect("Failed to edit unrelated metadata");
     }
 
     #[tokio::test]
