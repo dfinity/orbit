@@ -61,7 +61,10 @@ impl<'p, 'o> EditAddressBookEntryRequestExecute<'p, 'o> {
 impl Execute for EditAddressBookEntryRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         ADDRESS_BOOK_SERVICE
-            .edit_entry(self.operation.input.to_owned())
+            .edit_entry(
+                self.operation.input.to_owned(),
+                Some(self.request.requested_by),
+            )
             .await
             .map_err(|e| RequestExecuteError::Failed {
                 reason: format!("Failed to update address book entry: {e}"),
