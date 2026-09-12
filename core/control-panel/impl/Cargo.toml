@@ -15,6 +15,7 @@ bench = false
 
 [dependencies]
 candid = { workspace = true }
+async-trait = { workspace = true }
 canfund = { workspace = true }
 orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.2.0' }
 hex = { workspace = true }
