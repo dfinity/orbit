@@ -196,8 +196,9 @@ mod tests {
 
     use crate::{
         models::{
-            account_test_utils::mock_account, asset_test_utils::mock_asset, AddAssetOperationInput,
-            TokenStandard,
+            account_test_utils::mock_account,
+            asset_test_utils::{mock_asset, mock_asset_b},
+            AddAssetOperationInput, TokenStandard,
         },
         repositories::{ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
     };
@@ -250,6 +251,38 @@ mod tests {
 
         assert_eq!(assets.len(), 1);
         assert_eq!(assets[0].name, "Internet Computer");
+    }
+
+    #[tokio::test]
+    async fn test_asset_edit_can_set_initial_ledger_canister_id() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset_b();
+        assert!(mock_asset.ledger_canister_id().is_none());
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        service
+            .edit(crate::models::EditAssetOperationInput {
+                asset_id: mock_asset.id,
+                name: None,
+                symbol: None,
+                change_metadata: Some(crate::models::ChangeMetadata::OverrideSpecifiedBy(
+                    BTreeMap::from([(
+                        TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                        "mxzaz-hqaaa-aaaar-qaada-cai".to_string(),
+                    )]),
+                )),
+                blockchain: None,
+                standards: None,
+            })
+            .expect("Setting a ledger canister id for the first time must be allowed");
+
+        let stored = ASSET_REPOSITORY
+            .get(&mock_asset.id)
+            .expect("asset should still exist");
+        assert_eq!(
+            stored.ledger_canister_id(),
+            Some("mxzaz-hqaaa-aaaar-qaada-cai".to_string())
+        );
     }
 
     #[tokio::test]

@@ -377,6 +377,25 @@ mod test {
     }
 
     #[test]
+    fn test_edit_can_set_initial_ledger_canister_id() {
+        init_canister_system();
+
+        let asset = crate::models::asset_test_utils::mock_asset_b();
+        assert!(asset.ledger_canister_id().is_none());
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
+        let result = EnsureAsset::ledger_canister_id_preserved(
+            &asset.id,
+            &Some(ChangeMetadata::OverrideSpecifiedBy(BTreeMap::from([(
+                TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                Principal::from_slice(&[3; 29]).to_text(),
+            )]))),
+        );
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn test_edit_cannot_repoint_ledger_canister_id() {
         init_canister_system();
 
