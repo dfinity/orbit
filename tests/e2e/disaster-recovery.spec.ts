@@ -49,7 +49,12 @@ test('can recover uninstalled station', async ({ page }) => {
   );
 
   await page.goto(walletUrl);
-  await page.getByText(/disaster recovery/i).click();
+
+  // The entry point only appears once the wallet has noticed the station is uninstalled, so it is
+  // waited for rather than clicked straight away.
+  const disasterRecoveryLink = page.getByText(/disaster recovery/i).first();
+  await disasterRecoveryLink.waitFor({ state: 'visible', timeout: 60_000 });
+  await disasterRecoveryLink.click();
 
   const disasterRecoveryPage = new DisasterRecoveryPage(page);
   await disasterRecoveryPage.assertIsOn();
@@ -64,17 +69,20 @@ test('can recover uninstalled station', async ({ page }) => {
   await accountsPage.openByName('Main');
 
   await accountPage.pickByAsset('ICP');
-  await accountAssetPage.getBalance();
 
-  while (true) {
-    // refresh the page
-    await page.reload();
-    const balance = await accountAssetPage.getBalance();
-
-    if (balance!.includes('5.0')) {
-      break;
-    }
-
-    await page.waitForTimeout(5000);
-  }
+  // Bounded so that a balance that never returns fails here reporting what it actually read,
+  // instead of spinning until the shared test budget runs out somewhere unrelated.
+  await expect
+    .poll(
+      async () => {
+        await page.reload();
+        return (await accountAssetPage.getBalance()) ?? '';
+      },
+      {
+        message: 'the ICP balance should be restored after disaster recovery',
+        timeout: 180_000,
+        intervals: [5_000],
+      },
+    )
+    .toContain('5.0');
 });
