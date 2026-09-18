@@ -6,7 +6,7 @@ use crate::{
     models::{
         resource::{Resource, ResourceAction, ResourceId},
         AddAssetOperationInput, Asset, AssetCallerPrivileges, AssetId, EditAssetOperationInput,
-        RemoveAssetOperationInput, TokenStandard,
+        RemoveAssetOperationInput,
     },
     repositories::{AssetRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
 };
@@ -81,9 +81,16 @@ impl AssetService {
 
     pub fn edit(&self, input: EditAssetOperationInput) -> ServiceResult<Asset> {
         let mut asset = self.get(&input.asset_id)?;
-        let ledger_canister_id_before = asset
-            .metadata
-            .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID);
+
+        // Transfers, balance reads and fee lookups all resolve the ledger from this field at call
+        // time, so repointing it on an existing asset silently changes which token an
+        // already-approved transfer moves. To point at a different ledger, detach the asset from
+        // its accounts, remove it, and create a new one.
+        if let Some(change_metadata) = &input.change_metadata {
+            if asset.changes_ledger_canister_id(change_metadata) {
+                Err(AssetError::ImmutableLedgerCanisterId)?;
+            }
+        }
 
         if let Some(name) = input.name {
             asset.name = name;
@@ -103,19 +110,6 @@ impl AssetService {
 
         if let Some(standards) = input.standards {
             asset.standards = standards.into_iter().collect();
-        }
-
-        // Transfers, balance reads and fee lookups all resolve the ledger from this field at call
-        // time, so repointing it on an existing asset silently changes which token an
-        // already-approved transfer moves. To point at a different ledger, detach the asset from
-        // its accounts, remove it, and create a new one.
-        let ledger_canister_id_after = asset
-            .metadata
-            .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID);
-        if ledger_canister_id_before.is_some()
-            && ledger_canister_id_before != ledger_canister_id_after
-        {
-            Err(AssetError::ImmutableLedgerCanisterId)?;
         }
 
         asset.validate()?;

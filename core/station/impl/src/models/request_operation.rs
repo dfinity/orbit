@@ -1249,6 +1249,10 @@ impl ModelValidator<ValidationError> for RequestOperation {
             RequestOperation::AddAsset(_) => (),
             RequestOperation::EditAsset(op) => {
                 EnsureAsset::id_exists(&op.input.asset_id)?;
+                EnsureAsset::ledger_canister_id_preserved(
+                    &op.input.asset_id,
+                    &op.input.change_metadata,
+                )?;
             }
             RequestOperation::RemoveAsset(op) => {
                 EnsureAsset::id_exists(&op.input.asset_id)?;
