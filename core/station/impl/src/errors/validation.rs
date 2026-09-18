@@ -9,6 +9,7 @@ pub enum ValidationError {
     ExternalCanisterValidationError(ExternalCanisterValidationError),
     SystemInfoValidationError(SystemInfoValidationError),
     RequestPolicyRuleValidationError(RequestPolicyRuleValidationError),
+    AssetValidationError(AssetValidationError),
 }
 
 impl Display for ValidationError {
@@ -18,6 +19,7 @@ impl Display for ValidationError {
             ValidationError::ExternalCanisterValidationError(err) => write!(f, "{err}"),
             ValidationError::SystemInfoValidationError(err) => write!(f, "{err}"),
             ValidationError::RequestPolicyRuleValidationError(err) => write!(f, "{err}"),
+            ValidationError::AssetValidationError(err) => write!(f, "{err}"),
         }
     }
 }
@@ -29,6 +31,7 @@ impl DetailableError for ValidationError {
             ValidationError::ExternalCanisterValidationError(err) => err.details(),
             ValidationError::SystemInfoValidationError(err) => err.details(),
             ValidationError::RequestPolicyRuleValidationError(err) => err.details(),
+            ValidationError::AssetValidationError(err) => err.details(),
         }
     }
 }
@@ -54,6 +57,31 @@ impl From<SystemInfoValidationError> for ValidationError {
 impl From<RequestPolicyRuleValidationError> for ValidationError {
     fn from(err: RequestPolicyRuleValidationError) -> ValidationError {
         ValidationError::RequestPolicyRuleValidationError(err)
+    }
+}
+
+impl From<AssetValidationError> for ValidationError {
+    fn from(err: AssetValidationError) -> ValidationError {
+        ValidationError::AssetValidationError(err)
+    }
+}
+
+#[derive(Debug, Error, Eq, PartialEq)]
+pub enum AssetValidationError {
+    #[error(r#"The {field} of an existing asset cannot be changed."#)]
+    ImmutableField { field: String },
+}
+
+impl DetailableError for AssetValidationError {
+    fn details(&self) -> Option<std::collections::HashMap<String, String>> {
+        let mut details = std::collections::HashMap::new();
+
+        match self {
+            AssetValidationError::ImmutableField { field } => {
+                details.insert("field".to_string(), field.to_string());
+                Some(details)
+            }
+        }
     }
 }
 

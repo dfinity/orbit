@@ -5,7 +5,11 @@ use orbit_essentials::{
 };
 
 use super::{Blockchain, TokenStandard};
-use crate::{errors::AssetError, models::Metadata, repositories::ASSET_REPOSITORY};
+use crate::{
+    errors::AssetError,
+    models::{ChangeMetadata, Metadata},
+    repositories::ASSET_REPOSITORY,
+};
 use std::{
     collections::BTreeSet,
     hash::{Hash, Hasher},
@@ -36,6 +40,25 @@ impl Asset {
     pub const DECIMALS_RANGE: (u32, u32) = (0, 18);
     pub const SYMBOL_RANGE: (u16, u16) = (1, 32);
     pub const NAME_RANGE: (u16, u16) = (1, 64);
+
+    pub fn ledger_canister_id(&self) -> Option<String> {
+        self.metadata
+            .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
+    }
+
+    /// Whether applying `change_metadata` would repoint or drop a ledger canister id that is
+    /// already set. Setting one for the first time is not a change.
+    pub fn changes_ledger_canister_id(&self, change_metadata: &ChangeMetadata) -> bool {
+        let before = self.ledger_canister_id();
+        if before.is_none() {
+            return false;
+        }
+
+        let mut metadata = self.metadata.clone();
+        metadata.change(change_metadata.clone());
+
+        before != metadata.get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
+    }
 }
 
 impl ModelKey<AssetId> for Asset {
