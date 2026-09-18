@@ -38,6 +38,9 @@ pub enum AssetError {
     /// The ledger canister id of an existing asset cannot be changed.
     #[error(r#"The ledger canister id of an existing asset cannot be changed."#)]
     ImmutableLedgerCanisterId,
+    /// The ledger canister id is not a valid principal.
+    #[error(r#"The ledger canister id `{ledger_canister_id}` is not a valid principal."#)]
+    InvalidLedgerCanisterId { ledger_canister_id: String },
     /// The asset is not unique.
     #[error(r#"The asset already exists."#)]
     AlreadyExists {
@@ -108,6 +111,13 @@ impl DetailableError for AssetError {
                 Some(details)
             }
             AssetError::ImmutableLedgerCanisterId => Some(details),
+            AssetError::InvalidLedgerCanisterId { ledger_canister_id } => {
+                details.insert(
+                    "ledger_canister_id".to_string(),
+                    ledger_canister_id.to_string(),
+                );
+                Some(details)
+            }
         }
     }
 }

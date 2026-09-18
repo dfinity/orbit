@@ -286,6 +286,37 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_asset_edit_rejects_an_unparseable_initial_ledger_canister_id() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset_b();
+        assert!(mock_asset.ledger_canister_id().is_none());
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        // The first assignment is the only writable moment, so an unparseable value here would
+        // otherwise be locked in by the immutability rule.
+        let result = service.edit(crate::models::EditAssetOperationInput {
+            asset_id: mock_asset.id,
+            name: None,
+            symbol: None,
+            change_metadata: Some(crate::models::ChangeMetadata::OverrideSpecifiedBy(
+                BTreeMap::from([(
+                    TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                    "not-a-principal".to_string(),
+                )]),
+            )),
+            blockchain: None,
+            standards: None,
+        });
+
+        assert!(result.is_err());
+        assert!(ASSET_REPOSITORY
+            .get(&mock_asset.id)
+            .expect("asset should still exist")
+            .ledger_canister_id()
+            .is_none());
+    }
+
+    #[tokio::test]
     async fn test_asset_edit_cannot_repoint_ledger_canister_id() {
         let service = AssetService::default();
         let mock_asset = mock_asset();
