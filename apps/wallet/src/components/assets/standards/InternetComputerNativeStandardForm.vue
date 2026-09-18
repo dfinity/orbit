@@ -50,11 +50,15 @@ import DiffView from '~/components/requests/DiffView.vue';
 import { AssetMetadata } from '~/generated/station/station.did';
 import { requiredRule, validCanisterId } from '~/utils/form.utils';
 
-const props = defineProps<{
-  modelValue: AssetMetadata[];
-  currentMetadata?: AssetMetadata[];
-  readonly: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: AssetMetadata[];
+    currentMetadata?: AssetMetadata[];
+    readonly: boolean;
+    lockLedgerCanisterId?: boolean;
+  }>(),
+  { currentMetadata: undefined, lockLedgerCanisterId: false },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [AssetMetadata[]];
@@ -90,6 +94,10 @@ const currentIndexId = computed<string | undefined>(
 );
 
 // The station rejects an edit that repoints or drops a ledger canister id that is already set, so
-// the field is only writable while the asset does not have one yet.
-const isLedgerIdLocked = computed(() => currentLedgerId.value !== undefined);
+// the field is only writable while the asset does not have one yet. The flag has to come from a
+// snapshot taken when the asset was loaded: deriving it from the editable model would lock the
+// field on the first character typed into an asset that has no ledger yet.
+const isLedgerIdLocked = computed(
+  () => props.lockLedgerCanisterId || currentLedgerId.value !== undefined,
+);
 </script>

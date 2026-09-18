@@ -10,7 +10,7 @@
       v-slot="{ data }"
       :load="loadAsset"
       @loading="loading = $event"
-      @loaded="asset = $event.asset"
+      @loaded="onAssetLoaded"
     >
       <VCard>
         <VToolbar color="background">
@@ -101,6 +101,7 @@
                 id: true,
               }"
               :disabled="props.readonly.value"
+              :lock-ledger-canister-id="ledgerCanisterIdLocked"
               @submit="save"
               @valid="valid = $event"
             />
@@ -272,6 +273,18 @@ function loadWellKnownAssets() {
       .flat();
   });
 }
+
+// Captured once from the loaded asset rather than derived from the editable model, because the
+// station refuses to repoint a ledger canister id that is already set, and reading the live model
+// would lock the field as soon as the first character is typed into an asset without one.
+const ledgerCanisterIdLocked = ref(false);
+
+const onAssetLoaded = (data: { asset: Partial<Asset> }): void => {
+  asset.value = data.asset;
+  ledgerCanisterIdLocked.value = !!data.asset.metadata?.some(
+    entry => entry.key === 'ledger_canister_id',
+  );
+};
 
 const loadAsset = async (): Promise<{
   asset: Partial<Asset>;
