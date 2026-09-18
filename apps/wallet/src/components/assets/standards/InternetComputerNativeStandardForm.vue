@@ -9,10 +9,16 @@
             : 'metadata_ledger_canister_id'
         "
         :label="$t('pages.assets.forms.ledger_canister_id')"
-        :variant="props.readonly ? 'plain' : 'filled'"
+        :variant="props.readonly || isLedgerIdLocked ? 'plain' : 'filled'"
         density="comfortable"
-        :readonly="props.readonly || diffMode === 'before'"
+        :readonly="props.readonly || isLedgerIdLocked || diffMode === 'before'"
         :prepend-icon="mdiDatabase"
+        :hint="
+          isLedgerIdLocked && !props.readonly
+            ? $t('pages.assets.forms.ledger_canister_id_immutable')
+            : undefined
+        "
+        :persistent-hint="isLedgerIdLocked && !props.readonly"
         :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
         @update:model-value="val => diffMode === 'after' && (ledgerId = val)"
       />
@@ -82,4 +88,8 @@ const currentLedgerId = computed<string | undefined>(
 const currentIndexId = computed<string | undefined>(
   () => props.currentMetadata?.find(m => m.key === 'index_canister_id')?.value,
 );
+
+// The station rejects an edit that repoints or drops a ledger canister id that is already set, so
+// the field is only writable while the asset does not have one yet.
+const isLedgerIdLocked = computed(() => currentLedgerId.value !== undefined);
 </script>

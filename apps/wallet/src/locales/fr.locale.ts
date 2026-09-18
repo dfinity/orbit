@@ -1045,6 +1045,8 @@ export default {
       error_fetching_assets: 'Erreur lors du chargement des actifs, veuillez essayer de nouveau.',
       forms: {
         ledger_canister_id: 'ID du Canister Ledger',
+        ledger_canister_id_immutable:
+          'Le canister ledger ne peut plus être modifié une fois défini. Créez un nouvel actif pour utiliser un autre ledger.',
         index_canister_id: 'ID du Canister Index',
         decimals: 'Décimales',
       },
