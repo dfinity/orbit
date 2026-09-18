@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { getWalletPath } from '../config';
 import { getCanisterInfo } from '../utils/dfx.utils';
 
@@ -25,12 +25,16 @@ export class SettingsPage {
     await this.page.getByTestId('continue-action-btn').click();
     await this.page.getByTestId('submit-action-btn').click();
 
-    while (checkForNewModuleHash) {
-      const newModuleHash = getCanisterInfo(stationId).moduleHash;
-      if (newModuleHash !== originalModuleHash) {
-        break;
-      }
-      await this.page.waitForTimeout(1000);
+    if (checkForNewModuleHash) {
+      // Bounded so a wasm that never installs fails here rather than consuming the whole test
+      // budget and surfacing as a timeout in a later, unrelated step.
+      await expect
+        .poll(() => getCanisterInfo(stationId).moduleHash, {
+          message: 'the station module hash should change after installing the custom wasm',
+          timeout: 120_000,
+          intervals: [2_000],
+        })
+        .not.toBe(originalModuleHash);
     }
 
     // wait till the canister starts again
