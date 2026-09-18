@@ -4,20 +4,21 @@ use std::{hash::Hash, sync::Arc};
 use std::cell::RefCell;
 
 use crate::{
-    errors::{ExternalCanisterValidationError, RecordValidationError},
+    errors::{AssetValidationError, ExternalCanisterValidationError, RecordValidationError},
     models::{
         resource::{Resource, ResourceId, ResourceIds},
-        AccountKey, AddressBookEntryKey, NamedRuleKey, NotificationKey, RequestKey, TokenStandard,
-        UserKey,
+        AccountKey, AddressBookEntryKey, AssetId, ChangeMetadata, NamedRuleKey, NotificationKey,
+        RequestKey, TokenStandard, UserKey,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, request_policy::REQUEST_POLICY_REPOSITORY,
         ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NAMED_RULE_REPOSITORY,
         NOTIFICATION_REPOSITORY, REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
-    services::SYSTEM_SERVICE,
+    services::{MAINNET_CYCLES_LEDGER_CANISTER_ID, SYSTEM_SERVICE},
 };
 use candid::Principal;
+use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use ic_stable_structures::{Memory, Storable};
 
 use orbit_essentials::repository::Repository;
@@ -203,7 +204,13 @@ impl EnsureExternalCanister {
                 .is_some_and(|canister_id| canister_id == principal_str)
         });
 
+        // The asset-derived check above only covers ledgers that some asset currently points at,
+        // so it stops covering a ledger once its last asset is edited or removed. The system
+        // ledgers hold station funds directly, so they are pinned here and never depend on what
+        // the asset registry happens to contain.
         !(is_ledger_canister_id
+            || principal == MAINNET_LEDGER_CANISTER_ID
+            || principal == MAINNET_CYCLES_LEDGER_CANISTER_ID
             || principal == Principal::management_canister()
             || principal == crate::core::ic_cdk::api::id()
             || principal == SYSTEM_SERVICE.get_upgrader_canister_id())
@@ -252,6 +259,33 @@ impl EnsureIdExists<UUID> for EnsureAsset {
 
 impl EnsureResourceIdExists for EnsureAsset {}
 
+impl EnsureAsset {
+    /// The ledger canister id is resolved at call time by transfers, balance reads and fee
+    /// lookups, so repointing it on an existing asset silently changes which token those
+    /// operations act on. Rejecting it here keeps a doomed request from being created and
+    /// approved before the service refuses it at execution.
+    pub fn ledger_canister_id_preserved(
+        asset_id: &AssetId,
+        change_metadata: &Option<ChangeMetadata>,
+    ) -> Result<(), AssetValidationError> {
+        let Some(change_metadata) = change_metadata else {
+            return Ok(());
+        };
+
+        let Some(asset) = ASSET_REPOSITORY.get(asset_id) else {
+            return Ok(());
+        };
+
+        if asset.changes_ledger_canister_id(change_metadata) {
+            return Err(AssetValidationError::ImmutableField {
+                field: TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+            });
+        }
+
+        Ok(())
+    }
+}
+
 pub struct EnsureNamedRule {}
 
 impl EnsureIdExists<UUID> for EnsureNamedRule {
@@ -276,11 +310,26 @@ mod test {
 
     use crate::{
         core::test_utils::init_canister_system,
-        models::{asset_test_utils::mock_asset, TokenStandard},
+        models::{asset_test_utils::mock_asset, ChangeMetadata, TokenStandard},
         repositories::ASSET_REPOSITORY,
     };
 
-    use super::EnsureExternalCanister;
+    use super::{EnsureAsset, EnsureExternalCanister, MAINNET_CYCLES_LEDGER_CANISTER_ID};
+    use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
+
+    fn insert_asset_with_ledger(ledger: Principal) -> crate::models::Asset {
+        let mut asset = mock_asset();
+        asset
+            .metadata
+            .change(ChangeMetadata::OverrideSpecifiedBy(BTreeMap::from([(
+                TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                ledger.to_text(),
+            )])));
+
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
+        asset
+    }
 
     #[test]
     fn test_is_external_canister() {
@@ -310,5 +359,74 @@ mod test {
         assert!(!is_external_canister);
         let ensure_external_canister = EnsureExternalCanister::ensure_external_canister(principal);
         assert!(ensure_external_canister.is_err());
+    }
+
+    #[test]
+    fn test_system_ledgers_are_never_external_canisters() {
+        init_canister_system();
+
+        // These hold station funds directly, so they stay off limits even when no asset points at
+        // them, which is the case after the last asset naming them is edited or removed.
+        for ledger in [
+            MAINNET_LEDGER_CANISTER_ID,
+            MAINNET_CYCLES_LEDGER_CANISTER_ID,
+        ] {
+            assert!(!EnsureExternalCanister::is_external_canister(ledger));
+            assert!(EnsureExternalCanister::ensure_external_canister(ledger).is_err());
+        }
+    }
+
+    #[test]
+    fn test_edit_cannot_repoint_ledger_canister_id() {
+        init_canister_system();
+
+        let asset = insert_asset_with_ledger(Principal::from_slice(&[1; 29]));
+
+        let result = EnsureAsset::ledger_canister_id_preserved(
+            &asset.id,
+            &Some(ChangeMetadata::OverrideSpecifiedBy(BTreeMap::from([(
+                TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                Principal::from_slice(&[2; 29]).to_text(),
+            )]))),
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_edit_cannot_drop_ledger_canister_id() {
+        init_canister_system();
+
+        let asset = insert_asset_with_ledger(Principal::from_slice(&[1; 29]));
+
+        let result = EnsureAsset::ledger_canister_id_preserved(
+            &asset.id,
+            &Some(ChangeMetadata::RemoveKeys(vec![
+                TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+            ])),
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_edit_allows_unrelated_metadata_changes() {
+        init_canister_system();
+
+        let ledger = Principal::from_slice(&[1; 29]);
+        let asset = insert_asset_with_ledger(ledger);
+
+        let result = EnsureAsset::ledger_canister_id_preserved(
+            &asset.id,
+            &Some(ChangeMetadata::OverrideSpecifiedBy(BTreeMap::from([
+                ("description".to_string(), "updated".to_string()),
+                (
+                    TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                    ledger.to_text(),
+                ),
+            ]))),
+        );
+
+        assert!(result.is_ok());
     }
 }
