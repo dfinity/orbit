@@ -195,13 +195,15 @@ pub struct EnsureExternalCanister {}
 impl EnsureExternalCanister {
     // Known ledger canisters, the management canister, the orbit station, and the upgrader are NOT external canisters.
     pub fn is_external_canister(principal: Principal) -> bool {
-        // Check if the target canister is a ledger canister of an asset.
-        let principal_str = principal.to_text();
+        // Check if the target canister is a ledger canister of an asset. The stored value is
+        // compared as a principal rather than as text, because from_text accepts spellings that
+        // to_text does not emit, and a textual comparison would miss those and leave the ledger
+        // treated as external.
         let is_ledger_canister_id = ASSET_REPOSITORY.list().iter().any(|asset| {
             asset
-                .metadata
-                .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
-                .is_some_and(|canister_id| canister_id == principal_str)
+                .ledger_canister_id()
+                .and_then(|canister_id| Principal::from_text(canister_id).ok())
+                .is_some_and(|ledger_canister_id| ledger_canister_id == principal)
         });
 
         // The asset-derived check above only covers ledgers that some asset currently points at,
@@ -359,6 +361,25 @@ mod test {
         assert!(!is_external_canister);
         let ensure_external_canister = EnsureExternalCanister::ensure_external_canister(principal);
         assert!(ensure_external_canister.is_err());
+    }
+
+    #[test]
+    fn test_ledger_stored_non_canonically_is_still_not_external() {
+        init_canister_system();
+
+        let ledger = Principal::from_slice(&[7; 29]);
+        let mut asset = mock_asset();
+        asset
+            .metadata
+            .change(ChangeMetadata::OverrideSpecifiedBy(BTreeMap::from([(
+                TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                ledger.to_text().to_uppercase(),
+            )])));
+        ASSET_REPOSITORY.insert(asset.key(), asset);
+
+        // from_text is case insensitive but to_text emits lower case, so comparing the stored
+        // text against to_text() would not match and would leave this ledger callable.
+        assert!(!EnsureExternalCanister::is_external_canister(ledger));
     }
 
     #[test]

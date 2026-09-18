@@ -1572,6 +1572,41 @@ mod test {
     }
 
     #[tokio::test]
+    async fn fail_edit_asset_request_repointing_the_ledger_canister_id() {
+        use orbit_essentials::model::ModelKey;
+
+        let asset = crate::models::asset_test_utils::mock_asset();
+        crate::repositories::ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
+        // Without this the repoint would only be refused by the service, after the request had
+        // already been created and approved.
+        let err = RequestOperation::EditAsset(crate::models::EditAssetOperation {
+            input: crate::models::EditAssetOperationInput {
+                asset_id: asset.id,
+                name: None,
+                symbol: None,
+                change_metadata: Some(crate::models::ChangeMetadata::OverrideSpecifiedBy(
+                    std::collections::BTreeMap::from([(
+                        crate::models::TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                        candid::Principal::from_slice(&[9; 29]).to_text(),
+                    )]),
+                )),
+                blockchain: None,
+                standards: None,
+            },
+        })
+        .validate()
+        .expect_err("Repointing the ledger canister id must be refused at request validation");
+
+        assert!(matches!(
+            err,
+            ValidationError::AssetValidationError(
+                crate::errors::AssetValidationError::ImmutableField { .. }
+            )
+        ));
+    }
+
+    #[tokio::test]
     async fn fail_request_operation_with_non_external_canister() {
         let upgrader_id = candid::Principal::from_slice(&[42; 29]);
         let regular_canister = candid::Principal::from_slice(&[64; 29]);
