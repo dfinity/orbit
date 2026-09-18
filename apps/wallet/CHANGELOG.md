@@ -1,3 +1,18 @@
+## 0.8.0 (2026-09-10)
+
+
+### 🚀 Features
+
+- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))
+
+- **wallet:** show wasm_memory_persistence upgrade options on change canister requests ([#660](https://github.com/dfinity/orbit/pull/660))
+
+
+### ❤️  Thank You
+
+- Arshavir Ter-Gabrielyan @aterga
+- Mario Ruci @MRmarioruci
+
 ## 0.7.0 (2026-06-08)
 
 
