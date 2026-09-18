@@ -40,4 +40,41 @@ describe('InternetComputerNativeStandardForm', () => {
     expect(ledgerInput.value).toBe('ryjl3-tyaaa-aaaaa-aaaba-cai');
     expect(indexInput.value).toBe('qhbym-qaaaa-aaaaa-aaafq-cai');
   });
+
+  it('allows setting the ledger canister id while the asset does not have one', async () => {
+    const wrapper = mount(InternetComputerNativeStandardForm, {
+      props: {
+        modelValue: [],
+        readonly: false,
+      },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    const ledgerInput = wrapper.find('input[name="metadata_ledger_canister_id"]')
+      .element as HTMLInputElement;
+
+    expect(ledgerInput.readOnly).toBe(false);
+  });
+
+  it('locks the ledger canister id once the asset already has one', async () => {
+    const wrapper = mount(InternetComputerNativeStandardForm, {
+      props: {
+        modelValue: [{ key: 'ledger_canister_id', value: 'ryjl3-tyaaa-aaaaa-aaaba-cai' }],
+        currentMetadata: [{ key: 'ledger_canister_id', value: 'ryjl3-tyaaa-aaaaa-aaaba-cai' }],
+        readonly: false,
+      },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    const ledgerInput = wrapper.find('input[name="metadata_ledger_canister_id"]')
+      .element as HTMLInputElement;
+    const indexInput = wrapper.find('input[name="metadata_index_canister_id"]')
+      .element as HTMLInputElement;
+
+    expect(ledgerInput.readOnly).toBe(true);
+    // The index canister id stays editable; only the ledger is immutable.
+    expect(indexInput.readOnly).toBe(false);
+  });
 });

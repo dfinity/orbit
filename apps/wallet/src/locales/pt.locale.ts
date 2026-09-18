@@ -1041,6 +1041,8 @@ export default {
       error_fetching_assets: 'Erro ao carregar os ativos, por favor, tente novamente.',
       forms: {
         ledger_canister_id: 'ID do canister de contabilidade',
+        ledger_canister_id_immutable:
+          'O canister de contabilidade não pode ser alterado depois de definido. Crie um novo ativo para usar outro canister.',
         index_canister_id: 'ID do canister de índice',
         decimals: 'Decimais',
       },

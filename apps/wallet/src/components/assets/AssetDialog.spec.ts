@@ -100,6 +100,28 @@ describe('AssetDialog', () => {
     expect(index.value).toBe('qhbym-qaaaa-aaaaa-aaafq-cai');
   });
 
+  it('locks the ledger canister id when editing an asset that already has one', async () => {
+    const wrapper = mount(AssetDialog, {
+      props: {
+        open: true,
+        assetId: '1',
+      },
+    });
+
+    await flushPromises();
+
+    const form = wrapper.findComponent(AssetForm);
+    const ledger = form.find('input[name="metadata_ledger_canister_id"]')
+      .element as HTMLInputElement;
+    const index = form.find('input[name="metadata_index_canister_id"]').element as HTMLInputElement;
+    const name = form.find('input[name="name"]').element as HTMLInputElement;
+
+    expect(ledger.readOnly).toBe(true);
+    // Only the ledger is immutable; the rest of the asset stays editable.
+    expect(index.readOnly).toBe(false);
+    expect(name.readOnly).toBe(false);
+  });
+
   it('creates new custom asset', async () => {
     const wrapper = mount(AssetDialog, {
       props: {
