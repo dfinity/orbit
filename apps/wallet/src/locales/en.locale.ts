@@ -1027,6 +1027,8 @@ export default {
       error_fetching_assets: 'Error fetching assets, please try again.',
       forms: {
         ledger_canister_id: 'Ledger Canister ID',
+        ledger_canister_id_immutable:
+          'The ledger canister cannot be changed once the asset has one. Create a new asset to use a different ledger.',
         index_canister_id: 'Index Canister ID',
         decimals: 'Decimals',
       },
