@@ -1,3 +1,27 @@
+## 0.8.0 (2026-09-21)
+
+
+### 🚀 Features
+
+- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))
+
+- **wallet:** show wasm_memory_persistence upgrade options on change canister requests ([#660](https://github.com/dfinity/orbit/pull/660))
+
+
+### 🩹 Fixes
+
+- **wallet:** stop pinning the playground build to orbitwallet.io ([#664](https://github.com/dfinity/orbit/pull/664))
+
+- **wallet:** lock the ledger canister id once an asset has one ([#667](https://github.com/dfinity/orbit/pull/667))
+
+- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))
+
+
+### ❤️  Thank You
+
+- Arshavir Ter-Gabrielyan @aterga
+- Mario Ruci @MRmarioruci
+
 ## 0.7.0 (2026-06-08)
 
 

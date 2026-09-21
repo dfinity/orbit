@@ -1,3 +1,24 @@
+## 0.7.1 (2026-09-21)
+
+
+### 🚀 Features
+
+- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))
+
+
+### 🩹 Fixes
+
+- **station:** reject empty-approver quorums and zero-requirement policies ([#644](https://github.com/dfinity/orbit/pull/644))
+
+- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))
+
+- **station:** make asset ledger canister id immutable after creation ([#648](https://github.com/dfinity/orbit/pull/648))
+
+
+### ❤️  Thank You
+
+- Mario Ruci @MRmarioruci
+
 ## 0.7.0 (2026-06-08)
 
 
