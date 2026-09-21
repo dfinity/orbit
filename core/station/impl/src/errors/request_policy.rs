@@ -1,6 +1,6 @@
 use crate::errors::{
-    ExternalCanisterValidationError, RecordValidationError, RequestPolicyRuleValidationError,
-    SystemInfoValidationError, ValidationError,
+    AssetValidationError, ExternalCanisterValidationError, RecordValidationError,
+    RequestPolicyRuleValidationError, SystemInfoValidationError, ValidationError,
 };
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
@@ -100,6 +100,17 @@ impl From<ValidationError> for RequestPolicyError {
             ValidationError::ExternalCanisterValidationError(err) => err.into(),
             ValidationError::SystemInfoValidationError(err) => err.into(),
             ValidationError::RequestPolicyRuleValidationError(err) => err.into(),
+            ValidationError::AssetValidationError(err) => err.into(),
+        }
+    }
+}
+
+impl From<AssetValidationError> for RequestPolicyError {
+    fn from(err: AssetValidationError) -> RequestPolicyError {
+        match err {
+            AssetValidationError::ImmutableField { field } => RequestPolicyError::ValidationError {
+                info: format!("The {field} of an existing asset cannot be changed"),
+            },
         }
     }
 }

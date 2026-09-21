@@ -35,6 +35,12 @@ pub enum AssetError {
     /// The asset is in use.
     #[error(r#"The asset is used by {resource} `{id}`"#)]
     AssetInUse { id: String, resource: String },
+    /// The ledger canister id of an existing asset cannot be changed.
+    #[error(r#"The ledger canister id of an existing asset cannot be changed."#)]
+    ImmutableLedgerCanisterId,
+    /// The ledger canister id is not a valid principal.
+    #[error(r#"The ledger canister id `{ledger_canister_id}` is not a valid principal."#)]
+    InvalidLedgerCanisterId { ledger_canister_id: String },
     /// The asset is not unique.
     #[error(r#"The asset already exists."#)]
     AlreadyExists {
@@ -102,6 +108,14 @@ impl DetailableError for AssetError {
             }
             AssetError::IdAlreadyExists { id } => {
                 details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            AssetError::ImmutableLedgerCanisterId => Some(details),
+            AssetError::InvalidLedgerCanisterId { ledger_canister_id } => {
+                details.insert(
+                    "ledger_canister_id".to_string(),
+                    ledger_canister_id.to_string(),
+                );
                 Some(details)
             }
         }

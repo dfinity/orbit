@@ -1,3 +1,4 @@
+use candid::Principal;
 use orbit_essentials::{
     model::{ModelKey, ModelValidator, ModelValidatorResult},
     storable,
@@ -5,7 +6,11 @@ use orbit_essentials::{
 };
 
 use super::{Blockchain, TokenStandard};
-use crate::{errors::AssetError, models::Metadata, repositories::ASSET_REPOSITORY};
+use crate::{
+    errors::AssetError,
+    models::{ChangeMetadata, Metadata},
+    repositories::ASSET_REPOSITORY,
+};
 use std::{
     collections::BTreeSet,
     hash::{Hash, Hasher},
@@ -36,6 +41,25 @@ impl Asset {
     pub const DECIMALS_RANGE: (u32, u32) = (0, 18);
     pub const SYMBOL_RANGE: (u16, u16) = (1, 32);
     pub const NAME_RANGE: (u16, u16) = (1, 64);
+
+    pub fn ledger_canister_id(&self) -> Option<String> {
+        self.metadata
+            .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
+    }
+
+    /// Whether applying `change_metadata` would repoint or drop a ledger canister id that is
+    /// already set. Setting one for the first time is not a change.
+    pub fn changes_ledger_canister_id(&self, change_metadata: &ChangeMetadata) -> bool {
+        let before = self.ledger_canister_id();
+        if before.is_none() {
+            return false;
+        }
+
+        let mut metadata = self.metadata.clone();
+        metadata.change(change_metadata.clone());
+
+        before != metadata.get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
+    }
 }
 
 impl ModelKey<AssetId> for Asset {
@@ -130,12 +154,27 @@ fn validate_uniqueness(
     Ok(())
 }
 
+/// The ledger canister id is only parsed when a transfer or balance read resolves it, and it
+/// cannot be corrected in place once set, so an unparseable value is rejected at write time.
+fn validate_ledger_canister_id(asset: &Asset) -> ModelValidatorResult<AssetError> {
+    let Some(ledger_canister_id) = asset.ledger_canister_id() else {
+        return Ok(());
+    };
+
+    Principal::from_text(&ledger_canister_id).map_err(|_| AssetError::InvalidLedgerCanisterId {
+        ledger_canister_id: ledger_canister_id.clone(),
+    })?;
+
+    Ok(())
+}
+
 impl ModelValidator<AssetError> for Asset {
     fn validate(&self) -> ModelValidatorResult<AssetError> {
         validate_symbol(&self.symbol)?;
         validate_name(&self.name)?;
         validate_decimals(self.decimals)?;
         validate_uniqueness(&self.id, &self.symbol, &self.blockchain)?;
+        validate_ledger_canister_id(self)?;
 
         self.metadata.validate()?;
 
@@ -190,6 +229,7 @@ pub mod asset_test_utils {
 mod test {
 
     use orbit_essentials::repository::Repository;
+    use std::collections::BTreeMap;
 
     use super::*;
 
@@ -243,5 +283,44 @@ mod test {
             asset.validate().expect_err("Asset should not be unique"),
             AssetError::AlreadyExists { .. }
         ));
+    }
+
+    fn with_ledger_canister_id(value: &str) -> Asset {
+        let mut asset = asset_test_utils::mock_asset();
+        asset
+            .metadata
+            .change(ChangeMetadata::OverrideSpecifiedBy(BTreeMap::from([(
+                TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                value.to_string(),
+            )])));
+
+        asset
+    }
+
+    #[test]
+    fn test_validate_ledger_canister_id_accepts_a_principal() {
+        let asset = with_ledger_canister_id("ryjl3-tyaaa-aaaaa-aaaba-cai");
+
+        assert!(asset.validate().is_ok());
+    }
+
+    #[test]
+    fn test_validate_ledger_canister_id_rejects_a_non_principal() {
+        let asset = with_ledger_canister_id("not-a-principal");
+
+        assert!(matches!(
+            asset
+                .validate()
+                .expect_err("An unparseable ledger canister id must be rejected"),
+            AssetError::InvalidLedgerCanisterId { .. }
+        ));
+    }
+
+    #[test]
+    fn test_validate_allows_an_asset_without_a_ledger_canister_id() {
+        let asset = asset_test_utils::mock_asset_b();
+        assert!(asset.ledger_canister_id().is_none());
+
+        assert!(asset.validate().is_ok());
     }
 }

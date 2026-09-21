@@ -1249,6 +1249,10 @@ impl ModelValidator<ValidationError> for RequestOperation {
             RequestOperation::AddAsset(_) => (),
             RequestOperation::EditAsset(op) => {
                 EnsureAsset::id_exists(&op.input.asset_id)?;
+                EnsureAsset::ledger_canister_id_preserved(
+                    &op.input.asset_id,
+                    &op.input.change_metadata,
+                )?;
             }
             RequestOperation::RemoveAsset(op) => {
                 EnsureAsset::id_exists(&op.input.asset_id)?;
@@ -1565,6 +1569,41 @@ mod test {
         })
         .validate()
         .expect_err("Invalid resource id should fail");
+    }
+
+    #[tokio::test]
+    async fn fail_edit_asset_request_repointing_the_ledger_canister_id() {
+        use orbit_essentials::model::ModelKey;
+
+        let asset = crate::models::asset_test_utils::mock_asset();
+        crate::repositories::ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
+        // Without this the repoint would only be refused by the service, after the request had
+        // already been created and approved.
+        let err = RequestOperation::EditAsset(crate::models::EditAssetOperation {
+            input: crate::models::EditAssetOperationInput {
+                asset_id: asset.id,
+                name: None,
+                symbol: None,
+                change_metadata: Some(crate::models::ChangeMetadata::OverrideSpecifiedBy(
+                    std::collections::BTreeMap::from([(
+                        crate::models::TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                        candid::Principal::from_slice(&[9; 29]).to_text(),
+                    )]),
+                )),
+                blockchain: None,
+                standards: None,
+            },
+        })
+        .validate()
+        .expect_err("Repointing the ledger canister id must be refused at request validation");
+
+        assert!(matches!(
+            err,
+            ValidationError::AssetValidationError(
+                crate::errors::AssetValidationError::ImmutableField { .. }
+            )
+        ));
     }
 
     #[tokio::test]
