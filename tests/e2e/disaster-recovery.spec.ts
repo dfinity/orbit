@@ -70,19 +70,5 @@ test('can recover uninstalled station', async ({ page }) => {
 
   await accountPage.pickByAsset('ICP');
 
-  // Bounded so that a balance that never returns fails here reporting what it actually read,
-  // instead of spinning until the shared test budget runs out somewhere unrelated.
-  await expect
-    .poll(
-      async () => {
-        await page.reload();
-        return (await accountAssetPage.getBalance()) ?? '';
-      },
-      {
-        message: 'the ICP balance should be restored after disaster recovery',
-        timeout: 180_000,
-        intervals: [5_000],
-      },
-    )
-    .toContain('5.0');
+  await accountAssetPage.expectBalance('5.0');
 });
