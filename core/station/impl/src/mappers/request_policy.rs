@@ -485,12 +485,13 @@ impl RequestSpecifier {
                     ExternalCanisterResourceAction::Call(target.clone()),
                 )]
             }
-            RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {
-                ResourceSpecifier::Any => {
-                    vec![Resource::Permission(PermissionResourceAction::Update)]
-                }
-                ResourceSpecifier::Resource(resource) => vec![resource.clone()],
-            },
+            // Both scopes index under what the EditPermission *operation* produces. Filing the
+            // granular form under its target resource put it in the same bucket as that
+            // resource's own operations, where OR-combined evaluation turned a
+            // permission-administration rule into an extra approval path for those operations.
+            RequestSpecifier::EditPermission(_) => {
+                vec![Resource::Permission(PermissionResourceAction::Update)]
+            }
             RequestSpecifier::AddRequestPolicy => {
                 vec![Resource::RequestPolicy(ResourceAction::Create)]
             }
@@ -569,5 +570,78 @@ impl RequestSpecifier {
                     .collect::<_>(),
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{
+        asset_test_utils::mock_asset,
+        resource::{AccountResourceAction, ResourceId},
+        EditPermissionOperation, EditPermissionOperationInput, Metadata, RequestOperation,
+        TokenStandard, TransferOperation, TransferOperationInput,
+    };
+
+    fn treasury_transfer_resource(account_id: [u8; 16]) -> Resource {
+        Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(account_id)))
+    }
+
+    fn transfer_operation(account_id: [u8; 16]) -> RequestOperation {
+        RequestOperation::Transfer(TransferOperation {
+            fee: None,
+            transfer_id: None,
+            asset: mock_asset(),
+            input: TransferOperationInput {
+                from_account_id: account_id,
+                from_asset_id: [0; 16],
+                with_standard: TokenStandard::InternetComputerNative,
+                to: "0x1234567890abcdef".to_string(),
+                amount: 100u64.into(),
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                fee: None,
+            },
+        })
+    }
+
+    #[test]
+    fn edit_permission_specifier_indexes_under_the_operation_resource() {
+        let expected = vec![Resource::Permission(PermissionResourceAction::Update)];
+
+        let scoped = RequestSpecifier::EditPermission(ResourceSpecifier::Resource(
+            treasury_transfer_resource([1; 16]),
+        ));
+        let any = RequestSpecifier::EditPermission(ResourceSpecifier::Any);
+
+        assert_eq!(scoped.to_resources(), expected);
+        assert_eq!(any.to_resources(), expected);
+    }
+
+    /// Round-trip invariant: a specifier must only index under keys its own operation is
+    /// evaluated against, and must never index under a key produced by a different operation.
+    #[test]
+    fn edit_permission_specifier_never_matches_an_unrelated_operation() {
+        let account_id = [7; 16];
+        let specifier = RequestSpecifier::EditPermission(ResourceSpecifier::Resource(
+            treasury_transfer_resource(account_id),
+        ));
+
+        let own_operation = RequestOperation::EditPermission(EditPermissionOperation {
+            input: EditPermissionOperationInput {
+                resource: treasury_transfer_resource(account_id),
+                auth_scope: None,
+                users: None,
+                user_groups: None,
+            },
+        });
+
+        let indexed = specifier.to_resources();
+        let own_keys = own_operation.to_resources();
+        let unrelated_keys = transfer_operation(account_id).to_resources();
+
+        assert!(!indexed.is_empty());
+        assert!(indexed.iter().all(|key| own_keys.contains(key)));
+        assert!(indexed.iter().all(|key| !unrelated_keys.contains(key)));
     }
 }
