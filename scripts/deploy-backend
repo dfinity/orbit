@@ -173,10 +173,10 @@ if [[ -n "$DRY" ]]; then echo "dry run: artifacts verified, nothing shipped."; e
 
 # 2. Load the key into a throwaway dfx home.
 #
-#    HOME and DFX_CONFIG_ROOT both have to point at it: dfx honours
-#    DFX_CONFIG_ROOT, but orbit-cli resolves the pem from homedir() directly. Set
-#    only one and `registry publish` cannot find the identity dfx just imported.
-#    Doing this after the downloads keeps the real HOME in place for gh.
+#    DFX_CONFIG_ROOT only, never HOME. dfx is usually a dfxvm shim that resolves
+#    the version pinned in dfx.json under $HOME, so repointing HOME hides the
+#    installed toolchain and dfx exits with "0.30.2 is not installed". Both dfx
+#    and orbit-cli read the identity store from DFX_CONFIG_ROOT.
 if [[ -n "$OP_REF" ]]; then
   command -v op >/dev/null || die "1Password CLI (op) not found"
   echo "==> reading key from 1Password"
@@ -186,7 +186,7 @@ if [[ -n "$OP_REF" ]]; then
 fi
 
 DFX_HOME="$(mktemp -d)"; chmod 700 "$DFX_HOME"
-export HOME="$DFX_HOME" DFX_CONFIG_ROOT="$DFX_HOME"
+export DFX_CONFIG_ROOT="$DFX_HOME"
 dfx identity import "$IDENTITY" "$PEM" --storage-mode plaintext --force
 
 # Every network in dfx.json other than local points at mainnet, and dfx refuses
