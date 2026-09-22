@@ -2,7 +2,10 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '~/stores/app.store';
 
-const sessionInitialize = vi.fn<[], Promise<void>>();
+// `vi.mock` factories are hoisted above the imports, so the spy they use is hoisted as well.
+const { sessionInitialize } = vi.hoisted(() => ({
+  sessionInitialize: vi.fn<[], Promise<void>>(),
+}));
 
 vi.mock('~/stores/session.store', () => ({
   useSessionStore: () => ({
