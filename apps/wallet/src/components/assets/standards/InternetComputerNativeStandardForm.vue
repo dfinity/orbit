@@ -9,10 +9,16 @@
             : 'metadata_ledger_canister_id'
         "
         :label="$t('pages.assets.forms.ledger_canister_id')"
-        :variant="props.readonly ? 'plain' : 'filled'"
+        :variant="props.readonly || isLedgerIdLocked ? 'plain' : 'filled'"
         density="comfortable"
-        :readonly="props.readonly || diffMode === 'before'"
+        :readonly="props.readonly || isLedgerIdLocked || diffMode === 'before'"
         :prepend-icon="mdiDatabase"
+        :hint="
+          isLedgerIdLocked && !props.readonly
+            ? $t('pages.assets.forms.ledger_canister_id_immutable')
+            : undefined
+        "
+        :persistent-hint="isLedgerIdLocked && !props.readonly"
         :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
         @update:model-value="val => diffMode === 'after' && (ledgerId = val)"
       />
@@ -44,11 +50,15 @@ import DiffView from '~/components/requests/DiffView.vue';
 import { AssetMetadata } from '~/generated/station/station.did';
 import { requiredRule, validCanisterId } from '~/utils/form.utils';
 
-const props = defineProps<{
-  modelValue: AssetMetadata[];
-  currentMetadata?: AssetMetadata[];
-  readonly: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: AssetMetadata[];
+    currentMetadata?: AssetMetadata[];
+    readonly: boolean;
+    lockLedgerCanisterId?: boolean;
+  }>(),
+  { currentMetadata: undefined, lockLedgerCanisterId: false },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [AssetMetadata[]];
@@ -81,5 +91,13 @@ const currentLedgerId = computed<string | undefined>(
 );
 const currentIndexId = computed<string | undefined>(
   () => props.currentMetadata?.find(m => m.key === 'index_canister_id')?.value,
+);
+
+// The station rejects an edit that repoints or drops a ledger canister id that is already set, so
+// the field is only writable while the asset does not have one yet. The flag has to come from a
+// snapshot taken when the asset was loaded: deriving it from the editable model would lock the
+// field on the first character typed into an asset that has no ledger yet.
+const isLedgerIdLocked = computed(
+  () => props.lockLedgerCanisterId || currentLedgerId.value !== undefined,
 );
 </script>

@@ -189,6 +189,14 @@ DFX_HOME="$(mktemp -d)"; chmod 700 "$DFX_HOME"
 export HOME="$DFX_HOME" DFX_CONFIG_ROOT="$DFX_HOME"
 dfx identity import "$IDENTITY" "$PEM" --storage-mode plaintext --force
 
+# Every network in dfx.json other than local points at mainnet, and dfx refuses
+# to use a plaintext identity against mainnet unless this is set. The identity
+# has to be plaintext because nothing here can answer a passphrase prompt, so
+# the warning is expected rather than something to fix. It applies to the
+# control-panel install and to the `dfx canister call` that orbit-cli runs
+# underneath `registry publish`.
+export DFX_WARNING=-mainnet_plaintext_identity
+
 # 3. Ship it.
 case "$TARGET" in
   station|upgrader)

@@ -71,5 +71,5 @@ test('can recover uninstalled station', async ({ page }) => {
   await accountsPage.openByName('Main');
 
   await accountPage.pickByAsset('ICP');
-  await accountAssetPage.waitForBalance('5.0');
+  await accountAssetPage.expectBalance('5.0');
 });

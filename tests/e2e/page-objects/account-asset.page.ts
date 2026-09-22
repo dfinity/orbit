@@ -18,10 +18,12 @@ export class AccountAssetPage {
   /**
    * Waits until the balance shown in the page header contains the expected value.
    *
-   * The page refreshes the balance on its own, but between attempts the asset page is opened again
-   * so that a page left in an unexpected state (e.g. a failed load) cannot block the wait.
+   * The page refreshes its own balance every five seconds and shows a placeholder until the first
+   * one arrives, so this waits on the live header. Between attempts the asset page is opened again
+   * (the caller has already waited for the asset route, so this cannot race the navigation), which
+   * unblocks a page left in an unexpected state such as a failed load.
    */
-  async waitForBalance(expected: string | RegExp, timeout = 180_000) {
+  async expectBalance(balance: string | RegExp, timeout = 180_000) {
     const assetPageUrl = this.page.url();
     let attempt = 0;
 
@@ -30,7 +32,7 @@ export class AccountAssetPage {
         await this.page.goto(assetPageUrl);
       }
 
-      await expect(this.balance()).toContainText(expected, { timeout: 30_000 });
+      await expect(this.balance()).toContainText(balance, { timeout: 30_000 });
     }).toPass({ timeout });
   }
 }

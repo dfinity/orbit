@@ -52,6 +52,7 @@
       v-model="model.metadata!"
       :readonly="isViewMode"
       :current-metadata="currentAsset?.metadata"
+      :lock-ledger-canister-id="props.lockLedgerCanisterId.value"
     ></InternetComputerNativeStandardForm>
     <template v-if="model.blockchain && model.standards && model.standards.length > 0">
       <DiffView :before-value="currentAsset?.name" :after-value="model.name">
@@ -150,6 +151,7 @@ import DiffView from '~/components/requests/DiffView.vue';
 export type AssetFormProps = {
   modelValue: Partial<Asset>;
   currentAsset?: Asset;
+  lockLedgerCanisterId?: boolean;
   triggerSubmit?: boolean;
   valid?: boolean;
   mode?: 'view' | 'edit';
@@ -168,6 +170,7 @@ const input = withDefaults(defineProps<AssetFormProps>(), {
   mode: 'edit',
   triggerSubmit: false,
   currentAsset: undefined,
+  lockLedgerCanisterId: false,
 });
 const props = toRefs(input);
 

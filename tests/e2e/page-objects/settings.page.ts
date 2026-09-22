@@ -26,9 +26,11 @@ export class SettingsPage {
     await this.page.getByTestId('submit-action-btn').click();
 
     if (checkForNewModuleHash) {
-      // wait until the upgrader has installed the new module on the station
+      // Bounded so a wasm that never installs fails here rather than consuming the whole test
+      // budget and surfacing as a timeout in a later, unrelated step.
       await expect
         .poll(() => getCanisterInfo(stationId).moduleHash, {
+          message: 'the station module hash should change after installing the custom wasm',
           timeout: 120_000,
           intervals: [1_000],
         })
