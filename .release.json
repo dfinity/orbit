@@ -84,9 +84,9 @@
       "newVersion": null
     },
     "station": {
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "dependentProjects": [],
-      "newVersion": "0.7.0"
+      "newVersion": "0.7.1"
     },
     "upgrader-api": {
       "currentVersion": "0.2.0",
@@ -107,7 +107,7 @@
       "newVersion": null
     },
     "station-api": {
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "dependentProjects": [
         {
           "source": "control-panel",
@@ -140,12 +140,12 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": "0.6.0"
+      "newVersion": null
     },
     "dfx-orbit": {
-      "currentVersion": "0.10.0",
+      "currentVersion": "0.11.0",
       "dependentProjects": [],
-      "newVersion": "0.11.0"
+      "newVersion": null
     },
     "marketing-dapp": {
       "currentVersion": "0.3.0",
@@ -153,48 +153,40 @@
       "dependentProjects": []
     },
     "wallet-dapp": {
-      "currentVersion": "0.6.1",
-      "newVersion": "0.7.0",
+      "currentVersion": "0.7.0",
+      "newVersion": "0.8.0",
       "dependentProjects": []
     },
     "docs-portal": {
       "currentVersion": "0.2.0",
-      "newVersion": null,
+      "newVersion": "0.3.0",
       "dependentProjects": []
     }
   },
   "changes": {
     "station": {
       "releaseVersion": {
-        "rawVersion": "0.7.0",
-        "gitTag": "@orbit/station-v0.7.0",
+        "rawVersion": "0.7.1",
+        "gitTag": "@orbit/station-v0.7.1",
         "isPrerelease": false
       },
-      "contents": "## 0.7.0 (2026-06-08)\n\n\n### 🚀 Features\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.6.0\n\n\n### ❤️  Thank You\n\n- mraszyk @mraszyk\n- tomer-dfinity"
-    },
-    "station-api": {
-      "releaseVersion": {
-        "rawVersion": "0.6.0",
-        "gitTag": "@orbit/station-api-v0.6.0",
-        "isPrerelease": false
-      },
-      "contents": "## 0.6.0 (2026-06-08)\n\n\n### 🚀 Features\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### ❤️  Thank You\n\n- mraszyk @mraszyk\n- tomer-dfinity"
+      "contents": "## 0.7.1 (2026-09-21)\n\n\n### 🚀 Features\n\n- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))\n\n\n### 🩹 Fixes\n\n- **station:** reject empty-approver quorums and zero-requirement policies ([#644](https://github.com/dfinity/orbit/pull/644))\n\n- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))\n\n- **station:** make asset ledger canister id immutable after creation ([#648](https://github.com/dfinity/orbit/pull/648))\n\n\n### ❤️  Thank You\n\n- Mario Ruci @MRmarioruci"
     },
     "wallet-dapp": {
       "releaseVersion": {
-        "rawVersion": "0.7.0",
-        "gitTag": "@orbit/wallet-dapp-v0.7.0",
+        "rawVersion": "0.8.0",
+        "gitTag": "@orbit/wallet-dapp-v0.8.0",
         "isPrerelease": false
       },
-      "contents": "## 0.7.0 (2026-06-08)\n\n\n### 🚀 Features\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### ❤️  Thank You\n\n- mraszyk @mraszyk\n- tomer-dfinity"
+      "contents": "## 0.8.0 (2026-09-21)\n\n\n### 🚀 Features\n\n- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))\n\n- **wallet:** show wasm_memory_persistence upgrade options on change canister requests ([#660](https://github.com/dfinity/orbit/pull/660))\n\n\n### 🩹 Fixes\n\n- **wallet:** stop pinning the playground build to orbitwallet.io ([#664](https://github.com/dfinity/orbit/pull/664))\n\n- **wallet:** lock the ledger canister id once an asset has one ([#667](https://github.com/dfinity/orbit/pull/667))\n\n- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))\n\n\n### ❤️  Thank You\n\n- Arshavir Ter-Gabrielyan @aterga\n- Mario Ruci @MRmarioruci"
     },
-    "dfx-orbit": {
+    "docs-portal": {
       "releaseVersion": {
-        "rawVersion": "0.11.0",
-        "gitTag": "@orbit/dfx-orbit-v0.11.0",
+        "rawVersion": "0.3.0",
+        "gitTag": "@orbit/docs-portal-v0.3.0",
         "isPrerelease": false
       },
-      "contents": "## 0.11.0 (2026-06-08)\n\n\n### 🚀 Features\n\n- **marketing:** marketing site home page ([#500](https://github.com/dfinity/orbit/pull/500))\n\n- **docs:** initial docs portal ([#493](https://github.com/dfinity/orbit/pull/493))\n\n- **station:** configurable station initialization ([#482](https://github.com/dfinity/orbit/pull/482))\n\n- **upgrader:** new endpoint to list station snapshots ([#545](https://github.com/dfinity/orbit/pull/545))\n\n- **station:** update Request::last_modification_timestamp on adding approval ([#576](https://github.com/dfinity/orbit/pull/576))\n\n- **wallet:** DR UI ([#557](https://github.com/dfinity/orbit/pull/557))\n\n- **station:** request deduplication ([#589](https://github.com/dfinity/orbit/pull/589))\n\n- **station:** Add tags to the request ([#590](https://github.com/dfinity/orbit/pull/590))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n\n### 🩹 Fixes\n\n- **CI:** use rustup 1.27.1 for docker build ([#532](https://github.com/dfinity/orbit/pull/532))\n\n- **station:** bump ic-cdk to fix canister_status parsing ([#538](https://github.com/dfinity/orbit/pull/538))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.6.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos\n- tomer-dfinity"
+      "contents": "## 0.3.0 (2026-09-21)\n\n\n### 🚀 Features\n\n- **station:** configurable station initialization ([#482](https://github.com/dfinity/orbit/pull/482))\n\n- **upgrader:** new endpoint to list station snapshots ([#545](https://github.com/dfinity/orbit/pull/545))\n\n- **station:** update Request::last_modification_timestamp on adding approval ([#576](https://github.com/dfinity/orbit/pull/576))\n\n- **wallet:** DR UI ([#557](https://github.com/dfinity/orbit/pull/557))\n\n- **station,upgrader,control-panel:** enable overflow-checks in production canister builds ([#571](https://github.com/dfinity/orbit/pull/571))\n\n- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))\n\n- **wallet:** show wasm_memory_persistence upgrade options on change canister requests ([#660](https://github.com/dfinity/orbit/pull/660))\n\n\n### 🩹 Fixes\n\n- **CI:** use rustup 1.27.1 for docker build ([#532](https://github.com/dfinity/orbit/pull/532))\n\n- **station:** bump ic-cdk to fix canister_status parsing ([#538](https://github.com/dfinity/orbit/pull/538))\n\n- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))\n\n\n### ❤️  Thank You\n\n- Arshavir Ter-Gabrielyan @aterga\n- Jan Hrubes @jedna\n- Kepler Vital\n- Mario Ruci @MRmarioruci\n- mraszyk @mraszyk\n- olaszakos"
     }
   }
 }
