@@ -32,9 +32,16 @@ export class DisasterRecoveryPage {
     await expect(this.page.getByText(/Disaster Recovery State/i)).toBeVisible({ timeout });
   }
 
-  async selectRegistryWasm() {
+  /**
+   * Selects the station module to recover with from the registry entries, by version.
+   *
+   * The registry can hold several `@orbit/station` versions (e.g. after publishing more than one
+   * build against the same replica), so the option is picked by its version instead of assuming
+   * that there is exactly one.
+   */
+  async selectRegistryWasm(version: string) {
     await this.page.getByTestId('select-registry-wasm').getByRole('combobox').click();
-    await this.page.getByRole('option').click();
+    await this.page.getByRole('option', { name: version, exact: true }).click();
   }
 
   async submitRecovery() {

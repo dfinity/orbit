@@ -28,3 +28,12 @@ export function getStationHealthStatus(stationId: string): string {
 
   return result.stdout?.toString() ?? '';
 }
+
+/**
+ * Returns the `app:version` metadata of a canister, e.g. `0.7.1` for a station.
+ */
+export function getCanisterAppVersion(canisterId: string): string {
+  const result = spawnSync('dfx', ['canister', 'metadata', canisterId, 'app:version']);
+
+  return result.stdout.toString().trim();
+}

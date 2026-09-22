@@ -8,7 +8,7 @@ import { DisasterRecoveryPage } from './page-objects/disaster-recovery.page';
 import { InitializationPage } from './page-objects/initialization.page';
 import { LoginPage } from './page-objects/login.page';
 import { SettingsPage } from './page-objects/settings.page';
-import { getStationHealthStatus } from './utils/dfx.utils';
+import { getCanisterAppVersion, getStationHealthStatus } from './utils/dfx.utils';
 import { copyArtifact, publishArtifact, topUpAccount } from './utils/orbit.utils';
 
 test('can recover uninstalled station', async ({ page }) => {
@@ -41,6 +41,10 @@ test('can recover uninstalled station', async ({ page }) => {
 
   await topUpAccount(icpNativeAddress!, 5);
 
+  // the station is recovered with the module version it was running before it was replaced
+  const stationVersion = getCanisterAppVersion(stationId);
+  expect(stationVersion).toMatch(/^\d+\.\d+\.\d+/);
+
   // replace the station module with an unrelated canister, the wallet can no longer connect to it
   const settingsPage = new SettingsPage(page);
   await settingsPage.go();
@@ -56,7 +60,7 @@ test('can recover uninstalled station', async ({ page }) => {
 
   const disasterRecoveryPage = new DisasterRecoveryPage(page);
   await disasterRecoveryPage.openFromErrorScreen();
-  await disasterRecoveryPage.selectRegistryWasm();
+  await disasterRecoveryPage.selectRegistryWasm(stationVersion);
   await disasterRecoveryPage.submitRecovery();
   await disasterRecoveryPage.waitRecoverySuccess();
 
