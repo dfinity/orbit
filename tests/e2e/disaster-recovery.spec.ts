@@ -8,6 +8,7 @@ import { DisasterRecoveryPage } from './page-objects/disaster-recovery.page';
 import { InitializationPage } from './page-objects/initialization.page';
 import { LoginPage } from './page-objects/login.page';
 import { SettingsPage } from './page-objects/settings.page';
+import { getStationHealthStatus } from './utils/dfx.utils';
 import { copyArtifact, publishArtifact, topUpAccount } from './utils/orbit.utils';
 
 test('can recover uninstalled station', async ({ page }) => {
@@ -58,6 +59,12 @@ test('can recover uninstalled station', async ({ page }) => {
   await disasterRecoveryPage.selectRegistryWasm();
   await disasterRecoveryPage.submitRecovery();
   await disasterRecoveryPage.waitRecoverySuccess();
+
+  // the recovered station finishes its initialization (e.g. adding the accounts) in a timer after
+  // the installation and rejects calls until then, wait for it to be healthy before connecting
+  await expect
+    .poll(() => getStationHealthStatus(stationId), { timeout: 120_000, intervals: [1_000] })
+    .toContain('Healthy');
 
   // the recovered station has the same accounts and fetches their balances again from the ledger
   await accountsPage.goto();
