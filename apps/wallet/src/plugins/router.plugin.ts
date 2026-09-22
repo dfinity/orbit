@@ -1,4 +1,12 @@
-import { NavigationGuard, RouterView, createRouter, createWebHistory } from 'vue-router';
+import {
+  NavigationFailureType,
+  NavigationGuard,
+  NavigationHookAfter,
+  RouterView,
+  createRouter,
+  createWebHistory,
+  isNavigationFailure,
+} from 'vue-router';
 import { supportedLocales } from '~/configs/i18n.config';
 import { appInitConfig } from '~/configs/init.config';
 import {
@@ -587,11 +595,20 @@ router.beforeEach(initStateGuard);
 router.beforeEach(i18nRouteGuard(services(), () => useAppStore()));
 router.beforeEach(routeAccessGuard);
 
-// needs to be the last guard to end the loading state of the app routing
-router.afterEach((_to, _from) => {
+export const routeLoadingStateHook: NavigationHookAfter = (_to, _from, failure) => {
+  // A cancelled navigation was superseded by a newer one that is still pending, that navigation
+  // ends the loading state once it completes. Ending it here would take the route status code from
+  // the cancelled navigation, whose guards may not have finished running yet.
+  if (isNavigationFailure(failure, NavigationFailureType.cancelled)) {
+    return;
+  }
+
   const app = useAppStore();
   app.loading = false;
-});
+};
+
+// needs to be the last guard to end the loading state of the app routing
+router.afterEach(routeLoadingStateHook);
 
 router.onError(error => {
   logger.error(`Router error`, { error });
