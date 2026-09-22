@@ -7,7 +7,14 @@ import { promisify } from 'util';
 
 export const ROOT_PATH = join(__dirname, '../..');
 export const DFX_PATH = join(ROOT_PATH, 'dfx.json');
-export const DFX_DEFAULT_IDENTITY_STORE_PATH = join(homedir(), '.config/dfx/identity');
+// DFX_CONFIG_ROOT stands in for the home directory, the same way dfx itself
+// treats it. Without this a caller that isolates the identity store has to
+// repoint HOME as well, which hides the dfxvm version store and makes dfx
+// report the pinned version as not installed.
+export const DFX_DEFAULT_IDENTITY_STORE_PATH = join(
+  process.env.DFX_CONFIG_ROOT || homedir(),
+  '.config/dfx/identity',
+);
 
 // Parse a string of arguments separated by a separator and return an array of strings.
 export const parseArgsListSplitByComma = (arg?: string): string[] => {
