@@ -34,10 +34,10 @@ runs:
       shell: bash
       # Needed for orbit-cli, which performs the registry publish.
       run: pnpm install --frozen-lockfile
-    - name: 'Install dfx'
-      uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
-      with:
-        dfx-version: '0.30.2'
+    - name: 'Install icp-cli'
+      shell: bash
+      # dfx is deprecated in favour of icp-cli.
+      run: npm install --global @icp-sdk/icp-cli@1.5.0
     - name: 'Install icx-asset'
       shell: bash
       run: cargo install --locked icx-asset --version 0.29.0
