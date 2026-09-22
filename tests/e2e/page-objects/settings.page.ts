@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { getWalletPath } from '../config';
 import { getCanisterInfo } from '../utils/dfx.utils';
 
@@ -25,15 +25,14 @@ export class SettingsPage {
     await this.page.getByTestId('continue-action-btn').click();
     await this.page.getByTestId('submit-action-btn').click();
 
-    while (checkForNewModuleHash) {
-      const newModuleHash = getCanisterInfo(stationId).moduleHash;
-      if (newModuleHash !== originalModuleHash) {
-        break;
-      }
-      await this.page.waitForTimeout(1000);
+    if (checkForNewModuleHash) {
+      // wait until the upgrader has installed the new module on the station
+      await expect
+        .poll(() => getCanisterInfo(stationId).moduleHash, {
+          timeout: 120_000,
+          intervals: [1_000],
+        })
+        .not.toBe(originalModuleHash);
     }
-
-    // wait till the canister starts again
-    await this.page.waitForTimeout(3000);
   }
 }

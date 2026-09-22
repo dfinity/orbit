@@ -1,9 +1,12 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
 export class AccountPage {
   constructor(private page: Page) {}
 
   async pickByAsset(asset: string) {
     await this.page.getByTestId('account-assets-table').getByText(asset).click();
+
+    // the account asset page is loaded lazily, wait for the navigation to complete
+    await expect(this.page).toHaveURL(/\/accounts\/[^/?]+\/[^/?]+/);
   }
 }
