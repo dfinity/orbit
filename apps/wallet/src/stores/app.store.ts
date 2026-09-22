@@ -23,6 +23,15 @@ export interface AppStoreState {
   disableBackgroundPolling: boolean;
 }
 
+// Tracks an in-flight initialization so that concurrent callers share the same promise.
+//
+// The route guards call `initialize` on every navigation, and the initialization itself can
+// trigger a navigation (e.g. the station connection rewrites the url to include the station id),
+// which would otherwise start a second, concurrent initialization of the session. That second
+// initialization finishes later and its pending navigation would then override whatever route
+// the user navigated to in the meantime.
+let initializing: Promise<void> | null = null;
+
 export const useAppStore = defineStore('app', {
   state: (): AppStoreState => {
     return {
@@ -61,8 +70,14 @@ export const useAppStore = defineStore('app', {
         return;
       }
 
-      const session = useSessionStore();
-      await session.initialize();
+      if (!initializing) {
+        const session = useSessionStore();
+        initializing = session.initialize().finally(() => {
+          initializing = null;
+        });
+      }
+
+      await initializing;
 
       this.initialized = true;
     },

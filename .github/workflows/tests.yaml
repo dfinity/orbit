@@ -175,6 +175,16 @@ jobs:
       - name: Run e2e tests
         run: |
           pnpm run test:e2e
+      - name: 'Upload e2e test results'
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            playwright-report
+            test-results
+          retention-days: 10
+          if-no-files-found: ignore
   deployment-test:
     name: 'deployment-test:required'
     runs-on: ubuntu-latest

@@ -32,12 +32,9 @@ export class SettingsPage {
         .poll(() => getCanisterInfo(stationId).moduleHash, {
           message: 'the station module hash should change after installing the custom wasm',
           timeout: 120_000,
-          intervals: [2_000],
+          intervals: [1_000],
         })
         .not.toBe(originalModuleHash);
     }
-
-    // wait till the canister starts again
-    await this.page.waitForTimeout(3000);
   }
 }
