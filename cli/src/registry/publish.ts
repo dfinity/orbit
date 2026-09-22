@@ -7,14 +7,13 @@ import { join } from 'path';
 import { AddRegistryEntryResult, EditRegistryEntryResult } from '../generated/control_panel';
 import {
   assertCommandExists,
-  assertReplicaIsHealthy,
   cargoProjectVersion,
   execAsync,
-  getIdentityPemFilePath,
   getReplicaUrl,
   readFileIntoUint8Array,
   toBlobString,
 } from '../utils';
+import { callControlPanel, exportIdentityPem } from './icp';
 import {
   Application,
   applicationToRegistryEntryMap,
@@ -128,24 +127,13 @@ command
     parseRegistryApplication,
   );
 
-// Saves the argument in a temporary file and returns the path to the file.
-const saveArgumentInTempFile = async (argument: string): Promise<string> => {
-  const tempFilePath = join(tmpdir(), 'orbit-cli-argument-' + Math.random().toString(36).slice(2));
-
-  await writeFile(tempFilePath, argument, {
-    encoding: 'utf-8',
-  });
-
-  return tempFilePath;
-};
-
 command.action(async options => {
-  assertReplicaIsHealthy(options.network);
-  assertCommandExists('dfx');
+  assertCommandExists('icp');
   assertCommandExists('icx-asset');
 
   const replicaUrl = await getReplicaUrl(options.network);
-  const identityPemPath = await getIdentityPemFilePath(options.identity);
+  const identityPemPath = await exportIdentityPem(options.identity);
+  process.on('exit', () => rmSync(identityPemPath, { force: true }));
 
   // Finds the wasm chunk store canister id.
   const wasmChunkStoreId = getWasmChunkStoreId(options.network);
@@ -205,8 +193,7 @@ command.action(async options => {
 
     if (maybeRegistryId) {
       console.log(`Updating the registry entry for ${entry.name} with id(${maybeRegistryId})...`);
-      const argumentFile = await saveArgumentInTempFile(`
-        record {
+      const arg = `(record {
           id = "${maybeRegistryId}";
           entry = record {
             description = opt "${entry.description}";
@@ -227,16 +214,14 @@ command.action(async options => {
               }
             }
           }
-        }  
-      `);
+        })`;
 
-      const unparsed = await execAsync(`
-        dfx canister call --identity '${options.identity}' --network '${options.network}' --output json control_panel edit_registry_entry --argument-file '${argumentFile}'
-      `);
-
-      rmSync(argumentFile);
-
-      const result: EditRegistryEntryResult = JSON.parse(unparsed);
+      const result = await callControlPanel<EditRegistryEntryResult>({
+        method: 'edit_registry_entry',
+        network: options.network,
+        identity: options.identity,
+        arg,
+      });
       if ('Err' in result) {
         throw new Error(`Failed to update the registry entry: ${JSON.stringify(result.Err)}`);
       }
@@ -244,8 +229,7 @@ command.action(async options => {
       console.log(`Registry with id ${maybeRegistryId} has been updated for ${entry.name}.`);
     } else {
       console.log(`Adding the registry entry for ${entry.name}...`);
-      const argumentFile = await saveArgumentInTempFile(`
-        record {
+      const arg = `(record {
           entry = record {
             name = "${entry.name}";
             description = "${entry.description}";
@@ -266,16 +250,14 @@ command.action(async options => {
               }
             }
           }
-        }
-      `);
+        })`;
 
-      const unparsed = await execAsync(`
-        dfx canister call --identity '${options.identity}' --network '${options.network}' --output json control_panel add_registry_entry --argument-file '${argumentFile}'
-      `);
-
-      rmSync(argumentFile);
-
-      const result: AddRegistryEntryResult = JSON.parse(unparsed);
+      const result = await callControlPanel<AddRegistryEntryResult>({
+        method: 'add_registry_entry',
+        network: options.network,
+        identity: options.identity,
+        arg,
+      });
       if ('Err' in result) {
         throw new Error(`Failed to add the registry entry: ${JSON.stringify(result.Err)}`);
       }
