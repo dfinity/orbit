@@ -44,6 +44,8 @@ Actions tab, run the **Cut release** workflow. The form:
 
 It runs `orbit-cli release prepare`, which bumps the versions, writes the changelogs, and updates `.release.json` in one commit, then opens a PR whose body lists exactly what is being released. Review the versions and merge it. If nothing changed, it says so and opens no PR.
 
+Expect one snag on that PR. It is opened by `github-actions` using `GITHUB_TOKEN`, and GitHub fires no workflow events for anything that token does, so the required **External PR Ruleset** check never starts and sits on "Expected". Close the PR and reopen it: the reopen comes from you rather than from the bot, the check runs, and your approval survives. The real fix is to open the PR with a GitHub App installation token instead, which does fire events.
+
 ## Phase 2: publish (automatic)
 
 Merging the release PR touches `.release.json`, which fires the existing **Release** workflow (`release.yaml`). It builds each artifact, creates the `@orbit/<project>-v<version>` tag, and creates the GitHub release with the artifact attached. You do not click anything.
@@ -59,6 +61,12 @@ Playground and production are deployed differently on purpose.
 **Production is a command you run.** The key that signs a production deploy is not a repo secret, so there is no button for it. You run one script from a machine that can read the key. A production frontend sync reaches every user the moment it finishes, and a control-panel upgrade reaches every station, so the key that does either should not sit where a merged pull request can read it.
 
 Both halves run the same two scripts, `scripts/deploy-app` and `scripts/deploy-backend`. The workflows are wrappers around them, so CI and a laptop do the same thing.
+
+### What to deploy first
+
+Deploy the station frontend before publishing a station release to the registry.
+
+The frontend serves a UI version matching the API version of the station it is talking to, from the `compat.json` it ships with. A station on an API version the deployed `compat.json` has never heard of counts as incompatible, and the user is dropped on the unversioned path, which is the older UI. Publishing the station wasm first opens that window: an admin upgrades, then loads a UI that cannot pair with them. Deploying the frontend first closes it. Stations still on the previous version keep being redirected to their matching bundle, which is still there because `deploy-app` syncs with `--no-delete`.
 
 ### Frontends to playground
 
@@ -78,6 +86,8 @@ Actions tab, run **Deploy backend**. Tick station, upgrader, or control-panel an
 ### Production
 
 Run it from a machine that can read the signing key. `--op` takes a 1Password secret reference and reads the key into a temp file that is deleted when the script exits, so nothing is written down by hand. `--pem` takes a path if you already have the key on disk.
+
+The scripts want Node at the version in `.nvmrc` and pnpm 9; a newer Node fails the engine check before anything runs. `deploy-app` needs docker and icx-asset, `deploy-backend` needs dfx and `orbit-cli` on your PATH. `pnpm install` builds it, but the global link only lands if `pnpm setup` has been run on that machine, so without that you get "orbit-cli not found" from an install that reported success.
 
 Frontends. This deploys the released tarball, not a local build:
 
@@ -99,14 +109,19 @@ Both print what they are about to do and wait for you to confirm, and both check
 
 Ask the release administrators for the vault reference. Whoever holds it can deploy production, and nobody else can.
 
-## One-time setup
+### After a station release
 
-The playground network, its canisters and the live site all exist already. What is missing is the GitHub Actions configuration to reach them:
+Publishing puts the version in the registry and stops there. Each station upgrades when its own admins raise and approve the request.
 
-* Mint an identity for CI that can reach playground and nothing else, then create the `playground` GitHub Environment and add it as `DEPLOY_PLAYGROUND_IDENTITY_PEM` (frontends) and `BACKEND_PLAYGROUND_IDENTITY_PEM` (backends).
+An upgrade started from the station UI always takes a backup snapshot first, so there is a rollback point whether or not anyone thought about it. Using it means a `SystemRestore` request, which the UI can display but not create, so a rollback is an API call today.
 
-  Do not reuse the identity that deploys today. It controls the production canisters as well as the playground ones, so putting it here would hand CI production access and cancel out the reason production is deployed by hand. The playground canisters already trust several principals that production does not, so this is nothing new for them. The new identity needs to be a controller of the playground canisters, authorized on the playground asset canister, and a registry admin on the playground control-panel.
-* Restrict that environment's deployment branches to `main`, so a job on some other branch cannot claim the credential.
-* Create the `production` environment but leave it without a key, which is what keeps the production job inert. If production deploys are ever moved into CI, that environment needs `DEPLOY_PRODUCTION_IDENTITY_PEM` and `BACKEND_PRODUCTION_IDENTITY_PEM`, plus required reviewers and the same branch restriction, first.
-* Fix the playground `derivationOrigin` so Internet Identity login works there, ideally by making it come from an env var.
-* Stand up a test station that stays up, so someone can run a real self-upgrade against a wasm in the playground registry before it goes to production.
+Reinstalling an older station wasm works only while the stable memory version is unchanged. Across a change the station refuses the downgrade and traps in `post_upgrade`, which aborts the install and leaves the old code running. That is a safe refusal, not a broken canister, but it means the snapshot is the only way back.
+
+## Remaining setup
+
+Playground is wired up. There is a playground-only deploy identity, the `playground` environment holds its credentials, and that environment only accepts deployments from `main`. The identity has no production access at all, which is the property that stops a merged pull request from reaching production. Do not replace it with the identity that deploys production today: that one controls the production canisters too, and using it here would cancel out the reason production is deployed by hand.
+
+What is left:
+
+* Create the `production` environment and leave it without a key. An empty environment is what keeps the production job inert. Moving production deploys into CI would mean adding its credentials, required reviewers and the same branch restriction first, and accepting that CI can then reach production.
+* Stand up a test station that stays up, so someone can run a real self-upgrade against a wasm in the playground registry before the same wasm goes to production.
