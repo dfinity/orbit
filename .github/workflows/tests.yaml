@@ -26,15 +26,20 @@ env:
   SCCACHE_GHA_ENABLED: 'true'
   RUSTC_WRAPPER: 'sccache'
 
+permissions:
+  contents: read
+
 jobs:
   test-rust:
     name: 'test-rust:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
   test-node:
@@ -42,7 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Install Dependencies'
@@ -68,9 +75,11 @@ jobs:
             canister: station
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Build Package'
         run: ./scripts/generate-wasm.sh ${{ matrix.crate }}
       - name: 'Prepare artifacts'
@@ -78,7 +87,7 @@ jobs:
           mkdir -p artifacts
           mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: integration-tests-${{ matrix.canister }}
           path: artifacts/${{ matrix.canister }}.wasm.gz
@@ -100,7 +109,9 @@ jobs:
             name: 'ic-icrc1-ledger'
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Download Canister'
         run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
       - name: 'Prepare artifacts'
@@ -108,7 +119,7 @@ jobs:
           mkdir -p artifacts
           mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: integration-tests-${{ matrix.canister }}
           path: artifacts/${{ matrix.canister }}.wasm.gz
@@ -119,7 +130,7 @@ jobs:
     needs: [build-wasms, download-canisters]
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: integration-tests
           pattern: integration-tests-*
@@ -132,11 +143,13 @@ jobs:
       DOWNLOAD_NNS_CANISTERS: 'false'
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Download Artifacts'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: integration-tests
           path: tests/integration/wasms
@@ -154,16 +167,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Download Artifacts'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: integration-tests
           path: wasms
       - name: 'Install dfx'
-        uses: dfinity/setup-dfx@main
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Install Dependencies'
@@ -177,7 +192,7 @@ jobs:
           pnpm run test:e2e
       - name: 'Upload e2e test results'
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: e2e-test-results
           path: |
@@ -190,13 +205,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Install dfx'
-        uses: dfinity/setup-dfx@main
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
       - name: 'Start PocketIC'
         run: dfx start --clean --system-canisters --host 127.0.0.1:4943 --background
       - name: 'Perform local deployment'
@@ -209,13 +226,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Install dfx'
-        uses: dfinity/setup-dfx@main
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
       - name: 'Start local replica'
         run: dfx start --clean --system-canisters --host 127.0.0.1:4943 --background
       - name: 'Perform local deployment'
@@ -234,16 +253,18 @@ jobs:
           - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Setup Docker'
         run: |
           docker info # Check if Docker is running
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Install dfx'
-        uses: dfinity/setup-dfx@main
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
       - name: 'Start local replica'
         run: dfx start --clean --system-canisters --host 127.0.0.1:4943 --background
       - name: 'Test prod deployment script'
