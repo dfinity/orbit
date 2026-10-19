@@ -66,7 +66,7 @@ impl CycleManager {
             manager.borrow_mut().register(canister_id, register_opts);
         });
 
-        ic_cdk::print(format!(
+        crate::core::ic_cdk::api::print(format!(
             "Cycle manager: canister {canister_id} added to cycle monitoring."
         ));
     }
@@ -91,7 +91,7 @@ impl CycleManager {
             manager.borrow_mut().register(canister_id, register_opts);
         });
 
-        ic_cdk::print(format!(
+        crate::core::ic_cdk::api::print(format!(
             "Cycle manager: external canister {canister_id} added to cycle monitoring."
         ));
     }
@@ -105,7 +105,7 @@ impl CycleManager {
             manager.borrow_mut().unregister(canister_id);
         });
 
-        ic_cdk::print(format!(
+        crate::core::ic_cdk::api::print(format!(
             "Cycle manager: canister {canister_id} removed from cycle monitoring."
         ));
     }
@@ -115,7 +115,7 @@ impl CycleManager {
             manager.borrow_mut().start();
         });
 
-        ic_cdk::print("Cycle manager: monitoring started.");
+        crate::core::ic_cdk::api::print("Cycle manager: monitoring started.");
     }
 
     pub fn set_global_cycle_obtain_strategy(&self, strategy: &CycleObtainStrategy) {
@@ -126,7 +126,7 @@ impl CycleManager {
             fund_manager.with_options(options);
         });
 
-        ic_cdk::print(format!(
+        crate::core::ic_cdk::api::print(format!(
             "Cycle manager: obtain cycles strategy changed to {strategy:?}."
         ));
     }
