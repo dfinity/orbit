@@ -1038,10 +1038,9 @@ impl ExternalCanisterService {
     pub fn canister_monitor_restart(&self) {
         for canister in self.external_canister_repository.find_all() {
             if let Some(monitoring) = &canister.monitoring {
-                self.cycle_manager.add_canister(
+                self.cycle_manager.add_external_canister(
                     canister.canister_id,
                     monitoring.funding_strategy.clone(),
-                    monitoring.cycle_obtain_strategy,
                 );
             }
         }
@@ -1053,10 +1052,13 @@ impl ExternalCanisterService {
         strategy: MonitorExternalCanisterStrategy,
         cycle_obtain_strategy: Option<CycleObtainStrategy>,
     ) -> ServiceResult<()> {
-        if let Some(CycleObtainStrategy::MintFromNativeToken { .. }) = cycle_obtain_strategy {
+        if !matches!(
+            cycle_obtain_strategy,
+            None | Some(CycleObtainStrategy::Disabled)
+        ) {
             Err(ExternalCanisterError::Failed {
                 reason: format!(
-                    "Minting from native token is not yet supported for canister {}",
+                    "Obtaining cycles is not supported for canister {}",
                     canister_id.to_text()
                 ),
             })?;
@@ -1073,7 +1075,7 @@ impl ExternalCanisterService {
         }
 
         self.cycle_manager
-            .add_canister(canister_id, strategy.clone(), cycle_obtain_strategy);
+            .add_external_canister(canister_id, strategy.clone());
 
         external_canister.monitoring = Some(ExternalCanisterMonitoring {
             funding_strategy: strategy,

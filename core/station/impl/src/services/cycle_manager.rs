@@ -7,7 +7,9 @@ use canfund::api::ledger::{CyclesLedgerCanister, IcLedgerCanister};
 use canfund::manager::options::{FundManagerOptions, ObtainCyclesOptions};
 use canfund::manager::record::CanisterRecord;
 use canfund::manager::RegisterOpts;
-use canfund::operations::obtain::{MintCycles, WithdrawFromCyclesLedger};
+use canfund::operations::obtain::{
+    MintCycles, ObtainCycles, ObtainCyclesError, WithdrawFromCyclesLedger,
+};
 use canfund::FundManager;
 use ic_cdk::api::management_canister::main::CanisterId;
 use ic_cdk::print;
@@ -69,6 +71,31 @@ impl CycleManager {
         ));
     }
 
+    /// Registers an external canister for monitoring.
+    ///
+    /// External canisters can only be funded from the station's own cycles balance. They are
+    /// registered with explicit obtain options that never obtain cycles, so canfund does not
+    /// fall back to the station's global obtain strategy (e.g. minting from a treasury account).
+    pub fn add_external_canister(
+        &self,
+        canister_id: CanisterId,
+        fund_strategy: MonitorExternalCanisterStrategy,
+    ) {
+        let register_opts = RegisterOpts::new()
+            .with_strategy(fund_strategy.into())
+            .with_obtain_cycles_options(ObtainCyclesOptions {
+                obtain_cycles: Arc::new(NoObtainCycles),
+            });
+
+        FUND_MANAGER.with(|manager| {
+            manager.borrow_mut().register(canister_id, register_opts);
+        });
+
+        ic_cdk::print(format!(
+            "Cycle manager: external canister {canister_id} added to cycle monitoring."
+        ));
+    }
+
     pub fn get_canister(&self, canister_id: &CanisterId) -> Option<CanisterRecord> {
         FUND_MANAGER.with(|manager| manager.borrow().get_canisters().get(canister_id).cloned())
     }
@@ -102,6 +129,25 @@ impl CycleManager {
         ic_cdk::print(format!(
             "Cycle manager: obtain cycles strategy changed to {strategy:?}."
         ));
+    }
+}
+
+/// Obtain cycles operation that never obtains cycles.
+struct NoObtainCycles;
+
+#[async_trait::async_trait]
+impl ObtainCycles for NoObtainCycles {
+    async fn obtain_cycles(
+        &self,
+        _amount: u128,
+        target_canister_id: Principal,
+    ) -> Result<u128, ObtainCyclesError> {
+        Err(ObtainCyclesError {
+            details: format!(
+                "Obtaining cycles is not supported for external canister {target_canister_id}"
+            ),
+            can_retry: false,
+        })
     }
 }
 
