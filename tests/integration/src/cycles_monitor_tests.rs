@@ -3,8 +3,9 @@ use crate::setup::{
     get_canister_wasm, setup_new_env, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER,
 };
 use crate::utils::{
-    advance_time_to_burn_cycles, create_icp_account, get_core_canister_health_status,
-    get_icp_account_identifier, get_system_info, get_user, user_test_id, NNS_ROOT_CANISTER_ID,
+    advance_time_to_burn_cycles, create_icp_account, execute_request,
+    get_core_canister_health_status, get_icp_account_identifier, get_system_info, get_user,
+    upgrade_station, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use control_panel_api::{
@@ -14,9 +15,19 @@ use control_panel_api::{
 use ic_ledger_types::AccountIdentifier;
 use orbit_essentials::api::ApiResult;
 
+use candid::Principal;
 use pocket_ic::update_candid_as;
+use pocket_ic::PocketIc;
 use sha2::{Digest, Sha256};
-use station_api::{HealthStatus, SystemInfoResponse};
+use station_api::{
+    AllowDTO, AuthScopeDTO, CreateExternalCanisterOperationInput,
+    CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
+    CycleObtainStrategyInput, ExternalCanisterPermissionsCreateInput,
+    ExternalCanisterRequestPoliciesCreateInput, HealthStatus,
+    MonitorExternalCanisterOperationInput, MonitorExternalCanisterOperationKindDTO,
+    MonitorExternalCanisterStartInput, MonitorExternalCanisterStrategyDTO, RequestOperationDTO,
+    RequestOperationInput, SystemInfoResponse,
+};
 use std::time::Duration;
 
 #[test]
@@ -241,4 +252,174 @@ fn can_mint_cycles_to_top_up_self() {
         post_cycle_balance - pre_cycle_balance > 299_000_000_000
             && post_cycle_balance - pre_cycle_balance < 300_000_000_000
     );
+}
+
+fn create_external_canister(env: &PocketIc, station_id: Principal, name: &str) -> Principal {
+    let restricted = AllowDTO {
+        auth_scope: AuthScopeDTO::Restricted,
+        user_groups: vec![],
+        users: vec![],
+    };
+    let request = execute_request(
+        env,
+        WALLET_ADMIN_USER,
+        station_id,
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            kind: CreateExternalCanisterOperationKindDTO::CreateNew(
+                CreateExternalCanisterOperationKindCreateNewDTO {
+                    initial_cycles: Some(500_000_000_000),
+                    subnet_selection: None,
+                },
+            ),
+            name: name.to_string(),
+            description: None,
+            labels: None,
+            metadata: None,
+            permissions: ExternalCanisterPermissionsCreateInput {
+                calls: vec![],
+                read: restricted.clone(),
+                change: restricted,
+            },
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
+                calls: vec![],
+            },
+        }),
+    )
+    .unwrap();
+
+    match request.operation {
+        RequestOperationDTO::CreateExternalCanister(operation) => operation.canister_id.unwrap(),
+        operation => panic!("Unexpected request operation type: {operation:?}"),
+    }
+}
+
+fn monitor_external_canister(
+    env: &PocketIc,
+    station_id: Principal,
+    canister_id: Principal,
+    fund_cycles: u128,
+    cycle_obtain_strategy: Option<CycleObtainStrategyInput>,
+) -> bool {
+    execute_request(
+        env,
+        WALLET_ADMIN_USER,
+        station_id,
+        RequestOperationInput::MonitorExternalCanister(MonitorExternalCanisterOperationInput {
+            canister_id,
+            kind: MonitorExternalCanisterOperationKindDTO::Start(
+                MonitorExternalCanisterStartInput {
+                    funding_strategy: MonitorExternalCanisterStrategyDTO::Always(fund_cycles),
+                    cycle_obtain_strategy,
+                },
+            ),
+        }),
+    )
+    .is_ok()
+}
+
+fn run_fund_manager(env: &PocketIc) {
+    env.advance_time(Duration::from_secs(24 * 60 * 60));
+    for _ in 0..20 {
+        env.tick();
+    }
+}
+
+#[test]
+fn external_canisters_are_funded_only_from_station_balance() {
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = setup_new_env_with_config(SetupConfig {
+        start_cycles: Some(10_000_000_000_000),
+        ..Default::default()
+    });
+    let station_id = canister_ids.station;
+
+    // keep the station and upgrader well funded so that neither needs to obtain cycles
+    let upgrader_id = get_system_info(&env, WALLET_ADMIN_USER, station_id).upgrader_id;
+    env.add_cycles(upgrader_id, 100_000_000_000_000);
+    env.add_cycles(station_id, 100_000_000_000_000);
+
+    // the station can afford to fund this canister from its own balance
+    let funded = create_external_canister(&env, station_id, "funded");
+    assert!(monitor_external_canister(
+        &env,
+        station_id,
+        funded,
+        1_000_000_000_000,
+        None
+    ));
+
+    // the station cannot afford to fund this canister from its own balance, but minting from
+    // the ICP account could
+    let unfunded = create_external_canister(&env, station_id, "unfunded");
+    assert!(monitor_external_canister(
+        &env,
+        station_id,
+        unfunded,
+        200_000_000_000_000,
+        Some(CycleObtainStrategyInput::Disabled)
+    ));
+
+    // creating the first ICP account enables minting cycles for the station after the
+    // external canisters are monitored
+    let user = get_user(&env, WALLET_ADMIN_USER, station_id);
+    let account = create_icp_account(&env, station_id, user.id);
+    let account_identifier = AccountIdentifier::from_hex(
+        &get_icp_account_identifier(&account.addresses).expect("no icp address found"),
+    )
+    .unwrap();
+    send_icp_to_account(
+        &env,
+        controller,
+        account_identifier,
+        100 * ICP,
+        0,
+        None,
+        None,
+    )
+    .unwrap();
+
+    // external canisters cannot be configured to obtain cycles
+    let rejected = create_external_canister(&env, station_id, "rejected");
+    for cycle_obtain_strategy in [
+        CycleObtainStrategyInput::MintFromNativeToken {
+            account_id: account.id.clone(),
+        },
+        CycleObtainStrategyInput::WithdrawFromCyclesLedger {
+            account_id: account.id.clone(),
+        },
+    ] {
+        assert!(!monitor_external_canister(
+            &env,
+            station_id,
+            rejected,
+            1_000_000_000_000,
+            Some(cycle_obtain_strategy)
+        ));
+    }
+
+    let assert_funding_round = |env: &PocketIc| {
+        let pre_funded_balance = env.cycle_balance(funded);
+        let pre_unfunded_balance = env.cycle_balance(unfunded);
+
+        run_fund_manager(env);
+
+        let funded_top_up = env.cycle_balance(funded) - pre_funded_balance;
+        assert!(
+            funded_top_up > 990_000_000_000 && funded_top_up <= 1_000_000_000_000,
+            "unexpected top up of {funded_top_up} cycles"
+        );
+        assert!(env.cycle_balance(unfunded) <= pre_unfunded_balance);
+        assert_eq!(get_icp_account_balance(env, account_identifier), 100 * ICP);
+    };
+
+    assert_funding_round(&env);
+
+    // monitoring is restored after an upgrade with the same behavior
+    upgrade_station(&env, WALLET_ADMIN_USER, station_id, None);
+    assert_funding_round(&env);
 }
