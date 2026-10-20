@@ -881,6 +881,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 name = "control-panel"
 version = "0.4.0"
 dependencies = [
+ "async-trait",
  "candid",
  "candid_parser",
  "canfund",
