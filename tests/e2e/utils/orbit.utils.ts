@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 
 export function publishArtifact(artifact: string) {
-  execSync(`orbit-cli registry publish --app ${artifact}`, { stdio: 'inherit' });
+  execSync(`orbit-release-cli registry publish --app ${artifact}`, { stdio: 'inherit' });
 }
 
 export function copyArtifact(artifact: string) {

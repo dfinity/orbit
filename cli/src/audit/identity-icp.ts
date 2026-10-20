@@ -122,14 +122,14 @@ export const loadIcpIdentity = (name: string): Identity => {
 
   if (entry.kind === 'hsm') {
     throw new Error(
-      `icp identity '${name}' is HSM-backed. PKCS#11 isn't supported by orbit-cli audit yet.`,
+      `icp identity '${name}' is HSM-backed. PKCS#11 isn't supported by orbit-release-cli audit yet.`,
     );
   }
 
   if (entry.kind === 'keyring') {
     if (entry.algorithm && entry.algorithm !== 'ed25519') {
       throw new Error(
-        `icp identity '${name}' uses ${entry.algorithm}. orbit-cli audit currently supports Ed25519 keyring identities only. Use --identity-source icp with an Ed25519 identity, or use --identity-source dfx with a plaintext Ed25519 identity.`,
+        `icp identity '${name}' uses ${entry.algorithm}. orbit-release-cli audit currently supports Ed25519 keyring identities only. Use --identity-source icp with an Ed25519 identity, or use --identity-source dfx with a plaintext Ed25519 identity.`,
       );
     }
     const { stdout, stderr, status } = runIcp(['identity', 'export', name]);
@@ -143,7 +143,7 @@ export const loadIcpIdentity = (name: string): Identity => {
     const { pubKeyPem, identity: session } = generateSessionKey();
     const pubKeyPath = join(
       tmpdir(),
-      `orbit-cli-session-${process.pid}-${process.hrtime.bigint()}.pem`,
+      `orbit-release-cli-session-${process.pid}-${process.hrtime.bigint()}.pem`,
     );
     writeFileSync(pubKeyPath, pubKeyPem);
     try {

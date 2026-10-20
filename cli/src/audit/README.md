@@ -1,4 +1,4 @@
-# `orbit-cli audit`
+# `orbit-release-cli audit`
 
 Read-only sanity checks against an Orbit station's configuration. The command pulls live state via the station's `list_*` query methods using `agent-js`, runs a set of static checks against the configuration, and prints a severity-sorted report. Nothing is mutated — the audit is safe to run at any time, against any station the caller has read access to.
 
@@ -10,7 +10,7 @@ Read-only sanity checks against an Orbit station's configuration. The command pu
 ## Usage
 
 ```bash
-orbit-cli audit --station <CANISTER_ID> [--network <ic|local>] [--identity <NAME>] [--output <PATH>]
+orbit-release-cli audit --station <CANISTER_ID> [--network <ic|local>] [--identity <NAME>] [--output <PATH>]
 ```
 
 ### Options
@@ -38,20 +38,20 @@ Useful for CI integration — `set -e` pipelines fail naturally when a blocker s
 
 ```bash
 # Audit a mainnet station, print report to stdout.
-orbit-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai
+orbit-release-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai
 
 # As an admin-tier identity, write the report to a file.
-orbit-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai \
+orbit-release-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai \
                 --identity admin-readonly \
                 --output ./audit-report.txt
 
 # Sign with an icp-cli identity (II / Okta / linked browser logins).
-orbit-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai \
+orbit-release-cli audit --station rrkah-fqaaa-aaaaa-aaaaq-cai \
                 --identity my-icp-identity \
                 --identity-source icp
 
 # Local development station.
-orbit-cli audit --station <local-canister-id> --network local
+orbit-release-cli audit --station <local-canister-id> --network local
 ```
 
 ## Report format
@@ -85,7 +85,7 @@ Findings include policy, user, group, canister, and method identifiers. When usi
 ## Tests
 
 ```bash
-pnpm --filter orbit-cli test
+pnpm --filter orbit-release-cli test
 ```
 
 Unit tests cover each check across positive and negative cases, including combinator descent and cycle detection on `NamedRule` references. Fixtures are in [checks/fixtures.ts](./checks/fixtures.ts).

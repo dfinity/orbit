@@ -130,7 +130,7 @@ command
 
 // Saves the argument in a temporary file and returns the path to the file.
 const saveArgumentInTempFile = async (argument: string): Promise<string> => {
-  const tempFilePath = join(tmpdir(), 'orbit-cli-argument-' + Math.random().toString(36).slice(2));
+  const tempFilePath = join(tmpdir(), 'orbit-release-cli-argument-' + Math.random().toString(36).slice(2));
 
   await writeFile(tempFilePath, argument, {
     encoding: 'utf-8',
