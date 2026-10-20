@@ -76,6 +76,7 @@ impl From<&StationRecoveryRequestOperation> for StationRecoveryRequestOperationF
                     StationRecoveryRequestInstallCodeOperationFootprint {
                         install_mode: install_code.install_mode,
                         wasm_sha256: install_code.wasm_sha256.clone(),
+                        wasm_module_extra_chunks: install_code.wasm_module_extra_chunks.clone(),
                         arg_sha256: install_code.arg_sha256.clone(),
                     },
                 )
