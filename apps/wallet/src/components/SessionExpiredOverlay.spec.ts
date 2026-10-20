@@ -46,7 +46,10 @@ describe('SessionExpiredOverlay', () => {
   it('shows a spinner while authenticating', async () => {
     const wrapper = mount(SessionExpiredOverlay);
     const sessionStore = useSessionStore();
-    sessionStore.signIn = vi.fn(() => Promise.resolve());
+    // The spinner only exists while signIn is in flight, so the promise is resolved by hand
+    // after the assertion instead of resolving on the next microtask.
+    let completeSignIn!: () => void;
+    sessionStore.signIn = vi.fn(() => new Promise<void>(resolve => (completeSignIn = resolve)));
     sessionStore.$patch({
       reauthenticationNeeded: true,
     });
@@ -54,12 +57,12 @@ describe('SessionExpiredOverlay', () => {
 
     const reauthenticateButton = wrapper.getComponent(VBtn);
 
-    reauthenticateButton.trigger('click');
-
-    await wrapper.vm.$nextTick();
+    await reauthenticateButton.trigger('click');
 
     const spinner = wrapper.findComponent(VProgressCircular);
 
     expect(spinner.exists()).toBe(true);
+
+    completeSignIn();
   });
 });
