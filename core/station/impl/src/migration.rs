@@ -1,6 +1,8 @@
 use crate::core::ic_cdk::api::trap;
 use crate::core::{read_system_info, write_system_info};
+use crate::repositories::REQUEST_POLICY_REPOSITORY;
 use crate::STABLE_MEMORY_VERSION;
+use orbit_essentials::repository::{IndexedRepository, Repository};
 
 /// Handles stable memory schema migrations for the station canister.
 ///
@@ -50,7 +52,25 @@ impl MigrationHandler {
 
 /// If there is a check that needs to be run on every upgrade, regardless if the memory version has changed,
 /// it should be added here.
-fn post_run() {}
+fn post_run() {
+    rebuild_request_policy_resource_index();
+}
+
+/// Rebuilds the request policy resource index from the policies themselves.
+///
+/// The index is derived from `RequestSpecifier::to_resources()` and is written once, when a policy
+/// is inserted. Entries written before that mapping is corrected keep pointing at the old keys, so
+/// correcting the mapping alone would leave existing policies matching the wrong operations. This
+/// is idempotent and cheap relative to the number of stored policies.
+fn rebuild_request_policy_resource_index() {
+    let policies = REQUEST_POLICY_REPOSITORY.list();
+
+    REQUEST_POLICY_REPOSITORY.clear_indexes();
+
+    for policy in &policies {
+        REQUEST_POLICY_REPOSITORY.add_entry_indexes(policy);
+    }
+}
 
 /// The migration to apply to the station canister stable memory.
 ///
