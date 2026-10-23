@@ -29,10 +29,12 @@ const station = useStationStore();
 
 const memberNames = ref<string[]>([]);
 const totalMembers = ref(0);
-const failedToLoadMembers = ref(false);
+const membersLoaded = ref(false);
 
 const warning = computed(() => {
-  if (failedToLoadMembers.value) {
+  // The generic warning is shown until the members are loaded, so it is never hidden while the
+  // confirmation is already possible.
+  if (!membersLoaded.value) {
     return i18n.t('user_groups.members_removal_warning_unknown');
   }
 
@@ -59,10 +61,9 @@ onMounted(async () => {
 
     memberNames.value = result.users.map(user => user.name);
     totalMembers.value = Number(result.total);
+    membersLoaded.value = true;
   } catch (e) {
     logger.error('Failed to fetch user group members', e);
-
-    failedToLoadMembers.value = true;
   }
 });
 </script>

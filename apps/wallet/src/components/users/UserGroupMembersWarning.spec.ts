@@ -74,6 +74,16 @@ describe('UserGroupMembersWarning', () => {
     expect(warning.exists()).toBe(false);
   });
 
+  it('shows a generic warning while the members are loading', async () => {
+    vi.spyOn(mockedStationService, 'listUsers').mockReturnValueOnce(new Promise(() => {}));
+
+    const warning = await mountWarning();
+
+    expect(warning.text()).toContain(
+      'Removing this group will also remove it from any users who are still members of it.',
+    );
+  });
+
   it('falls back to a generic warning when the members cannot be loaded', async () => {
     vi.spyOn(mockedStationService, 'listUsers').mockRejectedValueOnce(new Error('Unauthorized'));
 
