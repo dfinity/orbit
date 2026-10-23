@@ -894,6 +894,14 @@ export default {
     external_canisters: 'Canisters',
     approval_rules: 'Approval Rules',
   },
+  user_groups: {
+    members_removal_warning:
+      'Removing this group will affect user {users} who is still a member of it. | Removing this group will affect users {users} who are still members of it.',
+    members_removal_warning_more:
+      'Removing this group will affect users {users} and {count} more who are still members of it.',
+    members_removal_warning_unknown:
+      'Removing this group will also remove it from any users who are still members of it.',
+  },
   pages: {
     dashboard: {
       title: 'Dashboard',
