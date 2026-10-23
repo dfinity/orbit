@@ -130,8 +130,12 @@ pub fn disaster_recovery_observes_insert_user(observer: &mut Observer<(User, Opt
             let user_is_in_committee =
                 user.status == UserStatus::Active && user.groups.contains(&committee.user_group_id);
 
-            if user_is_in_committee && !user_was_previously_in_committee
-                || !user_is_in_committee && user_was_previously_in_committee
+            let mirrored_fields_changed = prev
+                .as_ref()
+                .is_none_or(|prev| prev.identities != user.identities || prev.name != user.name);
+
+            if user_is_in_committee != user_was_previously_in_committee
+                || (user_is_in_committee && mirrored_fields_changed)
             {
                 crate::core::ic_cdk::spawn(async {
                     if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
