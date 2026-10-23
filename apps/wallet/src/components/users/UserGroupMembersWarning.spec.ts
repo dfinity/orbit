@@ -66,12 +66,24 @@ describe('UserGroupMembersWarning', () => {
     expect(warning.text()).toContain('users Alice, Bob and 3 more who are still members of it.');
   });
 
-  it('does not warn when the group has no members', async () => {
+  it('shows a generic warning when no members are listed', async () => {
     mockListUsers([]);
 
     const warning = await mountWarning();
 
-    expect(warning.exists()).toBe(false);
+    expect(warning.text()).toContain(
+      'Removing this group will also remove it from any users who are still members of it.',
+    );
+  });
+
+  it('shows a generic warning when the members are not visible to the caller', async () => {
+    mockListUsers([], 3);
+
+    const warning = await mountWarning();
+
+    expect(warning.text()).toContain(
+      'Removing this group will also remove it from any users who are still members of it.',
+    );
   });
 
   it('shows a generic warning while the members are loading', async () => {

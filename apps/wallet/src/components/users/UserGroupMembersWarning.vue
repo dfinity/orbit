@@ -33,13 +33,10 @@ const membersLoaded = ref(false);
 
 const warning = computed(() => {
   // The generic warning is shown until the members are loaded, so it is never hidden while the
-  // confirmation is already possible.
-  if (!membersLoaded.value) {
+  // confirmation is already possible, and when none are listed, since the caller might not be
+  // allowed to see them.
+  if (!membersLoaded.value || memberNames.value.length === 0) {
     return i18n.t('user_groups.members_removal_warning_unknown');
-  }
-
-  if (totalMembers.value === 0) {
-    return '';
   }
 
   const users = memberNames.value.join(', ');
