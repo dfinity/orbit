@@ -10,7 +10,9 @@ use crate::models::resource::{Resource, ResourceAction, ResourceId};
 use crate::models::{
     AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup, UserGroupCallerPrivileges,
 };
-use crate::repositories::{UseGroupWhereClause, UserGroupRepository};
+use crate::repositories::{
+    UseGroupWhereClause, UserGroupRepository, UserRepository, UserWhereClause,
+};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::model::ModelValidator;
@@ -29,6 +31,7 @@ lazy_static! {
 pub struct UserGroupService {
     system_service: Arc<SystemService>,
     user_group_repository: Arc<UserGroupRepository>,
+    user_repository: Arc<UserRepository>,
 }
 
 impl UserGroupService {
@@ -155,6 +158,21 @@ impl UserGroupService {
             }
         }
 
+        // Removes the group from all of its members, so no user record is left referencing a
+        // group that no longer exists.
+        let members = self.user_repository.find_where(UserWhereClause {
+            search_term: None,
+            statuses: None,
+            groups: Some(vec![user_group.id]),
+        });
+
+        for mut user in members {
+            user.groups.retain(|group_id| *group_id != user_group.id);
+            user.last_modification_timestamp = next_time();
+
+            self.user_repository.insert(user.to_key(), user);
+        }
+
         self.user_group_repository.remove(&user_group.id);
 
         Ok(())
@@ -165,8 +183,10 @@ impl UserGroupService {
 mod test {
     use crate::{
         core::write_system_info,
-        models::{AddUserGroupOperationInput, SystemInfo},
+        models::{user_test_utils::mock_user, AddUserGroupOperationInput, SystemInfo, UserStatus},
+        repositories::USER_REPOSITORY,
     };
+    use orbit_essentials::repository::Repository;
 
     use super::USER_GROUP_SERVICE;
 
@@ -197,5 +217,50 @@ mod test {
         let error = result.unwrap_err();
 
         assert_eq!(error.code, "CANNOT_DELETE_DISASTER_RECOVERY_COMMITTEE");
+    }
+
+    #[tokio::test]
+    async fn test_deleting_user_group_removes_it_from_members() {
+        let user_group = USER_GROUP_SERVICE
+            .create(AddUserGroupOperationInput {
+                name: "Test".to_string(),
+            })
+            .await
+            .expect("Failed to create user group");
+        let other_group = USER_GROUP_SERVICE
+            .create(AddUserGroupOperationInput {
+                name: "Other".to_string(),
+            })
+            .await
+            .expect("Failed to create user group");
+
+        write_system_info(SystemInfo::default());
+
+        // Inactive members are cleaned up as well.
+        let mut active_member = mock_user();
+        active_member.groups = vec![user_group.id, other_group.id];
+        USER_REPOSITORY.insert(active_member.to_key(), active_member.to_owned());
+
+        let mut inactive_member = mock_user();
+        inactive_member.groups = vec![user_group.id];
+        inactive_member.status = UserStatus::Inactive;
+        USER_REPOSITORY.insert(inactive_member.to_key(), inactive_member.to_owned());
+
+        USER_GROUP_SERVICE
+            .remove(&user_group.id)
+            .await
+            .expect("Failed to remove user group");
+
+        let active_member = USER_REPOSITORY.get(&active_member.to_key()).unwrap();
+        let inactive_member = USER_REPOSITORY.get(&inactive_member.to_key()).unwrap();
+
+        assert_eq!(active_member.groups, vec![other_group.id]);
+        assert!(inactive_member.groups.is_empty());
+
+        for status in [UserStatus::Active, UserStatus::Inactive] {
+            assert!(USER_REPOSITORY
+                .find_by_group_and_status(&user_group.id, &status)
+                .is_empty());
+        }
     }
 }

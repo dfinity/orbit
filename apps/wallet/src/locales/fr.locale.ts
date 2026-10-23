@@ -904,6 +904,14 @@ export default {
     external_canisters: 'Canisters',
     approval_rules: 'Règles d approbation',
   },
+  user_groups: {
+    members_removal_warning:
+      "La suppression de ce groupe affectera l'usager {users} qui en est encore membre. | La suppression de ce groupe affectera les usagers {users} qui en sont encore membres.",
+    members_removal_warning_more:
+      'La suppression de ce groupe affectera les usagers {users} et {count} autre(s) qui en sont encore membres.',
+    members_removal_warning_unknown:
+      'La suppression de ce groupe le retirera également de tous les usagers qui en sont encore membres.',
+  },
   pages: {
     dashboard: {
       title: 'Tableau de Bord',
