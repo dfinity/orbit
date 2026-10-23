@@ -1,9 +1,10 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_user, bump_time_to_avoid_ratelimit, canister_status, deploy_test_canister, execute_request,
-    get_core_canister_health_status, get_request, get_system_info, hash, submit_request,
-    submit_request_approval, submit_request_raw, submit_request_with_expected_trap, update_raw,
-    upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, COUNTER_WAT,
+    expect_await_call_result, get_core_canister_health_status, get_request, get_system_info, hash,
+    submit_request, submit_request_approval, submit_request_raw, submit_request_with_expected_trap,
+    update_raw, upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request,
+    COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -19,13 +20,15 @@ use station_api::{
     CallExternalCanisterResourceTargetDTO, CanisterInstallMode, CanisterMethodDTO,
     ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
-    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
+    CreateRequestInput, CreateRequestResponse, EditPermissionOperationInput,
+    EditUserOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
     ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
     HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse,
     PruneExternalCanisterOperationInput, PruneExternalCanisterResourceDTO, QuorumDTO,
-    RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, RequestStatusDTO, RestoreExternalCanisterOperationInput, Snapshot,
-    SnapshotExternalCanisterOperationInput, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    RequestApprovalStatusDTO, RequestExecutionScheduleDTO, RequestOperationDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
+    RestoreExternalCanisterOperationInput, Snapshot, SnapshotExternalCanisterOperationInput,
+    UserSpecifierDTO, UserStatusDTO, ValidationMethodResourceTargetDTO,
 };
 use std::str::FromStr;
 use std::time::Duration;
@@ -1062,6 +1065,107 @@ fn call_external_canister_test() {
         execution_method_reply,
         Some(hex::decode("4449444c016b01bc8a017101000004676f6f64").unwrap())
     );
+}
+
+#[test]
+fn create_call_external_canister_request_refuses_requester_deactivated_during_validation() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let test_canister_id = deploy_test_canister(&env, canister_ids.station);
+
+    let requester = user_test_id(0);
+    let requester_user = add_user(&env, requester, vec![], canister_ids.station);
+
+    let validation_method = CanisterMethodDTO {
+        canister_id: test_canister_id,
+        method_name: "validate_when_released".to_string(),
+    };
+    let execution_method = CanisterMethodDTO {
+        canister_id: test_canister_id,
+        method_name: "noop".to_string(),
+    };
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        RequestOperationInput::EditPermission(EditPermissionOperationInput {
+            resource: station_api::ResourceDTO::ExternalCanister(
+                station_api::ExternalCanisterResourceActionDTO::Call(
+                    CallExternalCanisterResourceTargetDTO {
+                        validation_method: ValidationMethodResourceTargetDTO::ValidationMethod(
+                            validation_method.clone(),
+                        ),
+                        execution_method: ExecutionMethodResourceTargetDTO::ExecutionMethod(
+                            execution_method.clone(),
+                        ),
+                    },
+                ),
+            ),
+            auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+            user_groups: None,
+            users: None,
+        }),
+    )
+    .unwrap();
+
+    // the validation method does not reply until it is released, which keeps the request creation pending
+    let create_request_input = CreateRequestInput {
+        operation: RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: Some(validation_method),
+                execution_method,
+                arg: None,
+                execution_method_cycles: None,
+            },
+        ),
+        title: None,
+        summary: None,
+        execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+        expiration_dt: None,
+        deduplication_key: None,
+        tags: None,
+    };
+    let message_id = env
+        .submit_call(
+            canister_ids.station,
+            requester,
+            "create_request",
+            Encode!(&create_request_input).unwrap(),
+        )
+        .unwrap();
+    env.tick();
+    env.tick();
+
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        RequestOperationInput::EditUser(EditUserOperationInput {
+            id: requester_user.id,
+            name: None,
+            identities: None,
+            groups: None,
+            status: Some(UserStatusDTO::Inactive),
+            cancel_pending_requests: None,
+        }),
+    )
+    .unwrap();
+
+    update_candid_as::<_, ((),)>(
+        &env,
+        test_canister_id,
+        Principal::anonymous(),
+        "release_validation",
+        ((),),
+    )
+    .unwrap();
+
+    let (result,) = expect_await_call_result::<(ApiResult<CreateRequestResponse>,)>(
+        env.await_call(message_id).unwrap(),
+    );
+    assert_eq!(result.unwrap_err().code, "UNAUTHORIZED");
 }
 
 #[test]
