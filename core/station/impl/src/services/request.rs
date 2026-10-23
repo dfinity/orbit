@@ -333,9 +333,10 @@ impl RequestService {
         // Preparing the request can await an external validation call, so the requester is
         // re-checked against the current state before the request is stored.
         let current_ctx = CallContext::new(ctx.caller());
-        if current_ctx.user().map(|user| user.id) != Some(requester.id)
-            || !Authorization::is_allowed(&current_ctx, &resource)
-        {
+        let requester_is_current_and_active = current_ctx
+            .user()
+            .is_some_and(|user| user.id == requester.id && user.is_active());
+        if !requester_is_current_and_active || !Authorization::is_allowed(&current_ctx, &resource) {
             return Err(RequestError::Unauthorized.into());
         }
 
@@ -907,6 +908,49 @@ mod tests {
 
         assert_eq!(error.code, "UNAUTHORIZED");
         assert_eq!(ctx.repository.list().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn create_request_refuses_deactivated_requester_with_public_permission() {
+        let ctx = setup();
+
+        let permission = Permission::new(
+            Allow::public(),
+            Resource::AddressBook(ResourceAction::Create),
+        );
+        PERMISSION_REPOSITORY.insert(permission.key(), permission);
+
+        let mut deactivated_user = ctx.caller_user.clone();
+        deactivated_user.status = UserStatus::Inactive;
+        USER_REPOSITORY.insert(deactivated_user.to_key(), deactivated_user);
+
+        let input = CreateRequestInput {
+            operation: station_api::RequestOperationInput::AddAddressBookEntry(
+                station_api::AddAddressBookEntryOperationInput {
+                    address_owner: "".to_owned(),
+                    address: "abc".to_owned(),
+                    blockchain: "icp".to_owned(),
+                    metadata: vec![],
+                    labels: vec![],
+                    address_format: AddressFormat::ICPAccountIdentifier.to_string(),
+                },
+            ),
+            title: None,
+            summary: None,
+            execution_plan: None,
+            expiration_dt: None,
+            deduplication_key: None,
+            tags: None,
+        };
+
+        let error = ctx
+            .service
+            .create_request(input, &ctx.call_context)
+            .await
+            .expect_err("a deactivated requester cannot create the request");
+
+        assert_eq!(error.code, "UNAUTHORIZED");
+        assert!(ctx.repository.list().is_empty());
     }
 
     #[tokio::test]
