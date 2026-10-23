@@ -9,8 +9,8 @@ use crate::utils::{
     get_disaster_recovery_state, get_icp_asset, get_system_info, get_upgrader_disaster_recovery,
     get_upgrader_logs, get_user, request_disaster_recovery, set_disaster_recovery,
     set_disaster_recovery_accounts, set_disaster_recovery_accounts_and_assets,
-    set_disaster_recovery_committee, upload_canister_chunks_to_asset_canister, user_test_id,
-    ADMIN_GROUP_ID, NNS_ROOT_CANISTER_ID,
+    set_disaster_recovery_committee, submit_request_raw, upload_canister_chunks_to_asset_canister,
+    user_test_id, ADMIN_GROUP_ID, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
@@ -394,6 +394,40 @@ fn test_disaster_recovery_flow() {
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 
     assert!(dr_status.recovery_requests.is_empty());
+}
+
+#[test]
+fn test_set_disaster_recovery_requires_committee() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let upgrader_id = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).upgrader_id;
+    let committee_before = get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station)
+        .expect("No committee found");
+
+    let error = submit_request_raw(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        RequestOperationInput::SetDisasterRecovery(SetDisasterRecoveryOperationInput {
+            committee: None,
+        }),
+    )
+    .expect("Failed to call create_request")
+    .0
+    .expect_err("A request without a committee should be refused");
+
+    assert_eq!(error.code, "VALIDATION_ERROR");
+    assert!(error
+        .details
+        .unwrap_or_default()
+        .get("info")
+        .is_some_and(|info| info.contains("MISSING_COMMITTEE")));
+
+    let committee_after = get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station)
+        .expect("No committee found");
+    assert_eq!(committee_after.users.len(), committee_before.users.len());
 }
 
 // The goal of this test is not to check if the committee is set correctly, but to check that when the station is

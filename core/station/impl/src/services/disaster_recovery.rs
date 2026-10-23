@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
-use orbit_essentials::api::ServiceResult;
+use orbit_essentials::api::{ApiResult, ServiceResult};
 use uuid::Uuid;
 
 use super::{SystemService, UserService, USER_SERVICE};
@@ -40,7 +40,7 @@ impl DisasterRecoveryService {
         let accounts = self.account_repository.list();
         let assets = self.asset_repository.list();
 
-        ic_cdk::call::<_, ()>(
+        ic_cdk::call::<_, (ApiResult,)>(
             upgrader_canister_id,
             "set_disaster_recovery_accounts_and_assets",
             (upgrader_api::SetDisasterRecoveryAccountsAndAssetsInput {
@@ -49,9 +49,9 @@ impl DisasterRecoveryService {
             },),
         )
         .await
-        .map_err(|(_, err)| DisasterRecoveryError::AccountSyncFailed {
-            reason: err.to_string(),
-        })?;
+        .map_err(|(_, err)| err.to_string())
+        .and_then(|(result,)| result.map_err(|err| err.to_string()))
+        .map_err(|reason| DisasterRecoveryError::AccountSyncFailed { reason })?;
 
         Ok(())
     }
@@ -72,7 +72,7 @@ impl DisasterRecoveryService {
             })
             .unwrap_or_default();
 
-        ic_cdk::call::<_, ()>(
+        ic_cdk::call::<_, (ApiResult,)>(
             upgrader_canister_id,
             "set_disaster_recovery_committee",
             (upgrader_api::SetDisasterRecoveryCommitteeInput {
@@ -90,9 +90,9 @@ impl DisasterRecoveryService {
             },),
         )
         .await
-        .map_err(|(_, err)| DisasterRecoveryError::CommitteeSyncFailed {
-            reason: err.to_string(),
-        })?;
+        .map_err(|(_, err)| err.to_string())
+        .and_then(|(result,)| result.map_err(|err| err.to_string()))
+        .map_err(|reason| DisasterRecoveryError::CommitteeSyncFailed { reason })?;
 
         Ok(())
     }
