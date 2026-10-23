@@ -6,6 +6,7 @@ use ic_cdk::{id, query, update};
 
 thread_local! {
     static NUMBER: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
+    static VALIDATION_RELEASED: std::cell::RefCell<bool> = const { std::cell::RefCell::new(false) };
 }
 
 #[update]
@@ -42,6 +43,21 @@ async fn validate_number(input: StoreNumberInput) -> ValidationResponse {
     } else {
         ValidationResponse::Ok("Number is valid".to_string())
     }
+}
+
+#[update]
+async fn validate_when_released() -> ValidationResponse {
+    while !VALIDATION_RELEASED.with(|released| *released.borrow()) {
+        let _ = ic_cdk::call::<_, ()>(id(), "noop", ((),)).await;
+    }
+    ValidationResponse::Ok("Released".to_string())
+}
+
+#[update]
+async fn release_validation() {
+    VALIDATION_RELEASED.with(|released| {
+        *released.borrow_mut() = true;
+    });
 }
 
 #[update]

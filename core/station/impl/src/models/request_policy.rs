@@ -166,14 +166,19 @@ pub mod request_policy_test_utils {
         core::CallContext,
         errors::RequestPolicyError,
         models::{
-            request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier,
+            permission::{Allow, Permission},
+            request_policy_rule::RequestPolicyRule,
+            request_specifier::RequestSpecifier,
+            resource::{Resource, UserResourceAction},
             AddNamedRuleOperationInput, AddRequestPolicyOperationInput, AddUserOperationInput,
             MetadataItem, ADMIN_GROUP_ID,
         },
+        repositories::permission::PERMISSION_REPOSITORY,
         services::{NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE, REQUEST_SERVICE, USER_SERVICE},
     };
     use candid::Principal;
-    use orbit_essentials::model::ModelValidator;
+    use orbit_essentials::model::{ModelKey, ModelValidator};
+    use orbit_essentials::repository::Repository;
     use station_api::CreateRequestInput;
     use uuid::Uuid;
 
@@ -221,6 +226,12 @@ pub mod request_policy_test_utils {
                 status: crate::models::UserStatus::Active,
             })
             .expect("Failed to add user");
+
+        let permission = Permission::new(
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::User(UserResourceAction::Create),
+        );
+        PERMISSION_REPOSITORY.insert(permission.key(), permission);
 
         let ctx = CallContext::new(user.identities[0]);
 
