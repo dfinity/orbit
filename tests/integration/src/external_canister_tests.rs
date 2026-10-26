@@ -3,7 +3,8 @@ use crate::utils::{
     add_user, bump_time_to_avoid_ratelimit, canister_status, deploy_test_canister, execute_request,
     get_core_canister_health_status, get_request, get_system_info, hash, submit_request,
     submit_request_approval, submit_request_raw, submit_request_with_expected_trap, update_raw,
-    upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, COUNTER_WAT,
+    upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, ADMIN_GROUP_ID,
+    COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -15,17 +16,20 @@ use orbit_essentials::utils::timestamp_to_rfc3339;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
-    AddRequestPolicyOperationInput, AllowDTO, CallExternalCanisterOperationInput,
+    AddRequestPolicyOperationInput, AllowDTO, AuthScopeDTO, CallExternalCanisterOperationInput,
     CallExternalCanisterResourceTargetDTO, CanisterInstallMode, CanisterMethodDTO,
     ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
+    CreateExternalCanisterOperationKindAddExistingDTO,
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
-    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
-    HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse,
-    PruneExternalCanisterOperationInput, PruneExternalCanisterResourceDTO, QuorumDTO,
-    RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, RequestStatusDTO, RestoreExternalCanisterOperationInput, Snapshot,
-    SnapshotExternalCanisterOperationInput, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO,
+    ExternalCanisterCallPermissionDTO, ExternalCanisterCallRequestPolicyRuleInput,
+    ExternalCanisterIdDTO, ExternalCanisterPermissionsCreateInput,
+    ExternalCanisterRequestPoliciesCreateInput, HealthStatus, ListRequestsInput,
+    ListRequestsOperationTypeDTO, ListRequestsResponse, PruneExternalCanisterOperationInput,
+    PruneExternalCanisterResourceDTO, QuorumDTO, RequestApprovalStatusDTO, RequestOperationDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
+    RestoreExternalCanisterOperationInput, Snapshot, SnapshotExternalCanisterOperationInput,
+    UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::str::FromStr;
 use std::time::Duration;
@@ -1757,4 +1761,143 @@ fn read_system_canister_info() {
     )
     .unwrap_err();
     assert!(err.reject_message.contains("System(SystemInfo)"));
+}
+
+#[test]
+fn long_running_request_does_not_delay_other_requests() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // create and install the test canister and add it to the station with calls to
+    // its methods being auto-approved for admins
+    let test_canister_id = deploy_test_canister(&env, canister_ids.station);
+    let admins = AllowDTO {
+        auth_scope: AuthScopeDTO::Restricted,
+        users: vec![],
+        user_groups: vec![ADMIN_GROUP_ID.hyphenated().to_string()],
+    };
+    let methods = ["wait_for_release", "noop"];
+    let add_test_canister =
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            kind: CreateExternalCanisterOperationKindDTO::AddExisting(
+                CreateExternalCanisterOperationKindAddExistingDTO {
+                    canister_id: test_canister_id,
+                },
+            ),
+            name: "test-canister".to_string(),
+            description: None,
+            labels: None,
+            metadata: None,
+            permissions: ExternalCanisterPermissionsCreateInput {
+                read: admins.clone(),
+                change: admins.clone(),
+                calls: methods
+                    .iter()
+                    .map(|method| ExternalCanisterCallPermissionDTO {
+                        allow: admins.clone(),
+                        validation_method: ValidationMethodResourceTargetDTO::No,
+                        execution_method: method.to_string(),
+                    })
+                    .collect(),
+            },
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
+                calls: methods
+                    .iter()
+                    .map(|method| ExternalCanisterCallRequestPolicyRuleInput {
+                        policy_id: None,
+                        rule: RequestPolicyRuleDTO::AutoApproved,
+                        validation_method: ValidationMethodResourceTargetDTO::No,
+                        execution_method: method.to_string(),
+                    })
+                    .collect(),
+            },
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_test_canister,
+    )
+    .unwrap();
+
+    let call_test_canister = |method: &str| {
+        RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+            validation_method: None,
+            execution_method: CanisterMethodDTO {
+                canister_id: test_canister_id,
+                method_name: method.to_string(),
+            },
+            arg: None,
+            execution_method_cycles: None,
+        })
+    };
+
+    // submit a request that keeps processing until the test canister is released
+    let long_running_request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        call_test_canister("wait_for_release"),
+    );
+    for _ in 0..5 {
+        env.advance_time(Duration::from_secs(5));
+        env.tick();
+    }
+    let status = get_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        long_running_request.clone(),
+    )
+    .status;
+    assert!(matches!(status, RequestStatusDTO::Processing { .. }));
+
+    // submit more requests than are executed in a single batch (20)
+    let requests: Vec<_> = (0..25)
+        .map(|_| {
+            submit_request(
+                &env,
+                WALLET_ADMIN_USER,
+                canister_ids.station,
+                call_test_canister("noop"),
+            )
+        })
+        .collect();
+    for _ in 0..20 {
+        env.advance_time(Duration::from_secs(5));
+        env.tick();
+    }
+
+    // all of them complete while the long-running request is still processing
+    for request in requests {
+        let status = get_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).status;
+        assert!(matches!(status, RequestStatusDTO::Completed { .. }));
+    }
+    let status = get_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        long_running_request.clone(),
+    )
+    .status;
+    assert!(matches!(status, RequestStatusDTO::Processing { .. }));
+
+    // once released, the long-running request completes as well
+    update_raw(
+        &env,
+        test_canister_id,
+        Principal::anonymous(),
+        "release",
+        Encode!(&()).unwrap(),
+    )
+    .unwrap();
+    wait_for_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        long_running_request,
+    )
+    .unwrap();
 }
