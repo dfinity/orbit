@@ -1,10 +1,12 @@
 /* eslint-disable vue/one-component-per-file */
 import { flushPromises } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { defineComponent, h } from 'vue';
+import { defineComponent, h, ref } from 'vue';
+import { RequestPolicyRule } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { mount } from '~/test.utils';
 import { useUserGroupsAutocomplete } from './autocomplete.composable';
+import { useRuleToTooltip } from './request-policies.composable';
 import { provideVerifiedReads, useVerifiedReads } from './verified-reads.composable';
 
 const Reader = defineComponent({
@@ -25,6 +27,30 @@ const ReviewScope = defineComponent({
     return () => h(Reader);
   },
 });
+
+const TooltipReader = defineComponent({
+  setup() {
+    useRuleToTooltip(
+      ref<RequestPolicyRule>({ Quorum: { min_approved: 1, approvers: { Group: ['group-1'] } } }),
+    );
+
+    return () => h('div');
+  },
+});
+
+const TooltipReviewScope = defineComponent({
+  setup() {
+    provideVerifiedReads();
+
+    return () => h(TooltipReader);
+  },
+});
+
+const mockUserGroup = () =>
+  vi.spyOn(services().station, 'getUserGroup').mockResolvedValue({
+    user_group: { id: 'group-1', name: 'Group 1' },
+    privileges: { id: 'group-1', can_edit: false, can_delete: false },
+  });
 
 describe('Verified reads composable', () => {
   afterEach(() => {
@@ -64,6 +90,30 @@ describe('Verified reads composable', () => {
     // the autocomplete search is debounced
     await vi.waitFor(() =>
       expect(services().station.listUserGroups).toHaveBeenCalledWith(expect.anything(), true),
+    );
+  });
+
+  it('uses query calls for rule tooltips outside of a review scope', async () => {
+    mockUserGroup();
+
+    mount(TooltipReader);
+    await flushPromises();
+
+    expect(services().station.getUserGroup).toHaveBeenCalledWith(
+      { user_group_id: 'group-1' },
+      false,
+    );
+  });
+
+  it('uses verified calls for rule tooltips inside a review scope', async () => {
+    mockUserGroup();
+
+    mount(TooltipReviewScope);
+    await flushPromises();
+
+    expect(services().station.getUserGroup).toHaveBeenCalledWith(
+      { user_group_id: 'group-1' },
+      true,
     );
   });
 });
