@@ -78,6 +78,7 @@ onBeforeMount(async () => {
     try {
       const { named_rule } = await station.service.getNamedRule(
         props.operation.input.named_rule_id,
+        true,
       );
 
       if (!formValue.value.description) {

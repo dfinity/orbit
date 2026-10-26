@@ -77,7 +77,10 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await station.service.getRequestPolicy(props.operation.input.policy_id);
+    const currentEntry = await station.service.getRequestPolicy(
+      props.operation.input.policy_id,
+      true,
+    );
 
     if (isDiffMode.value) {
       currentRequestPolicy.value = deepClone(currentEntry.policy);

@@ -2,6 +2,7 @@ import { Ref, ref } from 'vue';
 import { logger } from '~/core/logger.core';
 import { UserGroup } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
+import { useVerifiedReads } from '~/composables/verified-reads.composable';
 import { debounce } from '~/utils/helper.utils';
 
 export const useAutocomplete = <T>(fetchCall: (search: string) => Promise<T[]>) => {
@@ -40,13 +41,17 @@ export const useAutocomplete = <T>(fetchCall: (search: string) => Promise<T[]>) 
 
 export const useUserGroupsAutocomplete = () => {
   const station = useStationStore();
+  const verifiedReads = useVerifiedReads();
 
   const autocomplete = useAutocomplete<UserGroup>(async term => {
-    const groups = await station.service.listUserGroups({
-      searchTerm: term.trim().length > 0 ? term.trim() : undefined,
-      limit: 100,
-      offset: 0,
-    });
+    const groups = await station.service.listUserGroups(
+      {
+        searchTerm: term.trim().length > 0 ? term.trim() : undefined,
+        limit: 100,
+        offset: 0,
+      },
+      verifiedReads,
+    );
 
     return groups.user_groups;
   });
@@ -56,13 +61,17 @@ export const useUserGroupsAutocomplete = () => {
 
 export const useUsersAutocomplete = () => {
   const station = useStationStore();
+  const verifiedReads = useVerifiedReads();
 
   const autocomplete = useAutocomplete(async term => {
-    const users = await station.service.listUsers({
-      searchTerm: term.trim().length > 0 ? term.trim() : undefined,
-      limit: 100,
-      offset: 0,
-    });
+    const users = await station.service.listUsers(
+      {
+        searchTerm: term.trim().length > 0 ? term.trim() : undefined,
+        limit: 100,
+        offset: 0,
+      },
+      verifiedReads,
+    );
 
     return users.users;
   });
@@ -72,13 +81,17 @@ export const useUsersAutocomplete = () => {
 
 export const useAccountsAutocomplete = () => {
   const station = useStationStore();
+  const verifiedReads = useVerifiedReads();
 
   const autocomplete = useAutocomplete(async term => {
-    const accounts = await station.service.listAccounts({
-      searchTerm: term.trim().length > 0 ? term.trim() : undefined,
-      limit: 100,
-      offset: 0,
-    });
+    const accounts = await station.service.listAccounts(
+      {
+        searchTerm: term.trim().length > 0 ? term.trim() : undefined,
+        limit: 100,
+        offset: 0,
+      },
+      verifiedReads,
+    );
 
     return accounts.accounts;
   });
@@ -88,13 +101,17 @@ export const useAccountsAutocomplete = () => {
 
 export const useAddressBookAutocomplete = () => {
   const station = useStationStore();
+  const verifiedReads = useVerifiedReads();
 
   const autocomplete = useAutocomplete(async term => {
-    const results = await station.service.listAddressBook({
-      search_term: term.trim().length > 0 ? term.trim() : undefined,
-      limit: 10,
-      offset: 0,
-    });
+    const results = await station.service.listAddressBook(
+      {
+        search_term: term.trim().length > 0 ? term.trim() : undefined,
+        limit: 10,
+        offset: 0,
+      },
+      verifiedReads,
+    );
 
     return results.address_book_entries;
   });
@@ -104,12 +121,16 @@ export const useAddressBookAutocomplete = () => {
 
 export const useAssetAutocomplete = () => {
   const station = useStationStore();
+  const verifiedReads = useVerifiedReads();
 
   const autocomplete = useAutocomplete(async () => {
-    const results = await station.service.listAssets({
-      limit: 100,
-      offset: 0,
-    });
+    const results = await station.service.listAssets(
+      {
+        limit: 100,
+        offset: 0,
+      },
+      verifiedReads,
+    );
 
     return results.assets;
   });

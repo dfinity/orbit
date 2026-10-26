@@ -64,7 +64,10 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const { named_rule } = await station.service.getNamedRule(props.operation.input.named_rule_id);
+    const { named_rule } = await station.service.getNamedRule(
+      props.operation.input.named_rule_id,
+      true,
+    );
 
     formValue.value = named_rule;
   } catch (e) {
