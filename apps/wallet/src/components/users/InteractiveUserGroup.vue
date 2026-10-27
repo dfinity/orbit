@@ -49,7 +49,7 @@ async function fetchGroupDetails() {
       statuses: [{ Active: null }],
       limit: 5,
     });
-    tooltipContent.value = `${groupUsers.total} user${groupUsers.total > 1 ? 's' : ''} in group: ${groupUsers.users.map(user => user.name).join(', ')}`;
+    tooltipContent.value = `${groupUsers.total} active user${groupUsers.total > 1 ? 's' : ''} in group: ${groupUsers.users.map(user => user.name).join(', ')}`;
   } catch (error) {
     console.error('Failed to fetch group details:', error);
     tooltipContent.value = 'Failed to load group details';
