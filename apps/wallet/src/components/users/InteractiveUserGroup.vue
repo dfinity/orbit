@@ -46,6 +46,7 @@ async function fetchGroupDetails() {
   try {
     const groupUsers = await service.listUsers({
       groups: [input.id],
+      statuses: [{ Active: null }],
       limit: 5,
     });
     tooltipContent.value = `${groupUsers.total} user${groupUsers.total > 1 ? 's' : ''} in group: ${groupUsers.users.map(user => user.name).join(', ')}`;
