@@ -76,9 +76,12 @@ const fetchDetails = async () => {
     }
     loading.value = true;
 
-    const { permission: result } = await station.service.getPermission({
-      resource: props.operation.input.resource,
-    });
+    const { permission: result } = await station.service.getPermission(
+      {
+        resource: props.operation.input.resource,
+      },
+      true,
+    );
 
     if (isDiffMode.value) {
       // snapshot original for diff

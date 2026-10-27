@@ -68,7 +68,10 @@ onBeforeMount(async () => {
   if (isDiffMode.value) {
     try {
       currentUserGroup.value = (
-        await stationService.getUserGroup({ user_group_id: props.operation.input.user_group_id })
+        await stationService.getUserGroup(
+          { user_group_id: props.operation.input.user_group_id },
+          true,
+        )
       ).user_group;
     } catch (e) {
       currentUserGroupFailed.value = getErrorMessage(e);

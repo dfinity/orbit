@@ -90,7 +90,7 @@ onBeforeMount(async () => {
           {
             user_id: props.operation.input.id,
           },
-          false,
+          true,
         )
       ).user;
     } catch (error) {
