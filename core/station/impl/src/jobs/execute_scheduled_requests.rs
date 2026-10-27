@@ -1,6 +1,6 @@
 use super::{scheduler::Scheduler, JobType, ScheduledJob};
 use crate::{
-    core::ic_cdk::next_time,
+    core::ic_cdk::{next_time, spawn},
     errors::RequestExecuteError,
     models::{Request, RequestStatus},
     repositories::RequestRepository,
@@ -65,29 +65,31 @@ impl Job {
                 .save_modified(request, request_processing_time);
         }
 
-        // batch the requests to be executed
-        let calls = requests
-            .clone()
-            .into_iter()
-            .map(|request| self.execute_request(request));
-
-        // wait for all the requests to be executed
-        let results = future::join_all(calls).await;
-
-        // update the status of the requests
-        for result in results.into_iter() {
-            match result {
-                Ok(()) => (),
-                Err((request, e)) => {
-                    let request_failed_time = next_time();
-                    self.request_service
-                        .fail_request(request, e.to_string(), request_failed_time)
-                        .await;
-                }
+        // execute each request in its own task, so that a request completes independently of the
+        // other requests in the batch and a long-running request doesn't hold up the job
+        //
+        // the number of requests in flight is still bounded by `MAX_PROCESSING_REQUESTS`
+        if cfg!(test) {
+            future::join_all(requests.into_iter().map(Self::execute_and_finalize)).await;
+        } else {
+            for request in requests {
+                spawn(Self::execute_and_finalize(request));
             }
         }
 
         processing_all_requests
+    }
+
+    /// Executes a single request and marks it as failed if its execution failed.
+    async fn execute_and_finalize(request: Request) {
+        let job = Self::default();
+
+        if let Err((request, e)) = job.execute_request(request).await {
+            let request_failed_time = next_time();
+            job.request_service
+                .fail_request(request, e.to_string(), request_failed_time)
+                .await;
+        }
     }
 
     /// Executes a single request.

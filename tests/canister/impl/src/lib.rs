@@ -6,6 +6,7 @@ use ic_cdk::{id, query, update};
 
 thread_local! {
     static NUMBER: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
+    static RELEASED: std::cell::RefCell<bool> = const { std::cell::RefCell::new(false) };
 }
 
 #[update]
@@ -66,6 +67,18 @@ async fn unstoppable() {
             let _ = ic_cdk::call::<_, ()>(id(), "noop", ((),)).await;
         }
     }
+}
+
+#[update]
+async fn wait_for_release() {
+    while !RELEASED.with(|r| *r.borrow()) {
+        let _ = ic_cdk::call::<_, ()>(id(), "noop", ((),)).await;
+    }
+}
+
+#[update]
+async fn release() {
+    RELEASED.with(|r| *r.borrow_mut() = true);
 }
 
 #[cfg(test)]
