@@ -8,15 +8,24 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" />
-  <UserGroupForm v-else :model-value="formValue" mode="view" />
+  <div v-else>
+    <UserGroupMembersWarning
+      v-if="isPending"
+      :user-group-id="props.operation.input.user_group_id"
+      class="mb-4"
+    />
+    <UserGroupForm :model-value="formValue" mode="view" />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import UserGroupForm from '~/components/users/UserGroupForm.vue';
+import UserGroupMembersWarning from '~/components/users/UserGroupMembersWarning.vue';
 import logger from '~/core/logger.core';
 import { Request, RemoveUserGroupOperation, UserGroup } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
+import { variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 
 const props = withDefaults(
@@ -31,6 +40,12 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
+// Members are only removed when the request executes, so the warning is only relevant until then.
+const isPending = computed(() =>
+  (['Created', 'Approved', 'Scheduled', 'Processing'] as const).some(status =>
+    variantIs(props.request.status, status),
+  ),
+);
 const formValue: Ref<Partial<UserGroup>> = ref({});
 const loading = ref(false);
 const station = useStationStore();
