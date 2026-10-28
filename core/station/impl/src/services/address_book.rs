@@ -16,7 +16,9 @@ use crate::{
     repositories::{AddressBookRepository, AddressBookWhereClause, ADDRESS_BOOK_REPOSITORY},
 };
 use lazy_static::lazy_static;
-use orbit_essentials::{api::ServiceResult, model::ModelValidator, repository::Repository};
+use orbit_essentials::{
+    api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
+};
 use station_api::PaginationInput;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -111,11 +113,13 @@ impl AddressBookService {
     pub async fn create_entry(
         &self,
         input: AddAddressBookEntryOperationInput,
+        created_by: Option<UUID>,
     ) -> ServiceResult<AddressBookEntry> {
         let uuid = generate_uuid_v4().await;
         let key = AddressBookEntry::key(*uuid.as_bytes());
 
-        let new_entry = AddressBookMapper::from_create_input(input.to_owned(), *uuid.as_bytes())?;
+        let new_entry =
+            AddressBookMapper::from_create_input(input.to_owned(), *uuid.as_bytes(), created_by)?;
         new_entry.validate()?;
 
         if let Some(v) = self
@@ -139,6 +143,7 @@ impl AddressBookService {
     pub async fn edit_entry(
         &self,
         input: EditAddressBookEntryOperationInput,
+        edited_by: Option<UUID>,
     ) -> ServiceResult<AddressBookEntry> {
         let mut entry = self.get_entry_by_id(&input.address_book_entry_id)?;
 
@@ -149,6 +154,8 @@ impl AddressBookService {
         if let Some(change_metadata) = input.change_metadata {
             entry.metadata.change(change_metadata);
         }
+
+        entry.last_modified_by = edited_by;
 
         entry.validate()?;
 
@@ -215,7 +222,10 @@ mod tests {
             },
         };
 
-        let result = ctx.service.create_entry(operation.input.clone()).await;
+        let result = ctx
+            .service
+            .create_entry(operation.input.clone(), None)
+            .await;
 
         let new_entry = result.unwrap();
 
@@ -226,7 +236,7 @@ mod tests {
 
         // adding a new entry for the same address should fail
 
-        let result = ctx.service.create_entry(operation.input).await;
+        let result = ctx.service.create_entry(operation.input, None).await;
 
         result.unwrap_err();
     }
@@ -258,7 +268,7 @@ mod tests {
             )),
             labels: None,
         };
-        let result = ctx.service.edit_entry(operation).await;
+        let result = ctx.service.edit_entry(operation, None).await;
         assert!(result.is_ok());
         let updated_entry = result.unwrap();
         address_book_entry.address_owner = "test_edit".to_string();
@@ -298,7 +308,7 @@ mod tests {
             )),
             labels: None,
         };
-        let result = ctx.service.edit_entry(operation).await;
+        let result = ctx.service.edit_entry(operation, None).await;
         assert!(result.is_ok());
         let updated_entry = result.unwrap();
         address_book_entry.metadata = new_metadata_dto;
@@ -315,7 +325,7 @@ mod tests {
             change_metadata: Some(ChangeMetadata::RemoveKeys(remove_keys)),
             labels: None,
         };
-        let result = ctx.service.edit_entry(operation).await;
+        let result = ctx.service.edit_entry(operation, None).await;
         assert!(result.is_ok());
         let updated_entry = result.unwrap();
         address_book_entry.metadata = new_metadata_dto.into();
