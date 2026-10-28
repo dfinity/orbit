@@ -479,6 +479,7 @@ mod tests {
     use async_trait::async_trait;
     use candid::Principal;
     use orbit_essentials::types::WasmModuleExtraChunks;
+    use orbit_essentials::utils::sha256_hash;
     use std::{
         panic::{set_hook, take_hook},
         sync::{atomic::AtomicI32, Arc},
@@ -840,5 +841,89 @@ mod tests {
             .expect_err("Setting committee during recovery should fail");
 
         assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
+    }
+
+    #[tokio::test]
+    async fn install_code_footprint_includes_module_delivery() {
+        // A member submitting a chunked install that copies another member's
+        // declared wasm hash but sources the module from a different store must
+        // not match that member's footprint. Before the delivery was part of the
+        // footprint, the two requests collided and a single member could ride an
+        // honest recovery to run their own request.
+        let dr = DisasterRecoveryService {
+            installer: Arc::new(TestInstaller::default()),
+            storage: Default::default(),
+            logger: Default::default(),
+        };
+        dr.set_committee(mock_committee())
+            .expect("Failed to set committee");
+
+        let official_module = vec![0xCA, 0xFE, 0xBA, 0xBE];
+        let official_hash = sha256_hash(&official_module);
+
+        // Honest member: reinstall the official module, no extra chunks.
+        dr.request_recovery(
+            Principal::from_slice(&[1; 29]),
+            upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+                upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                    arg: vec![7],
+                    module: official_module,
+                    module_extra_chunks: None,
+                    install_mode: upgrader_api::InstallMode::Reinstall,
+                },
+            ),
+        );
+
+        // Second member: same install_mode, arg, and declared hash, but a chunked
+        // delivery pointing at a store of their choosing.
+        dr.request_recovery(
+            Principal::from_slice(&[2; 29]),
+            upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+                upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                    arg: vec![7],
+                    module: vec![0xDE, 0xAD],
+                    module_extra_chunks: Some(WasmModuleExtraChunks {
+                        store_canister: Principal::from_slice(&[42; 29]),
+                        extra_chunks_key: "attacker".to_string(),
+                        wasm_module_hash: official_hash,
+                    }),
+                    install_mode: upgrader_api::InstallMode::Reinstall,
+                },
+            ),
+        );
+
+        assert_eq!(dr.storage.get().recovery_requests.len(), 2);
+        // Footprints differ on delivery, so quorum is not reached by the two
+        // mismatched requests.
+        assert!(matches!(
+            dr.evaluate_requests(),
+            RecoveryEvaluationResult::Unmet
+        ));
+
+        // Two members agreeing on the same chunked delivery do reach quorum.
+        for member in [
+            Principal::from_slice(&[2; 29]),
+            Principal::from_slice(&[3; 29]),
+        ] {
+            dr.request_recovery(
+                member,
+                upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+                    upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                        arg: vec![7],
+                        module: vec![0xDE, 0xAD],
+                        module_extra_chunks: Some(WasmModuleExtraChunks {
+                            store_canister: Principal::from_slice(&[42; 29]),
+                            extra_chunks_key: "shared".to_string(),
+                            wasm_module_hash: sha256_hash(&[0xDE, 0xAD]),
+                        }),
+                        install_mode: upgrader_api::InstallMode::Reinstall,
+                    },
+                ),
+            );
+        }
+        assert!(matches!(
+            dr.evaluate_requests(),
+            RecoveryEvaluationResult::Met(_)
+        ));
     }
 }
