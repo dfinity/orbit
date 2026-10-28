@@ -1,5 +1,4 @@
 import { createCommand } from 'commander';
-import { assertReplicaIsHealthy } from '../utils';
 import {
   Application,
   applicationToRegistryEntryMap,
@@ -29,8 +28,6 @@ command
   );
 
 command.action(async options => {
-  assertReplicaIsHealthy(options.network);
-
   const entries = await searchRegistry({
     name: applicationToRegistryEntryMap[options.app as Application],
     network: options.network,

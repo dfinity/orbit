@@ -1,20 +1,10 @@
 import { exec, execSync } from 'child_process';
-import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
-import { homedir } from 'os';
 import { join } from 'path';
 import { promisify } from 'util';
 
 export const ROOT_PATH = join(__dirname, '../..');
 export const DFX_PATH = join(ROOT_PATH, 'dfx.json');
-// DFX_CONFIG_ROOT stands in for the home directory, the same way dfx itself
-// treats it. Without this a caller that isolates the identity store has to
-// repoint HOME as well, which hides the dfxvm version store and makes dfx
-// report the pinned version as not installed.
-export const DFX_DEFAULT_IDENTITY_STORE_PATH = join(
-  process.env.DFX_CONFIG_ROOT || homedir(),
-  '.config/dfx/identity',
-);
 
 // Parse a string of arguments separated by a separator and return an array of strings.
 export const parseArgsListSplitByComma = (arg?: string): string[] => {
@@ -78,16 +68,6 @@ export const toBlobString = (buffer: Uint8Array): string => {
     .join('');
 };
 
-export const assertReplicaIsHealthy = async (network: string): Promise<void> => {
-  const ping: { replica_health_status?: string } = JSON.parse(
-    await execAsync(`dfx ping '${network}'`),
-  );
-
-  if (ping.replica_health_status?.toLowerCase() !== 'healthy') {
-    throw new Error('The replica is not healthy.');
-  }
-};
-
 export const commandExists = (command: string): boolean => {
   try {
     execSync(`command -v ${command}`, { stdio: 'ignore' });
@@ -130,24 +110,4 @@ export const getReplicaUrl = async (network: string): Promise<string> => {
   }
 
   throw new Error(`Network '${network}' does not have a replica URL.`);
-};
-
-export const getIdentityPemFilePath = async (identity: string): Promise<string> => {
-  if (!existsSync(DFX_DEFAULT_IDENTITY_STORE_PATH)) {
-    throw new Error('Identity store not found.');
-  }
-
-  const possiblePaths = [
-    join(DFX_DEFAULT_IDENTITY_STORE_PATH, identity, `${identity}.pem`),
-    join(DFX_DEFAULT_IDENTITY_STORE_PATH, identity, `identity.pem`),
-    join(DFX_DEFAULT_IDENTITY_STORE_PATH, identity, `id.pem`),
-  ];
-
-  for (const path of possiblePaths) {
-    if (existsSync(path)) {
-      return path;
-    }
-  }
-
-  throw new Error(`PEM file not found for identity: ${identity}`);
 };
