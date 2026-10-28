@@ -327,7 +327,18 @@ impl RequestService {
         ctx: &CallContext,
     ) -> ServiceResult<Request> {
         let requester = self.user_service.get_user_by_identity(&ctx.caller())?;
+        let resource = Resource::from(&input);
         let mut request = RequestFactory::create_request(requester.id, input).await?;
+
+        // Preparing the request can await an external validation call, so the requester is
+        // re-checked against the current state before the request is stored.
+        let current_ctx = CallContext::new(ctx.caller());
+        let requester_is_current_and_active = current_ctx
+            .user()
+            .is_some_and(|user| user.id == requester.id && user.is_active());
+        if !requester_is_current_and_active || !Authorization::is_allowed(&current_ctx, &resource) {
+            return Err(RequestError::Unauthorized.into());
+        }
 
         // Different request types may have different validation rules.
         request.validate()?;
@@ -571,12 +582,12 @@ mod tests {
         models::{
             account_test_utils::mock_account,
             asset_test_utils::mock_asset,
-            permission::Allow,
+            permission::{Allow, Permission},
             request_policy_rule::RequestPolicyRule,
             request_policy_test_utils::mock_request_policy,
             request_specifier::{RequestSpecifier, UserSpecifier},
             request_test_utils::mock_request,
-            resource::ResourceIds,
+            resource::{AccountResourceAction, ResourceAction, ResourceIds},
             user_test_utils::mock_user,
             AddAccountOperationInput, AddAddressBookEntryOperation,
             AddAddressBookEntryOperationInput, AddAssetOperationInput, AddUserOperation,
@@ -585,8 +596,9 @@ mod tests {
             TransferOperation, TransferOperationInput, User, UserGroup, UserStatus, ADMIN_GROUP_ID,
         },
         repositories::{
-            request_policy::REQUEST_POLICY_REPOSITORY, AccountRepository, AssetRepository,
-            NOTIFICATION_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
+            permission::PERMISSION_REPOSITORY, request_policy::REQUEST_POLICY_REPOSITORY,
+            AccountRepository, AssetRepository, NOTIFICATION_REPOSITORY, USER_GROUP_REPOSITORY,
+            USER_REPOSITORY,
         },
         services::{AccountService, ASSET_SERVICE},
     };
@@ -624,6 +636,14 @@ mod tests {
         user.groups.push(ADMIN_GROUP_ID.to_owned());
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        for resource in [
+            Resource::AddressBook(ResourceAction::Create),
+            Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
+        ] {
+            let permission = Permission::new(Allow::user_groups(vec![*ADMIN_GROUP_ID]), resource);
+            PERMISSION_REPOSITORY.insert(permission.key(), permission);
+        }
 
         let call_context = CallContext::new(caller_principal);
 
@@ -845,6 +865,92 @@ mod tests {
             .unwrap();
 
         assert!(!request.approvals.is_empty());
+    }
+
+    #[tokio::test]
+    async fn create_request_refuses_requester_deactivated_after_authorization() {
+        let ctx = setup();
+
+        let input = CreateRequestInput {
+            operation: station_api::RequestOperationInput::AddAddressBookEntry(
+                station_api::AddAddressBookEntryOperationInput {
+                    address_owner: "".to_owned(),
+                    address: "abc".to_owned(),
+                    blockchain: "icp".to_owned(),
+                    metadata: vec![],
+                    labels: vec![],
+                    address_format: AddressFormat::ICPAccountIdentifier.to_string(),
+                },
+            ),
+            title: None,
+            summary: None,
+            execution_plan: None,
+            expiration_dt: None,
+            deduplication_key: None,
+            tags: None,
+        };
+
+        ctx.service
+            .create_request(input.clone(), &ctx.call_context)
+            .await
+            .expect("an active requester can create the request");
+        assert_eq!(ctx.repository.list().len(), 1);
+
+        let mut deactivated_user = ctx.caller_user.clone();
+        deactivated_user.status = UserStatus::Inactive;
+        USER_REPOSITORY.insert(deactivated_user.to_key(), deactivated_user);
+
+        let error = ctx
+            .service
+            .create_request(input, &ctx.call_context)
+            .await
+            .expect_err("a deactivated requester cannot create the request");
+
+        assert_eq!(error.code, "UNAUTHORIZED");
+        assert_eq!(ctx.repository.list().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn create_request_refuses_deactivated_requester_with_public_permission() {
+        let ctx = setup();
+
+        let permission = Permission::new(
+            Allow::public(),
+            Resource::AddressBook(ResourceAction::Create),
+        );
+        PERMISSION_REPOSITORY.insert(permission.key(), permission);
+
+        let mut deactivated_user = ctx.caller_user.clone();
+        deactivated_user.status = UserStatus::Inactive;
+        USER_REPOSITORY.insert(deactivated_user.to_key(), deactivated_user);
+
+        let input = CreateRequestInput {
+            operation: station_api::RequestOperationInput::AddAddressBookEntry(
+                station_api::AddAddressBookEntryOperationInput {
+                    address_owner: "".to_owned(),
+                    address: "abc".to_owned(),
+                    blockchain: "icp".to_owned(),
+                    metadata: vec![],
+                    labels: vec![],
+                    address_format: AddressFormat::ICPAccountIdentifier.to_string(),
+                },
+            ),
+            title: None,
+            summary: None,
+            execution_plan: None,
+            expiration_dt: None,
+            deduplication_key: None,
+            tags: None,
+        };
+
+        let error = ctx
+            .service
+            .create_request(input, &ctx.call_context)
+            .await
+            .expect_err("a deactivated requester cannot create the request");
+
+        assert_eq!(error.code, "UNAUTHORIZED");
+        assert!(ctx.repository.list().is_empty());
     }
 
     #[tokio::test]
