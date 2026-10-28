@@ -124,11 +124,20 @@ impl DisasterRecoveryService {
             return Err(UpgraderApiError::EmptyCommittee.into());
         }
 
+        // Membership is deduplicated by user id elsewhere in the service (and requests are keyed by
+        // user id), so the quorum must be validated against the number of unique voters, not the
+        // length of the (possibly duplicate-containing) users vec. A quorum of 0 would approve
+        // disaster recovery with no votes; a quorum larger than the unique membership could never
+        // be met. Both are misconfigurations that must be rejected.
+        let committee_set: HashSet<_> = committee.users.iter().map(|user| user.id).collect();
+        if committee.quorum == 0 || committee.quorum as usize > committee_set.len() {
+            return Err(UpgraderApiError::InvalidQuorum.into());
+        }
+
         value.committee = Some(committee.clone());
 
         // only retain recovery requests from committee members
         // who are in the new committee
-        let committee_set: HashSet<_> = committee.users.iter().map(|user| user.id).collect();
         value
             .recovery_requests
             .retain(|request| committee_set.contains(&request.user_id));
@@ -570,6 +579,47 @@ mod tests {
         async fn stop(&self, _canister_id: Principal) -> Result<(), String> {
             Ok(())
         }
+    }
+
+    #[tokio::test]
+    async fn set_committee_rejects_invalid_quorum() {
+        let dr = DisasterRecoveryService {
+            installer: Arc::new(TestInstaller::default()),
+            storage: Default::default(),
+            logger: Default::default(),
+        };
+
+        // mock_committee has 3 members.
+        let mut committee = mock_committee();
+
+        committee.quorum = 0;
+        let err = dr
+            .set_committee(committee.clone())
+            .expect_err("quorum of 0 must be rejected");
+        assert_eq!(err.code, "INVALID_QUORUM".to_string());
+
+        committee.quorum = committee.users.len() as u16 + 1;
+        let err = dr
+            .set_committee(committee.clone())
+            .expect_err("quorum greater than the number of members must be rejected");
+        assert_eq!(err.code, "INVALID_QUORUM".to_string());
+        committee.quorum = committee.users.len() as u16;
+        dr.set_committee(committee.clone())
+            .expect("quorum equal to the number of members must be accepted");
+
+        committee.quorum = 1;
+        dr.set_committee(committee)
+            .expect("a positive quorum within the committee size must be accepted");
+
+        // Duplicate members must not inflate the effective quorum ceiling: 3 vec entries but only
+        // 2 unique voters, so a quorum of 3 is unreachable and must be rejected.
+        let mut committee = mock_committee();
+        committee.users[2].id = committee.users[1].id;
+        committee.quorum = 3;
+        let err = dr
+            .set_committee(committee)
+            .expect_err("quorum greater than the number of unique members must be rejected");
+        assert_eq!(err.code, "INVALID_QUORUM".to_string());
     }
 
     #[tokio::test]
