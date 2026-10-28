@@ -161,8 +161,10 @@ mod tests {
         indexes::request_policy_resource_index::RequestPolicyResourceIndex,
         request_policy_rule::RequestPolicyRule,
         request_policy_test_utils::mock_request_policy,
-        request_specifier::RequestSpecifier,
-        resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
+        request_specifier::{RequestSpecifier, ResourceSpecifier},
+        resource::{
+            AccountResourceAction, PermissionResourceAction, Resource, ResourceId, ResourceIds,
+        },
     };
 
     #[test]
@@ -177,6 +179,34 @@ mod tests {
         assert!(repository.get(&policy.id).is_some());
         assert!(repository.remove(&policy.id).is_some());
         assert!(repository.get(&policy.id).is_none());
+    }
+
+    /// A rule about who may change permissions on a resource must not become an approval path for
+    /// operations on that resource.
+    #[test]
+    fn edit_permission_policy_is_not_returned_for_the_target_resource() {
+        let repository = RequestPolicyRepository::default();
+        let treasury = [42; 16];
+        let treasury_transfer =
+            Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(treasury)));
+
+        let policy = RequestPolicy {
+            id: [9; 16],
+            specifier: RequestSpecifier::EditPermission(ResourceSpecifier::Resource(
+                treasury_transfer.clone(),
+            )),
+            rule: RequestPolicyRule::AutoApproved,
+        };
+
+        repository.insert(policy.id, policy.clone());
+
+        assert!(repository.find_by_resource(treasury_transfer).is_empty());
+        assert_eq!(
+            repository
+                .find_by_resource(Resource::Permission(PermissionResourceAction::Update))
+                .len(),
+            1
+        );
     }
 
     #[test]
