@@ -1038,10 +1038,9 @@ impl ExternalCanisterService {
     pub fn canister_monitor_restart(&self) {
         for canister in self.external_canister_repository.find_all() {
             if let Some(monitoring) = &canister.monitoring {
-                self.cycle_manager.add_canister(
+                self.cycle_manager.add_external_canister(
                     canister.canister_id,
                     monitoring.funding_strategy.clone(),
-                    monitoring.cycle_obtain_strategy,
                 );
             }
         }
@@ -1053,10 +1052,13 @@ impl ExternalCanisterService {
         strategy: MonitorExternalCanisterStrategy,
         cycle_obtain_strategy: Option<CycleObtainStrategy>,
     ) -> ServiceResult<()> {
-        if let Some(CycleObtainStrategy::MintFromNativeToken { .. }) = cycle_obtain_strategy {
+        if !matches!(
+            cycle_obtain_strategy,
+            None | Some(CycleObtainStrategy::Disabled)
+        ) {
             Err(ExternalCanisterError::Failed {
                 reason: format!(
-                    "Minting from native token is not yet supported for canister {}",
+                    "Obtaining cycles is not supported for canister {}",
                     canister_id.to_text()
                 ),
             })?;
@@ -1073,7 +1075,7 @@ impl ExternalCanisterService {
         }
 
         self.cycle_manager
-            .add_canister(canister_id, strategy.clone(), cycle_obtain_strategy);
+            .add_external_canister(canister_id, strategy.clone());
 
         external_canister.monitoring = Some(ExternalCanisterMonitoring {
             funding_strategy: strategy,
@@ -2359,6 +2361,106 @@ mod tests {
                 info: "The name 'test1' is already in use.".to_string()
             })
         );
+    }
+
+    #[test]
+    fn canister_monitor_start_rejects_cycle_obtain_strategies() {
+        setup();
+        let account = crate::models::account_test_utils::mock_account();
+        crate::repositories::ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+        let external_canister =
+            crate::models::external_canister_test_utils::mock_external_canister();
+        EXTERNAL_CANISTER_REPOSITORY.insert(external_canister.key(), external_canister.clone());
+
+        for cycle_obtain_strategy in [
+            CycleObtainStrategy::MintFromNativeToken {
+                account_id: account.id,
+            },
+            CycleObtainStrategy::WithdrawFromCyclesLedger {
+                account_id: account.id,
+            },
+        ] {
+            let result = EXTERNAL_CANISTER_SERVICE.canister_monitor_start(
+                external_canister.canister_id,
+                MonitorExternalCanisterStrategy::Always(1_000_000_000_000),
+                Some(cycle_obtain_strategy),
+            );
+
+            assert!(result.is_err());
+            assert!(CYCLE_MANAGER
+                .get_canister(&external_canister.canister_id)
+                .is_none());
+        }
+
+        for cycle_obtain_strategy in [None, Some(CycleObtainStrategy::Disabled)] {
+            let external_canister =
+                crate::models::external_canister_test_utils::mock_external_canister();
+            EXTERNAL_CANISTER_REPOSITORY.insert(external_canister.key(), external_canister.clone());
+
+            EXTERNAL_CANISTER_SERVICE
+                .canister_monitor_start(
+                    external_canister.canister_id,
+                    MonitorExternalCanisterStrategy::Always(1_000_000_000_000),
+                    cycle_obtain_strategy,
+                )
+                .expect("Failed to start monitoring the external canister");
+        }
+    }
+
+    #[tokio::test]
+    async fn monitored_external_canisters_never_obtain_cycles() {
+        setup();
+        let account = crate::models::account_test_utils::mock_account();
+        crate::repositories::ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+        CYCLE_MANAGER.set_global_cycle_obtain_strategy(&CycleObtainStrategy::MintFromNativeToken {
+            account_id: account.id,
+        });
+
+        // a monitor started through the service
+        let started = crate::models::external_canister_test_utils::mock_external_canister();
+        EXTERNAL_CANISTER_REPOSITORY.insert(started.key(), started.clone());
+        EXTERNAL_CANISTER_SERVICE
+            .canister_monitor_start(
+                started.canister_id,
+                MonitorExternalCanisterStrategy::Always(1_000_000_000_000),
+                None,
+            )
+            .expect("Failed to start monitoring the external canister");
+
+        // a monitor restored from storage with a per-canister obtain strategy
+        let mut restored = crate::models::external_canister_test_utils::mock_external_canister();
+        restored.monitoring = Some(ExternalCanisterMonitoring {
+            funding_strategy: MonitorExternalCanisterStrategy::Always(1_000_000_000_000),
+            cycle_obtain_strategy: Some(CycleObtainStrategy::WithdrawFromCyclesLedger {
+                account_id: account.id,
+            }),
+        });
+        EXTERNAL_CANISTER_REPOSITORY.insert(restored.key(), restored.clone());
+        EXTERNAL_CANISTER_SERVICE.canister_monitor_restart();
+
+        // changing the global strategy afterwards must not affect the external canisters
+        CYCLE_MANAGER.set_global_cycle_obtain_strategy(
+            &CycleObtainStrategy::WithdrawFromCyclesLedger {
+                account_id: account.id,
+            },
+        );
+
+        for canister_id in [started.canister_id, restored.canister_id] {
+            let record = CYCLE_MANAGER
+                .get_canister(&canister_id)
+                .expect("External canister is not monitored");
+            let obtain_cycles_options = record
+                .get_obtain_cycles_options()
+                .clone()
+                .expect("External canister has no obtain cycles options");
+
+            let error = obtain_cycles_options
+                .obtain_cycles
+                .obtain_cycles(1_000_000_000_000, canister_id)
+                .await
+                .expect_err("External canister must not obtain cycles");
+            assert!(!error.can_retry);
+        }
     }
 }
 
