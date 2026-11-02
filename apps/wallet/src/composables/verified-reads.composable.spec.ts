@@ -3,6 +3,7 @@ import { flushPromises } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref } from 'vue';
 import { RequestPolicyRule } from '~/generated/station/station.did';
+import InteractiveUserGroup from '~/components/users/InteractiveUserGroup.vue';
 import { services } from '~/plugins/services.plugin';
 import { mount } from '~/test.utils';
 import { useUserGroupsAutocomplete } from './autocomplete.composable';
@@ -43,6 +44,14 @@ const TooltipReviewScope = defineComponent({
     provideVerifiedReads();
 
     return () => h(TooltipReader);
+  },
+});
+
+const GroupReviewScope = defineComponent({
+  setup() {
+    provideVerifiedReads();
+
+    return () => h(InteractiveUserGroup, { id: 'group-1', name: 'Group 1' });
   },
 });
 
@@ -115,5 +124,24 @@ describe('Verified reads composable', () => {
       { user_group_id: 'group-1' },
       true,
     );
+  });
+
+  it('uses verified calls for group member tooltips inside a review scope', async () => {
+    vi.spyOn(services().station, 'listUsers').mockResolvedValue({
+      users: [],
+      next_offset: [],
+      total: BigInt(0),
+      privileges: [],
+    });
+
+    const wrapper = mount(
+      GroupReviewScope,
+      {},
+      { initialPiniaState: { station: { privileges: [{ ListUsers: null }] } } },
+    );
+    await wrapper.find('.underline-dotted').trigger('mouseenter');
+    await flushPromises();
+
+    expect(services().station.listUsers).toHaveBeenCalledWith(expect.anything(), true);
   });
 });
