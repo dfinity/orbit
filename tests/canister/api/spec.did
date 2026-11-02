@@ -14,4 +14,6 @@ service : {
   get_number : () -> (nat64) query;
   noop : () -> ();
   unstoppable : () -> ();
+  wait_for_release : () -> ();
+  release : () -> ();
 };
