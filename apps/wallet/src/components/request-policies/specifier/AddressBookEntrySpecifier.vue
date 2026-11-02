@@ -36,6 +36,7 @@ import { computed, ref, toRefs, watch } from 'vue';
 import AddressBookAutocomplete from '~/components/inputs/AddressBookAutocomplete.vue';
 import { AddressBookEntry, ResourceIds } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
+import { useVerifiedReads } from '~/composables/verified-reads.composable';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -54,6 +55,7 @@ const input = withDefaults(
 const props = toRefs(input);
 
 const stationService = services().station;
+const verifiedReads = useVerifiedReads();
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: ResourceIds): void;
@@ -96,9 +98,12 @@ watch(
       const list = variantIs(model.value, 'Ids') ? model.value['Ids'] : [];
       const allEntries = [];
       while (list.length > 0) {
-        const entries = await stationService.listAddressBook({
-          ids: list.splice(0, 100),
-        });
+        const entries = await stationService.listAddressBook(
+          {
+            ids: list.splice(0, 100),
+          },
+          verifiedReads,
+        );
         allEntries.push(...entries.address_book_entries);
       }
       loadedEntries.value = allEntries;

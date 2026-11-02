@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { services } from '~/plugins/services.plugin';
+import { useVerifiedReads } from '~/composables/verified-reads.composable';
 import { Privilege } from '~/types/auth.types';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
 
@@ -34,6 +35,7 @@ const input = defineProps<{
 const tooltipContent = ref('');
 const isLoadingTooltip = ref(false);
 const service = services().station;
+const verifiedReads = useVerifiedReads();
 
 const hasListUsersPrivilege = computed(() =>
   hasRequiredPrivilege({ anyOf: [Privilege.ListUsers] }),
@@ -44,11 +46,14 @@ async function fetchGroupDetails() {
 
   isLoadingTooltip.value = true;
   try {
-    const groupUsers = await service.listUsers({
-      groups: [input.id],
-      statuses: [{ Active: null }],
-      limit: 5,
-    });
+    const groupUsers = await service.listUsers(
+      {
+        groups: [input.id],
+        statuses: [{ Active: null }],
+        limit: 5,
+      },
+      verifiedReads,
+    );
     tooltipContent.value = `${groupUsers.total} active user${groupUsers.total > 1 ? 's' : ''} in group: ${groupUsers.users.map(user => user.name).join(', ')}`;
   } catch (error) {
     console.error('Failed to fetch group details:', error);

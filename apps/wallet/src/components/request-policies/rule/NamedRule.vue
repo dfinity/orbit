@@ -45,6 +45,7 @@ import { computed } from 'vue';
 import { toRefs } from 'vue';
 import ErrorTooltip from '~/components/error/ErrorTooltip.vue';
 import { useRuleToTooltip } from '~/composables/request-policies.composable';
+import { useVerifiedReads } from '~/composables/verified-reads.composable';
 import { NamedRule, UUID } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
@@ -65,6 +66,7 @@ const namedRule = ref<NamedRule | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const appStore = useAppStore();
+const verifiedReads = useVerifiedReads();
 
 const rule = computed(() => (namedRule.value ? namedRule.value.rule : null));
 
@@ -77,7 +79,9 @@ const emit = defineEmits<{
 onMounted(async () => {
   loading.value = true;
   try {
-    namedRule.value = (await services().station.getNamedRule(props.namedRuleId.value)).named_rule;
+    namedRule.value = (
+      await services().station.getNamedRule(props.namedRuleId.value, verifiedReads)
+    ).named_rule;
   } catch (e) {
     appStore.sendErrorNotification(e);
     error.value = getErrorMessage(e);
