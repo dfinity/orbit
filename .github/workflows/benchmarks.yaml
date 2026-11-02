@@ -26,14 +26,19 @@ env:
   SCCACHE_GHA_ENABLED: 'true'
   RUSTC_WRAPPER: 'sccache'
 
+permissions:
+  contents: read
+
 jobs:
   bench-station:
     name: 'bench-station:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@65101d47ea8028ed0c98a1cdea8dd9182e9b5133 # v0.0.8
       - name: 'Run Station Benchmarks'
         run: ./scripts/benchmark-canister.sh ./core/station/impl

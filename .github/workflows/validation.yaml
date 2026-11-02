@@ -23,6 +23,9 @@ env:
   # Use the local .curlrc
   CURL_HOME: .
 
+permissions:
+  contents: read
+
 jobs:
   validate-commits:
     name: 'validate-commits:required'
@@ -31,9 +34,10 @@ jobs:
       TITLE: ${{ github.event.pull_request.title }}
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       # Conditional steps for commit message check
       - if: ${{ github.event_name != 'pull_request' }}
         name: 'Setup Python'
@@ -64,9 +68,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Install dfx'
-        uses: dfinity/setup-dfx@main
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365 # main (no tags/releases published)
       - name: 'Run dfx generate'
         run: |
           dfx generate control_panel
@@ -78,7 +84,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Check code'
         run: |
           cargo fmt --all -- --check
@@ -91,7 +99,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Install Dependencies'

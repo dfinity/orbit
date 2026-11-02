@@ -8,6 +8,11 @@ on:
     paths:
       - '.release.json'
 
+# `orbit-cli release publish` pushes the release tags and creates the GitHub
+# releases, which needs contents: write and nothing else.
+permissions:
+  contents: write
+
 jobs:
   release_projects:
     name: 'release'
@@ -20,10 +25,13 @@ jobs:
           - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           fetch-tags: true
+          # Kept (the default): `git push origin --tags` authenticates with the
+          # token checkout leaves in .git/config.
+          persist-credentials: true
       # Helps with debugging
       - name: Show versions
         run: |
