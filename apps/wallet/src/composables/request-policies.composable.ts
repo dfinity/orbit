@@ -16,6 +16,7 @@ import { mapRequestSpecifierToEnum } from '~/mappers/request-specifiers.mapper';
 import { services } from '~/plugins/services.plugin';
 import { StationService } from '~/services/station.service';
 import { useStationStore } from '~/stores/station.store';
+import { useVerifiedReads } from '~/composables/verified-reads.composable';
 import { SelectItem } from '~/types/helper.types';
 import { RequestPolicyRuleEnum, RequestPolicyRuleUserSpecifierEnum } from '~/types/station.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
@@ -166,12 +167,13 @@ export type PopulatedRule =
 async function populateUserSpecifier(
   userSpecifier: UserSpecifier,
   station: StationService,
+  verifiedCall: boolean,
 ): Promise<PopulatedUserSpecifier> {
   if (variantIs(userSpecifier, 'Id')) {
     const users = await Promise.all(
       userSpecifier.Id.map(id =>
         station
-          .getUser({ user_id: id })
+          .getUser({ user_id: id }, verifiedCall)
           .catch(_ => ({
             user: {
               id,
@@ -193,7 +195,7 @@ async function populateUserSpecifier(
     const groups = await Promise.all(
       userSpecifier.Group.map(group_id =>
         station
-          .getUserGroup({ user_group_id: group_id })
+          .getUserGroup({ user_group_id: group_id }, verifiedCall)
           .catch(_ => ({
             user_group: {
               name: group_id,
@@ -219,6 +221,7 @@ async function populateUserSpecifier(
 async function populateRule(
   rule: RequestPolicyRule,
   station: StationService,
+  verifiedCall: boolean,
 ): Promise<PopulatedRule> {
   if (variantIs(rule, 'AutoApproved')) {
     return {
@@ -228,13 +231,17 @@ async function populateRule(
     return {
       kind: RequestPolicyRuleEnum.Quorum,
       n: rule.Quorum.min_approved,
-      approvers: await populateUserSpecifier(rule.Quorum.approvers, station),
+      approvers: await populateUserSpecifier(rule.Quorum.approvers, station, verifiedCall),
     };
   } else if (variantIs(rule, 'QuorumPercentage')) {
     return {
       kind: RequestPolicyRuleEnum.QuorumPercentage,
       n: rule.QuorumPercentage.min_approved,
-      approvers: await populateUserSpecifier(rule.QuorumPercentage.approvers, station),
+      approvers: await populateUserSpecifier(
+        rule.QuorumPercentage.approvers,
+        station,
+        verifiedCall,
+      ),
     };
   } else if (variantIs(rule, 'AllowListedByMetadata')) {
     return {
@@ -249,20 +256,20 @@ async function populateRule(
   } else if (variantIs(rule, 'AllOf')) {
     return {
       kind: RequestPolicyRuleEnum.AllOf,
-      rules: await Promise.all(rule.AllOf.map(r => populateRule(r, station))),
+      rules: await Promise.all(rule.AllOf.map(r => populateRule(r, station, verifiedCall))),
     };
   } else if (variantIs(rule, 'AnyOf')) {
     return {
       kind: RequestPolicyRuleEnum.AnyOf,
-      rules: await Promise.all(rule.AnyOf.map(r => populateRule(r, station))),
+      rules: await Promise.all(rule.AnyOf.map(r => populateRule(r, station, verifiedCall))),
     };
   } else if (variantIs(rule, 'Not')) {
     return {
       kind: RequestPolicyRuleEnum.Not,
-      rule: await populateRule(rule.Not, station),
+      rule: await populateRule(rule.Not, station, verifiedCall),
     };
   } else if (variantIs(rule, 'NamedRule')) {
-    const { named_rule } = await station.getNamedRule(rule.NamedRule).catch(_ => ({
+    const { named_rule } = await station.getNamedRule(rule.NamedRule, verifiedCall).catch(_ => ({
       named_rule: {
         name: undefined,
         id: rule.NamedRule,
@@ -274,7 +281,9 @@ async function populateRule(
       kind: 'NamedRule',
       name: named_rule.name,
       id: named_rule.id,
-      rule: named_rule.rule ? await populateRule(named_rule.rule, station) : undefined,
+      rule: named_rule.rule
+        ? await populateRule(named_rule.rule, station, verifiedCall)
+        : undefined,
     };
   } else {
     return unreachable(rule);
@@ -404,6 +413,7 @@ export function populatedRuleToTooltip(
 
 export function useRuleToTooltip(rule: Ref<RequestPolicyRule | null>): Ref<string | null> {
   const station = services().station;
+  const verifiedReads = useVerifiedReads();
   const i18n = useI18n();
   const tooltip = ref<string | null>(null);
 
@@ -415,7 +425,7 @@ export function useRuleToTooltip(rule: Ref<RequestPolicyRule | null>): Ref<strin
         return;
       }
 
-      const populatedRule = await populateRule(rule, station);
+      const populatedRule = await populateRule(rule, station, verifiedReads);
       tooltip.value = populatedRuleToTooltip(populatedRule, i18n);
     },
     { immediate: true },
@@ -443,6 +453,7 @@ export function usePopulatedRule(rule: Ref<RequestPolicyRule | null>): {
   complexRuleSummary: Ref<string | null>;
 } {
   const station = services().station;
+  const verifiedReads = useVerifiedReads();
   const populatedRule = ref<PopulatedRule | null>(null);
   const complexRuleSummary = ref<string | null>(null);
   const i18n = useI18n();
@@ -453,7 +464,7 @@ export function usePopulatedRule(rule: Ref<RequestPolicyRule | null>): {
         populatedRule.value = null;
         return;
       }
-      populatedRule.value = await populateRule(rule, station);
+      populatedRule.value = await populateRule(rule, station, verifiedReads);
       const isComplex = isRuleComplex(populatedRule.value);
       complexRuleSummary.value = isComplex
         ? populatedRuleToTooltip(populatedRule.value, i18n)

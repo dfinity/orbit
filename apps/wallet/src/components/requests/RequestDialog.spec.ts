@@ -226,7 +226,11 @@ describe('RequestDialog', () => {
 
     await flushPromises();
 
-    expect(services().station.getNextApprovableRequest).toHaveBeenCalled();
+    // the next request is rendered from this response, so it is loaded like the initial one
+    expect(services().station.getNextApprovableRequest).toHaveBeenCalledWith(
+      expect.anything(),
+      true,
+    );
 
     contents = wrapper.findComponent(VCard);
 

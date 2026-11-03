@@ -1587,8 +1587,9 @@ export class StationService {
     return result.Ok.request;
   }
 
-  async getNamedRule(id: UUID): Promise<ExtractOk<GetNamedRuleResult>> {
-    const result = await this.actor.get_named_rule({ named_rule_id: id });
+  async getNamedRule(id: UUID, verifiedCall = false): Promise<ExtractOk<GetNamedRuleResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_named_rule({ named_rule_id: id });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

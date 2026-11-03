@@ -56,7 +56,7 @@ const appStore = useAppStore();
 
 onMounted(async () => {
   try {
-    const { system } = await stationService.systemInfo();
+    const { system } = await stationService.systemInfo(!isListMode.value);
     currentSystemInfo.value = system;
   } catch (error) {
     appStore.sendErrorNotification(error);

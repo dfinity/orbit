@@ -99,6 +99,7 @@ import RequestDetailView from './RequestDetailView.vue';
 import LoadingMessage from '~/components/LoadingMessage.vue';
 import { RequestApprovalStatusEnum } from '~/types/requests.types';
 import { getRequestUrl } from '~/utils/app.utils';
+import { provideVerifiedReads } from '~/composables/verified-reads.composable';
 
 type DataType = {
   request: GetRequestResultData['request'];
@@ -136,6 +137,9 @@ const skippedRequestIds = ref<UUID[]>([]);
 
 const requestType = ref<ListRequestsOperationType | undefined>();
 const loadNext = ref(false);
+
+// Shared components rendered inside this dialog load their data with verified calls too.
+provideVerifiedReads();
 
 watch(props.open, isOpen => {
   if (isOpen) {
@@ -221,10 +225,14 @@ const onRequestLoaded = (data: Awaited<ReturnType<typeof loadRequest>>): void =>
 };
 
 const loadNextRequest = async (): Promise<DataType | null> => {
-  const nextRequest = await services().station.getNextApprovableRequest({
-    types: [requestType.value!],
-    excludedRequestIds: skippedRequestIds.value,
-  });
+  // The result is rendered directly, so it is loaded with a verified call like in `loadRequest`.
+  const nextRequest = await services().station.getNextApprovableRequest(
+    {
+      types: [requestType.value!],
+      excludedRequestIds: skippedRequestIds.value,
+    },
+    true,
+  );
 
   if (nextRequest.length === 0) {
     return null;

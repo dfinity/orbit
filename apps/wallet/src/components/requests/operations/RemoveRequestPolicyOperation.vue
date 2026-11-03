@@ -53,7 +53,10 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await station.service.getRequestPolicy(props.operation.input.policy_id);
+    const currentEntry = await station.service.getRequestPolicy(
+      props.operation.input.policy_id,
+      true,
+    );
 
     formValue.value = currentEntry.policy;
   } catch (e) {
