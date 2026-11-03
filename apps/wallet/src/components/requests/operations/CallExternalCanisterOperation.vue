@@ -57,10 +57,13 @@ const fillReviewContext = (
 
 const loadWithFullInformation = async (): Promise<void> => {
   try {
-    const result = await station.service.getRequest({
-      request_id: props.request.id,
-      with_full_info: [true],
-    });
+    const result = await station.service.getRequest(
+      {
+        request_id: props.request.id,
+        with_full_info: [true],
+      },
+      true,
+    );
 
     if (variantIs(result.request.operation, 'CallExternalCanister')) {
       const candidIdl = await fetchCanisterIdlFromMetadata(
