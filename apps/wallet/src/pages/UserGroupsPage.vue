@@ -76,7 +76,10 @@
                   :submit="id => station.service.removeUserGroup({ user_group_id: id })"
                   @failed="useOnFailedOperation"
                   @submitted="useOnSuccessfulOperation"
-                />
+                >
+                  <p>{{ $t('app.dialog_confirmation_question') }}</p>
+                  <UserGroupMembersWarning :user-group-id="userGroup.id" class="mt-4" />
+                </ActionBtn>
                 <OpenUserGroupBtn
                   :icon="!hasEditPrivilege(userGroup.id) ? mdiEye : mdiPencil"
                   :user-group-id="userGroup.id"
@@ -116,6 +119,7 @@ import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
 import OpenUserGroupBtn from '~/components/users/OpenUserGroupBtn.vue';
+import UserGroupMembersWarning from '~/components/users/UserGroupMembersWarning.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
   useOnFailedOperation,

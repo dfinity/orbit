@@ -514,6 +514,24 @@ impl SystemService {
         NAMED_RULE_REPOSITORY.build_cache();
     }
 
+    /// Removes the ids of user groups that no longer exist from the user records.
+    ///
+    /// Must only be called after the cache is initialized.
+    fn remove_missing_user_groups_from_users(&self) {
+        for mut user in USER_REPOSITORY.list() {
+            let groups_count = user.groups.len();
+
+            user.groups
+                .retain(|group_id| USER_GROUP_REPOSITORY.get(group_id).is_some());
+
+            if user.groups.len() != groups_count {
+                user.last_modification_timestamp = next_time();
+
+                USER_REPOSITORY.insert(user.to_key(), user);
+            }
+        }
+    }
+
     /// Initializes the canister with the given owners and settings.
     ///
     /// Must only be called within a canister init call.
@@ -605,6 +623,8 @@ impl SystemService {
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
         // initializes the cache of the canister data, must happen during the same call as the upgrade
         self.init_cache();
+
+        self.remove_missing_user_groups_from_users();
 
         // recompute all metrics to make sure they are up to date, only gauges are recomputed
         // since they are the only ones that can change over time.
@@ -1286,7 +1306,10 @@ mod tests {
     use super::*;
     use crate::{
         core::validation::disable_mock_resource_validation,
-        models::request_test_utils::mock_request,
+        models::{
+            request_test_utils::mock_request, user_group_test_utils::add_group,
+            user_test_utils::mock_user,
+        },
         services::system::init_canister_sync_handlers::{
             set_initial_accounts, set_initial_assets, set_initial_named_rules,
             set_initial_request_policies, set_initial_user_groups, set_initial_users,
@@ -1356,6 +1379,30 @@ mod tests {
         let system_info = read_system_info();
 
         assert!(system_info.get_change_canister_request().is_none());
+    }
+
+    #[tokio::test]
+    async fn canister_upgrade_removes_missing_user_groups_from_users() {
+        let group = add_group("Test");
+        let missing_group_id = [255; 16];
+
+        let mut user = mock_user();
+        user.groups = vec![group.id, missing_group_id];
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        write_system_info(SystemInfo::new(
+            Principal::management_canister(),
+            Vec::new(),
+        ));
+
+        SYSTEM_SERVICE
+            .upgrade_canister(None)
+            .await
+            .expect("Failed to upgrade canister");
+
+        let user = USER_REPOSITORY.get(&user.to_key()).unwrap();
+
+        assert_eq!(user.groups, vec![group.id]);
     }
 
     #[tokio::test]

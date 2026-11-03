@@ -900,6 +900,14 @@ export default {
     external_canisters: 'Canisters',
     approval_rules: 'Regras de aprovação',
   },
+  user_groups: {
+    members_removal_warning:
+      'Remover este grupo afetará o usuário {users}, que ainda é membro dele. | Remover este grupo afetará os usuários {users}, que ainda são membros dele.',
+    members_removal_warning_more:
+      'Remover este grupo afetará os usuários {users} e mais {count}, que ainda são membros dele.',
+    members_removal_warning_unknown:
+      'Remover este grupo também o removerá de todos os usuários que ainda são membros dele.',
+  },
   pages: {
     dashboard: {
       title: 'Dashboard',
