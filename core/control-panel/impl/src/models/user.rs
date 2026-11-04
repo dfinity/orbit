@@ -100,6 +100,13 @@ impl User {
 
     pub fn add_deployed_station(&mut self, station: Principal) {
         self.deployed_stations.push(station);
+    }
+
+    /// Consumes one unit of the user's daily deploy quota.
+    ///
+    /// Kept separate from `add_deployed_station` so the quota can be charged before any cycles are
+    /// spent, rather than only on the fully successful path.
+    pub fn consume_deploy_quota(&mut self) {
         self.user_rate_limiter.add_deployed_station();
     }
 
