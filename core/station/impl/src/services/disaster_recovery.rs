@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
-use orbit_essentials::api::ServiceResult;
+use orbit_essentials::api::{ApiResult, ServiceResult};
 use uuid::Uuid;
 
 use super::{SystemService, UserService, USER_SERVICE};
@@ -40,7 +40,7 @@ impl DisasterRecoveryService {
         let accounts = self.account_repository.list();
         let assets = self.asset_repository.list();
 
-        ic_cdk::call::<_, ()>(
+        ic_cdk::call::<_, (ApiResult,)>(
             upgrader_canister_id,
             "set_disaster_recovery_accounts_and_assets",
             (upgrader_api::SetDisasterRecoveryAccountsAndAssetsInput {
@@ -49,9 +49,9 @@ impl DisasterRecoveryService {
             },),
         )
         .await
-        .map_err(|(_, err)| DisasterRecoveryError::AccountSyncFailed {
-            reason: err.to_string(),
-        })?;
+        .map_err(|(_, err)| err.to_string())
+        .and_then(|(result,)| result.map_err(|err| err.to_string()))
+        .map_err(|reason| DisasterRecoveryError::AccountSyncFailed { reason })?;
 
         Ok(())
     }
@@ -72,7 +72,7 @@ impl DisasterRecoveryService {
             })
             .unwrap_or_default();
 
-        ic_cdk::call::<_, ()>(
+        ic_cdk::call::<_, (ApiResult,)>(
             upgrader_canister_id,
             "set_disaster_recovery_committee",
             (upgrader_api::SetDisasterRecoveryCommitteeInput {
@@ -90,9 +90,9 @@ impl DisasterRecoveryService {
             },),
         )
         .await
-        .map_err(|(_, err)| DisasterRecoveryError::CommitteeSyncFailed {
-            reason: err.to_string(),
-        })?;
+        .map_err(|(_, err)| err.to_string())
+        .and_then(|(result,)| result.map_err(|err| err.to_string()))
+        .map_err(|reason| DisasterRecoveryError::CommitteeSyncFailed { reason })?;
 
         Ok(())
     }
@@ -130,8 +130,12 @@ pub fn disaster_recovery_observes_insert_user(observer: &mut Observer<(User, Opt
             let user_is_in_committee =
                 user.status == UserStatus::Active && user.groups.contains(&committee.user_group_id);
 
-            if user_is_in_committee && !user_was_previously_in_committee
-                || !user_is_in_committee && user_was_previously_in_committee
+            let mirrored_fields_changed = prev
+                .as_ref()
+                .is_none_or(|prev| prev.identities != user.identities || prev.name != user.name);
+
+            if user_is_in_committee != user_was_previously_in_committee
+                || (user_is_in_committee && mirrored_fields_changed)
             {
                 crate::core::ic_cdk::spawn(async {
                     if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
