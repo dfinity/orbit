@@ -1,3 +1,20 @@
+## 0.12.0 (2026-11-09)
+
+
+### 🚀 Features
+
+- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))
+
+
+### 🩹 Fixes
+
+- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))
+
+
+### ❤️  Thank You
+
+- Mario Ruci @MRmarioruci
+
 ## 0.11.0 (2026-06-08)
 
 
