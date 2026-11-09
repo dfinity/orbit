@@ -3,17 +3,12 @@
 
 ### 🚀 Features
 
-- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))
-
-
-### 🩹 Fixes
-
-- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))
+- **dfx-orbit,wallet:** support --wasm-memory-persistence for external canister upgrades ([#641](https://github.com/dfinity/orbit/pull/641))
 
 
 ### ❤️  Thank You
 
-- Mario Ruci @MRmarioruci
+- Arshavir Ter-Gabrielyan @aterga
 
 ## 0.11.0 (2026-06-08)
 

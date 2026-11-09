@@ -14,7 +14,7 @@
         "gitTag": "@orbit/dfx-orbit-v0.12.0",
         "isPrerelease": false
       },
-      "contents": "## 0.12.0 (2026-11-09)\n\n\n### 🚀 Features\n\n- **cli:** audit subcommand for station configuration sanity checks ([#638](https://github.com/dfinity/orbit/pull/638))\n\n\n### 🩹 Fixes\n\n- **e2e:** wait for the asset page before reading the balance in disaster recovery ([#668](https://github.com/dfinity/orbit/pull/668))\n\n\n### ❤️  Thank You\n\n- Mario Ruci @MRmarioruci"
+      "contents": "## 0.12.0 (2026-11-09)\n\n\n### 🚀 Features\n\n- **dfx-orbit,wallet:** support --wasm-memory-persistence for external canister upgrades ([#641](https://github.com/dfinity/orbit/pull/641))\n\n\n### ❤️  Thank You\n\n- Arshavir Ter-Gabrielyan @aterga"
     }
   }
 }
