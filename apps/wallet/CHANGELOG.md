@@ -1,3 +1,23 @@
+## 0.8.1 (2026-11-09)
+
+
+### 🩹 Fixes
+
+- **wallet:** prevent stale navigation on page load and de-flake the disaster recovery e2e test ([#671](https://github.com/dfinity/orbit/pull/671))
+
+- **wallet:** filter group tooltip users to active only ([#680](https://github.com/dfinity/orbit/pull/680))
+
+- **wallet:** consistently use verified calls in the request dialog ([#679](https://github.com/dfinity/orbit/pull/679))
+
+- **station,wallet:** remove a deleted user group from its members ([#675](https://github.com/dfinity/orbit/pull/675))
+
+
+### ❤️  Thank You
+
+- Arshavir Ter-Gabrielyan @aterga
+- Björn Tackmann @Dfinity-Bjoern
+- sea-snake @sea-snake
+
 ## 0.8.0 (2026-09-21)
 
 
