@@ -1,3 +1,15 @@
+## 0.12.0 (2026-11-09)
+
+
+### 🚀 Features
+
+- **dfx-orbit,wallet:** support --wasm-memory-persistence for external canister upgrades ([#641](https://github.com/dfinity/orbit/pull/641))
+
+
+### ❤️  Thank You
+
+- Arshavir Ter-Gabrielyan @aterga
+
 ## 0.11.0 (2026-06-08)
 
 
