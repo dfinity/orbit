@@ -96,16 +96,18 @@ const createICAssetsJson = (
 };
 
 export const withIcAssetsFile = (
-  opts: { isProduction?: boolean; publicDir?: string; fileName?: string } = {},
+  opts: { isProduction?: boolean; fileName?: string } = {},
 ): Plugin => {
   const isProduction = opts.isProduction ?? true;
-  const publicDir = opts.publicDir ?? 'public';
   const fileName = opts.fileName ?? '.ic-assets.json';
 
   return {
     name: 'with-ic-assets',
     writeBundle({ dir }) {
-      const icAssetsPath = resolve(__dirname, '../..', publicDir, fileName);
+      // Written into the build output, so that the release artifact carries the headers. Release
+      // deploys upload that artifact as is. Vite copies public/ before this hook runs, so a file
+      // written there would only reach the output of a later build, and never a clean one.
+      const icAssetsPath = resolve(dir!, fileName);
       const indexHtml = resolve(dir!, 'index.html');
       const indexContent = readFileSync(indexHtml, { encoding: 'utf-8' });
       const virtualDOM = load(indexContent);
