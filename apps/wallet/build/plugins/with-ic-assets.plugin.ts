@@ -4,6 +4,13 @@ import { Plugin } from 'vite';
 import { load } from 'cheerio';
 import { createHash } from 'node:crypto';
 
+// The wasm chunk stores of the control-panel registry, `wasm_chunk_store` in canister_ids.json.
+// Disaster recovery downloads registry modules from their HTTP interface.
+const WASM_CHUNK_STORE_ORIGINS = [
+  'https://f2mu6-kiaaa-aaaam-advhq-cai.icp0.io', // production
+  'https://lwcm6-3aaaa-aaaam-qb7ba-cai.icp0.io', // playground
+];
+
 const getContentSecurityPolicy = (
   isProduction: boolean,
   dynamicCspHeaders: Record<string, string[]> = {},
@@ -18,6 +25,7 @@ const getContentSecurityPolicy = (
       'https://ic0.app',
       'https://icp0.io',
       'https://3r4gx-wqaaa-aaaaq-aaaia-cai.icp0.io', // SNS aggregator
+      ...WASM_CHUNK_STORE_ORIGINS,
     ],
     'img-src': ["'self'", 'data:'],
     'font-src': ["'self'"],

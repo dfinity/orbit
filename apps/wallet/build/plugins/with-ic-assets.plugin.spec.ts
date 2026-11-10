@@ -1,10 +1,12 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { withIcAssetsFile } from './with-ic-assets.plugin';
 
 type IcAssetsRule = { match: string; headers?: Record<string, string> };
+
+const CANISTER_IDS_PATH = resolve(__dirname, '../../../../canister_ids.json');
 
 const INDEX_HTML = '<script>window.inline = true;</script><script src="/main.js"></script>';
 // sha256 of the inline script above, base64 encoded.
@@ -57,5 +59,18 @@ describe('with-ic-assets plugin', () => {
     expect(readHeadersForAllAssets(outDir)['Content-Security-Policy']).toContain(
       INLINE_SCRIPT_HASH,
     );
+  });
+
+  it('allows downloads from every wasm chunk store in canister_ids.json', () => {
+    runWriteBundle(outDir);
+    const csp = readHeadersForAllAssets(outDir)['Content-Security-Policy'] ?? '';
+    const connectSrc = csp.split('; ').find(directive => directive.startsWith('connect-src '));
+    const canisterIds = JSON.parse(readFileSync(CANISTER_IDS_PATH, 'utf-8'));
+    const stores = Object.values(canisterIds.wasm_chunk_store ?? {}) as string[];
+
+    expect(stores.length).toBeGreaterThan(0);
+    for (const store of stores) {
+      expect(connectSrc?.split(' ')).toContain(`https://${store}.icp0.io`);
+    }
   });
 });
