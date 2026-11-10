@@ -103,8 +103,10 @@ export const withVersionedEntrypoint = (
         encoding: 'utf-8',
       });
 
-      // copy everything from the public directory to the versioned directory
-      copyFolderRecursiveSync(publicDir, versionDir, [/.DS_Store/]);
+      // copy everything from the public directory to the versioned directory, except a leftover
+      // .ic-assets.json from older builds: nested under the versioned directory it would override
+      // the one with-ic-assets writes at the root of the output.
+      copyFolderRecursiveSync(publicDir, versionDir, [/.DS_Store/, /\.ic-assets\.json5?$/]);
     },
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
