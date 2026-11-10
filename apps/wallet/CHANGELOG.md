@@ -1,3 +1,7 @@
+## 0.8.2 (2026-11-10)
+
+This was a version bump only for wallet-dapp to align it with other projects, there were no code changes.
+
 ## 0.8.1 (2026-11-09)
 
 
