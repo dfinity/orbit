@@ -14,7 +14,7 @@
         "gitTag": "@orbit/wallet-dapp-v0.8.2",
         "isPrerelease": false
       },
-      "contents": "## 0.8.2 (2026-11-10)\n\nThis was a version bump only for wallet-dapp to align it with other projects, there were no code changes."
+      "contents": "## 0.8.2 (2026-11-10)\n\n\n### 🩹 Fixes\n\n- **wallet:** ship the security headers config in the build output ([#683](https://github.com/dfinity/orbit/pull/683))\n\n\n### ❤️  Thank You\n\n- Arshavir Ter-Gabrielyan @aterga"
     }
   }
 }
