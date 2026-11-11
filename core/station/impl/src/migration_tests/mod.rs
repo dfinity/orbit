@@ -53,6 +53,7 @@ mod test {
                 blockchain: crate::models::Blockchain::InternetComputer,
                 labels: vec!["Alice".to_string(), "Bob".to_string()],
                 last_modification_timestamp: 0,
+                last_modified_by: None,
                 metadata: Metadata::default(),
             },
             AddressBookEntry {
@@ -63,6 +64,7 @@ mod test {
                 blockchain: crate::models::Blockchain::InternetComputer,
                 labels: vec!["Alice".to_string(), "Bob".to_string()],
                 last_modification_timestamp: 0,
+                last_modified_by: None,
                 metadata: Metadata::new(
                     [
                         ("key1".to_string(), "value1".to_string()),
