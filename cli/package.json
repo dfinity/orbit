@@ -1,7 +1,8 @@
 {
-  "name": "orbit-cli",
+  "name": "orbit-release-cli",
   "version": "0.0.1",
   "bin": {
+    "orbit-release-cli": "./dist/cli.js",
     "orbit-cli": "./dist/cli.js"
   },
   "main": "cli.js",
