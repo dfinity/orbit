@@ -1,6 +1,5 @@
-import { execSync } from 'child_process';
 import { RegistryEntry, SearchRegistryResult } from '../generated/control_panel';
-import { execAsync } from '../utils';
+import { callControlPanel, getCanisterId } from './icp';
 import { Principal } from '@dfinity/principal';
 
 export enum Application {
@@ -8,13 +7,8 @@ export enum Application {
   Upgrader = 'upgrader',
 }
 
-export const getWasmChunkStoreId = (network: string = 'local'): Principal => {
-  const maybeCanisterId = execSync(`dfx canister id wasm_chunk_store --network ${network}`)
-    .toString()
-    .trim();
-
-  return Principal.fromText(maybeCanisterId);
-};
+export const getWasmChunkStoreId = (network: string = 'local'): Principal =>
+  getCanisterId('wasm_chunk_store', network);
 
 export const applicationToRegistryEntryMap: Record<Application, string> = {
   [Application.Station]: '@orbit/station',
@@ -52,17 +46,19 @@ export const searchRegistry = async (opts: {
   let offset = 0;
   const entries: RegistryEntry[] = [];
   do {
-    const unparsed = await execAsync(`
-      dfx canister call --identity '${opts.identity}' --network '${opts.network}' --output json control_panel search_registry 'record {
+    const result = await callControlPanel<SearchRegistryResult>({
+      method: 'search_registry',
+      network: opts.network,
+      identity: opts.identity,
+      query: true,
+      arg: `(record {
         pagination = opt record { offset = opt ${offset}; limit = opt 50; };
         sort_by = opt variant { Version = variant { Desc } };
         filter_by = vec {
           variant { Name = "${opts.name}" }
         };
-      }'
-    `);
-
-    const result: SearchRegistryResult = JSON.parse(unparsed);
+      })`,
+    });
     if ('Err' in result) {
       throw new Error(`Failed to search the registry: ${JSON.stringify(result.Err)}`);
     }

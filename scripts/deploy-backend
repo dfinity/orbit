@@ -15,9 +15,10 @@ set -eEuo pipefail
 # The signing key can be a pem file (--pem) or read straight from 1Password
 # (--op op://Vault/Item/field), so nothing has to be saved to disk by hand.
 #
-# Needs: gh, jq, cargo, dfx, icx-asset, orbit-cli (and op for --op).
+# Needs: gh, jq, cargo, icp, icx-asset, orbit-cli (and op for --op).
 
 REPO="dfinity/orbit"
+ICP_MIN_VERSION="1.3.0"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # target -> release tag prefix, wasm file name, artifacts subdir, cargo package
@@ -84,11 +85,18 @@ done
 [[ -z "$PEM" || -f "$PEM" ]] || die "pem file not found: $PEM"
 cd "$ROOT"
 
-# A dry run only resolves and verifies artifacts, so it needs neither dfx nor
+# A dry run only resolves and verifies artifacts, so it needs neither icp nor
 # orbit-cli. Do not make people install a toolchain to check a checksum.
 for c in gh jq cargo; do command -v "$c" >/dev/null || die "$c not found"; done
 if [[ -z "$DRY" ]]; then
-  command -v dfx >/dev/null || die "dfx not found"
+  command -v icp >/dev/null || die "icp not found: see https://cli.internetcomputer.org"
+  # Version checked, not just presence. An npm-installed icp under a node
+  # version manager can shadow a newer one on PATH, and the old argument
+  # handling fails deep inside a deploy rather than here.
+  icp_version="$(icp --version | awk '{ print $2 }')"
+  if [[ "$(printf '%s\n' "$ICP_MIN_VERSION" "$icp_version" | sort -V | head -1)" != "$ICP_MIN_VERSION" ]]; then
+    die "icp $icp_version is too old, need $ICP_MIN_VERSION or newer (found at $(command -v icp))"
+  fi
   if [[ "$TARGET" != "control-panel" ]]; then
     command -v orbit-cli >/dev/null || die "orbit-cli not found: run pnpm install at the repo root"
   fi
@@ -171,12 +179,12 @@ done
 
 if [[ -n "$DRY" ]]; then echo "dry run: artifacts verified, nothing shipped."; exit 0; fi
 
-# 2. Load the key into a throwaway dfx home.
+# 2. Load the key into a throwaway icp home.
 #
-#    DFX_CONFIG_ROOT only, never HOME. dfx is usually a dfxvm shim that resolves
-#    the version pinned in dfx.json under $HOME, so repointing HOME hides the
-#    installed toolchain and dfx exits with "0.30.2 is not installed". Both dfx
-#    and orbit-cli read the identity store from DFX_CONFIG_ROOT.
+#    icp-cli keys its identity store off HOME and is a single binary with no
+#    version shim behind it, so pointing HOME at a temp directory isolates the
+#    store without hiding the toolchain. Doing it after the downloads keeps the
+#    real HOME in place for gh.
 if [[ -n "$OP_REF" ]]; then
   command -v op >/dev/null || die "1Password CLI (op) not found"
   echo "==> reading key from 1Password"
@@ -185,17 +193,15 @@ if [[ -n "$OP_REF" ]]; then
   PEM="$TMP_PEM"
 fi
 
-DFX_HOME="$(mktemp -d)"; chmod 700 "$DFX_HOME"
-export DFX_CONFIG_ROOT="$DFX_HOME"
-dfx identity import "$IDENTITY" "$PEM" --storage-mode plaintext --force
-
-# Every network in dfx.json other than local points at mainnet, and dfx refuses
-# to use a plaintext identity against mainnet unless this is set. The identity
-# has to be plaintext because nothing here can answer a passphrase prompt, so
-# the warning is expected rather than something to fix. It applies to the
-# control-panel install and to the `dfx canister call` that orbit-cli runs
-# underneath `registry publish`.
-export DFX_WARNING=-mainnet_plaintext_identity
+ICP_HOME="$(mktemp -d)"; chmod 700 "$ICP_HOME"
+export HOME="$ICP_HOME"
+# Plaintext because nothing here can answer a passphrase prompt. icp-cli warns
+# about that on import, which is expected rather than something to fix.
+icp identity import "$IDENTITY" --from-pem "$PEM" --storage plaintext
+# Settings live under the throwaway home too, so this neither nags about
+# updates nor sends telemetry from a deploy, and leaves real settings alone.
+icp settings update-check off >/dev/null
+icp settings telemetry off >/dev/null
 
 # 3. Ship it.
 case "$TARGET" in
@@ -205,8 +211,8 @@ case "$TARGET" in
     ;;
   control-panel)
     echo "==> upgrading the control-panel canister on $NETWORK"
-    dfx canister install control_panel \
-      --network "$NETWORK" --identity "$IDENTITY" \
+    icp canister install "$(jq -re --arg n "$NETWORK" '.control_panel[$n]' canister_ids.json)" \
+      --network https://icp0.io --root-key mainnet --identity "$IDENTITY" \
       --wasm "artifacts/control-panel/${WASM[control-panel]}" \
       --mode upgrade --yes
     ;;

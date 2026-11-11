@@ -6,11 +6,11 @@
   },
   "main": "cli.js",
   "scripts": {
-    "build": "tsc && mkdir -p dist/audit/generated && cp src/audit/generated/station.did.js dist/audit/generated/",
+    "build": "tsc && mkdir -p dist/audit/generated dist/generated && cp src/audit/generated/station.did.js dist/audit/generated/ && cp src/generated/control_panel.did.js dist/generated/",
     "start": "node dist/cli.js",
     "expose": "pnpm link --global",
     "test": "vitest run",
-    "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts",
+    "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts && didc bind --target js ../core/control-panel/api/spec.did | sed -E 's/^export const ([a-zA-Z_]+)/exports.\\1/g' > ./src/generated/control_panel.did.js",
     "generate-station-types": "didc bind --target ts ../core/station/api/spec.did > ./src/audit/generated/station.did.d.ts && didc bind --target js ../core/station/api/spec.did | sed -E 's/^export const ([a-zA-Z_]+)/exports.\\1/g' > ./src/audit/generated/station.did.js && cp ../core/station/api/spec.did ./src/audit/generated/station.did"
   },
   "devDependencies": {
