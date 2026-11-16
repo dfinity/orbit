@@ -1,3 +1,15 @@
+## 0.8.2 (2026-11-10)
+
+
+### 🩹 Fixes
+
+- **wallet:** ship the security headers config in the build output ([#683](https://github.com/dfinity/orbit/pull/683))
+
+
+### ❤️  Thank You
+
+- Arshavir Ter-Gabrielyan @aterga
+
 ## 0.8.1 (2026-11-09)
 
 
