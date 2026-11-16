@@ -45,7 +45,7 @@ For detailed information on orbit components and terminology, please refer to th
 
 ### Production canister IDs
 
-The following singleton canisters are deployed once on the ICP mainnet and have fixed canister IDs:
+Orbit's production deployment on the ICP mainnet uses the following singleton canisters, each with a fixed canister ID:
 
 | Canister | Description | Canister ID |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ The following singleton canisters are deployed once on the ICP mainnet and have 
 
 Station and Upgrader canisters are not singletons: a new pair is deployed for each Orbit Station, so each station has its own canister IDs.
 
-The source of truth for these IDs (including the `playground` and `testing` environments) is [`canister_ids.json`](canister_ids.json).
+Separate instances of some of these canisters also run on mainnet for the `playground` and `testing` environments. The source of truth for all of these IDs is [`canister_ids.json`](canister_ids.json).
 
 ## Target Architecture
 
