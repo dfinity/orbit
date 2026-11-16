@@ -58,7 +58,7 @@
     "@nx/devkit": "19.8.3",
     "@nx/js": "19.8.3",
     "@nx/workspace": "19.8.3",
-    "@playwright/test": "^1.55.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "22.7.4",
     "@typescript-eslint/eslint-plugin": "8.23.0",
     "@typescript-eslint/parser": "8.23.0",

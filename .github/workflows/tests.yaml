@@ -187,6 +187,12 @@ jobs:
       - name: Build test canister
         run: |
           ./scripts/generate-wasm.sh test_canister
+      # Install the browsers the e2e projects use together with their OS packages, so that
+      # a new runner image (ubuntu-latest moves between Ubuntu releases) cannot leave them
+      # without the system libraries they need.
+      - name: 'Install Playwright browsers'
+        run: |
+          pnpm exec playwright install --with-deps chromium firefox
       - name: Run e2e tests
         run: |
           pnpm run test:e2e
