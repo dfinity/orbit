@@ -43,6 +43,22 @@ Orbit is composed of several components, each with its own role and responsibili
 
 For detailed information on orbit components and terminology, please refer to the [Orbit Glossary](docs/old/GLOSSARY.md).
 
+### Production canister IDs
+
+Orbit's production deployment on the ICP mainnet uses the following singleton canisters, each with a fixed canister ID:
+
+| Canister | Description | Canister ID |
+| --- | --- | --- |
+| Control Panel | Facilitates common operations for accessing and managing Orbit Stations | `5mxvd-qaaaa-aaaal-ajbkq-cai` |
+| Wallet (App) | Frontend of the Orbit Wallet | `5fu67-giaaa-aaaal-ajbla-cai` |
+| Wasm Chunk Store | Stores large wasm modules in chunks for canister upgrades | `f2mu6-kiaaa-aaaam-advhq-cai` |
+| Marketing website | Frontend of the Orbit marketing website | `kguhj-fyaaa-aaaaa-qad6a-cai` |
+| Docs portal | Frontend of the Orbit documentation | `bp6mw-eqaaa-aaaac-ahroq-cai` |
+
+Station and Upgrader canisters are not singletons: a new pair is deployed for each Orbit Station, so each station has its own canister IDs.
+
+Separate instances of some of these canisters also run on mainnet for the `playground` and `testing` environments. The source of truth for all of these IDs is [`canister_ids.json`](canister_ids.json).
+
 ## Target Architecture
 
 The Orbit platform is designed to be modular and extensible, allowing developers to build a wide range of applications on top of it. The platform consists of several components, including the Orbit Station canisters, UI canisters and Control Panel. Developers can build custom applications using the Orbit SDK and CDK, and extend the platform with third-party integrations from the Extensions Marketplace for additional functionality. The highlighted components are part of the current release. The remaining components will be developed in future iterations.
