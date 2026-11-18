@@ -7,7 +7,7 @@ use crate::{
         metrics::recompute_metrics,
         read_system_info, read_system_state, write_system_info,
     },
-    errors::SystemError,
+    errors::{DisasterRecoveryError, SystemError},
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         Asset, Blockchain, CanisterInstallMode, ManageSystemInfoOperationInput, Metadata,
@@ -23,6 +23,7 @@ use crate::{
         change_canister::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
         disaster_recovery::DISASTER_RECOVERY_SERVICE,
         request::{RequestService, REQUEST_SERVICE},
+        USER_SERVICE,
     },
     SYSTEM_VERSION,
 };
@@ -183,7 +184,26 @@ impl SystemService {
         res
     }
 
-    pub fn set_disaster_recovery_committee(committee: Option<DisasterRecoveryCommittee>) {
+    /// Sets the committee of a `SetDisasterRecovery` request.
+    pub fn set_disaster_recovery_committee(
+        committee: Option<DisasterRecoveryCommittee>,
+    ) -> ServiceResult<()> {
+        Self::assert_disaster_recovery_committee(committee.as_ref())?;
+        Self::store_disaster_recovery_committee(committee);
+
+        Ok(())
+    }
+
+    /// Fails unless the committee is set and its user group has an active member.
+    pub fn assert_disaster_recovery_committee(
+        committee: Option<&DisasterRecoveryCommittee>,
+    ) -> ServiceResult<()> {
+        let committee = committee.ok_or(DisasterRecoveryError::MissingCommittee)?;
+
+        USER_SERVICE.assert_disaster_recovery_committee_has_active_member(committee, None)
+    }
+
+    fn store_disaster_recovery_committee(committee: Option<DisasterRecoveryCommittee>) {
         let mut system_info = read_system_info();
         system_info.set_disaster_recovery_committee(committee);
         write_system_info(system_info);
@@ -435,7 +455,7 @@ impl SystemService {
             match init.initial_config {
                 InitialConfig::WithAllDefaults { admin_quorum, .. }
                 | InitialConfig::WithDefaultPolicies { admin_quorum, .. } => {
-                    SystemService::set_disaster_recovery_committee(Some(
+                    SystemService::store_disaster_recovery_committee(Some(
                         DisasterRecoveryCommittee {
                             quorum: admin_quorum,
                             user_group_id: *crate::models::ADMIN_GROUP_ID,
@@ -446,7 +466,7 @@ impl SystemService {
                     disaster_recovery_committee,
                     ..
                 } => {
-                    SystemService::set_disaster_recovery_committee(
+                    SystemService::store_disaster_recovery_committee(
                         disaster_recovery_committee.map(|committee| committee.into()),
                     );
                 }

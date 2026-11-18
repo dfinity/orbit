@@ -9,8 +9,8 @@ use crate::utils::{
     get_disaster_recovery_state, get_icp_asset, get_system_info, get_upgrader_disaster_recovery,
     get_upgrader_logs, get_user, request_disaster_recovery, set_disaster_recovery,
     set_disaster_recovery_accounts, set_disaster_recovery_accounts_and_assets,
-    set_disaster_recovery_committee, upload_canister_chunks_to_asset_canister, user_test_id,
-    ADMIN_GROUP_ID, NNS_ROOT_CANISTER_ID,
+    set_disaster_recovery_committee, submit_request_raw, upload_canister_chunks_to_asset_canister,
+    user_test_id, ADMIN_GROUP_ID, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
@@ -394,6 +394,106 @@ fn test_disaster_recovery_flow() {
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 
     assert!(dr_status.recovery_requests.is_empty());
+}
+
+#[test]
+fn test_set_disaster_recovery_requires_committee() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let upgrader_id = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).upgrader_id;
+    let committee_before = get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station)
+        .expect("No committee found");
+
+    let error = submit_request_raw(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        RequestOperationInput::SetDisasterRecovery(SetDisasterRecoveryOperationInput {
+            committee: None,
+        }),
+    )
+    .expect("Failed to call create_request")
+    .0
+    .expect_err("A request without a committee should be refused");
+
+    assert_eq!(error.code, "VALIDATION_ERROR");
+    assert!(error
+        .details
+        .unwrap_or_default()
+        .get("info")
+        .is_some_and(|info| info.contains("MISSING_COMMITTEE")));
+
+    let committee_after = get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station)
+        .expect("No committee found");
+    assert_eq!(committee_after.users.len(), committee_before.users.len());
+}
+
+#[test]
+fn test_committee_member_identity_change_is_synced() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let upgrader_id = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).upgrader_id;
+
+    let old_identity = user_test_id(1);
+    let new_identity = user_test_id(2);
+    let member = add_user(
+        &env,
+        old_identity,
+        vec![ADMIN_GROUP_ID.hyphenated().to_string()],
+        canister_ids.station,
+    );
+
+    // a quorum above the number of requests made below keeps the recovery from starting
+    set_disaster_recovery(
+        &env,
+        canister_ids.station,
+        SetDisasterRecoveryOperationInput {
+            committee: Some(DisasterRecoveryCommitteeDTO {
+                quorum: 3,
+                user_group_id: ADMIN_GROUP_ID.hyphenated().to_string(),
+            }),
+        },
+    );
+
+    let edit_user = RequestOperationInput::EditUser(EditUserOperationInput {
+        id: member.id,
+        name: None,
+        identities: Some(vec![new_identity]),
+        groups: None,
+        status: None,
+        cancel_pending_requests: None,
+    });
+    execute_request(&env, WALLET_ADMIN_USER, canister_ids.station, edit_user).unwrap();
+    for _ in 0..5 {
+        env.tick();
+    }
+
+    let committee = get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station)
+        .expect("No committee found");
+    let identities: Vec<_> = committee
+        .users
+        .iter()
+        .flat_map(|user| user.identities.iter())
+        .collect();
+    assert!(identities.contains(&&new_identity));
+    assert!(!identities.contains(&&old_identity));
+
+    let request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            module: vec![],
+            module_extra_chunks: None,
+            arg: vec![],
+            install_mode: upgrader_api::InstallMode::Reinstall,
+        },
+    );
+    request_disaster_recovery(&env, upgrader_id, old_identity, request.clone())
+        .expect_err("The previous identity should not be able to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, new_identity, request)
+        .expect("The new identity should be able to request disaster recovery");
 }
 
 // The goal of this test is not to check if the committee is set correctly, but to check that when the station is

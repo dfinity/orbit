@@ -2,13 +2,15 @@ use crate::{
     core::{
         authorization::Authorization,
         ic_cdk::next_time,
+        read_system_info,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
-    errors::UserError,
+    errors::{DisasterRecoveryError, UserError},
     mappers::{authorization::USER_PRIVILEGES, HelperMapper, UserMapper},
     models::{
         resource::{Resource, ResourceId, UserResourceAction},
+        system::DisasterRecoveryCommittee,
         AddUserOperationInput, EditUserOperationInput, RequestStatus, RequestStatusCode, User,
         UserCallerPrivileges, UserGroupId, UserId, UserKey, UserStatus, ADMIN_GROUP_ID,
     },
@@ -100,6 +102,9 @@ impl UserService {
         let user = self.user_repository.find_by_identity(identity);
         if let Some(mut user) = user {
             user.groups.retain(|group| *group != *ADMIN_GROUP_ID);
+            if let Some(committee) = read_system_info().get_disaster_recovery_committee() {
+                self.assert_disaster_recovery_committee_has_active_member(committee, Some(&user))?;
+            }
             self.user_repository.insert(user.to_key(), user.to_owned());
         }
 
@@ -165,6 +170,10 @@ impl UserService {
         user.update_with(input)?;
         user.validate()?;
 
+        if let Some(committee) = read_system_info().get_disaster_recovery_committee() {
+            self.assert_disaster_recovery_committee_has_active_member(committee, Some(&user))?;
+        }
+
         self.user_repository.insert(user.to_key(), user.to_owned());
 
         if let Some(true) = cancel_pending_requests {
@@ -185,6 +194,44 @@ impl UserService {
         }
 
         Ok(user)
+    }
+
+    /// Fails when the committee user group would have no active member. With `updated_user`,
+    /// only a change that takes an active member out of the committee is checked.
+    pub fn assert_disaster_recovery_committee_has_active_member(
+        &self,
+        committee: &DisasterRecoveryCommittee,
+        updated_user: Option<&User>,
+    ) -> ServiceResult<()> {
+        let is_active_member = |user: &User| {
+            user.status == UserStatus::Active && user.groups.contains(&committee.user_group_id)
+        };
+
+        if let Some(updated_user) = updated_user {
+            let leaves_committee = !is_active_member(updated_user)
+                && self
+                    .user_repository
+                    .get(&updated_user.to_key())
+                    .is_some_and(|stored_user| is_active_member(&stored_user));
+            if !leaves_committee {
+                return Ok(());
+            }
+        }
+
+        let has_other_active_member = self
+            .get_active_users_in_groups(&[committee.user_group_id])
+            .iter()
+            .any(|member| updated_user.is_none_or(|user| user.id != member.id));
+
+        if !has_other_active_member {
+            Err(DisasterRecoveryError::CommitteeWithoutActiveMembers {
+                user_group_id: Uuid::from_bytes(committee.user_group_id)
+                    .hyphenated()
+                    .to_string(),
+            })?
+        }
+
+        Ok(())
     }
 
     /// Returns the list of active users in the given groups.
@@ -307,12 +354,12 @@ impl UserService {
 mod tests {
     use super::*;
     use crate::{
-        core::{test_utils, validation::disable_mock_resource_validation},
+        core::{test_utils, validation::disable_mock_resource_validation, write_system_info},
         models::{
             permission::AuthScope,
-            user_group_test_utils::mock_user_group,
+            user_group_test_utils::{add_group, mock_user_group},
             user_test_utils::{self, mock_user},
-            EditPermissionOperationInput, UserStatus,
+            EditPermissionOperationInput, SystemInfo, UserStatus,
         },
         repositories::{UserGroupRepository, USER_REPOSITORY},
         services::permission::PERMISSION_SERVICE,
@@ -631,6 +678,127 @@ mod tests {
         assert_eq!(privileges.len(), 2);
         assert!(privileges.contains(&UserPrivilege::ListUsers));
         assert!(privileges.contains(&UserPrivilege::AddUser));
+    }
+
+    fn setup_committee(members: &[UserStatus]) -> (UserGroupId, Vec<User>) {
+        let group = add_group("committee");
+        let mut system_info = SystemInfo::default();
+        system_info.set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
+            user_group_id: group.id,
+            quorum: 1,
+        }));
+        write_system_info(system_info);
+
+        let users = members
+            .iter()
+            .map(|status| {
+                let mut user = mock_user();
+                user.groups = vec![group.id];
+                user.status = status.clone();
+                USER_REPOSITORY.insert(user.to_key(), user.clone());
+                user
+            })
+            .collect();
+
+        (group.id, users)
+    }
+
+    fn edit_user_input(user_id: UserId) -> EditUserOperationInput {
+        EditUserOperationInput {
+            user_id,
+            name: None,
+            identities: None,
+            groups: None,
+            status: None,
+            cancel_pending_requests: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn edit_user_cannot_remove_last_active_committee_member_from_group() {
+        let (group_id, users) = setup_committee(&[UserStatus::Active, UserStatus::Inactive]);
+
+        let mut input = edit_user_input(users[0].id);
+        input.groups = Some(vec![]);
+        let error = USER_SERVICE.edit_user(input).await.unwrap_err();
+
+        assert_eq!(error.code, "COMMITTEE_WITHOUT_ACTIVE_MEMBERS");
+        let stored = USER_REPOSITORY.get(&users[0].to_key()).unwrap();
+        assert_eq!(stored.groups, vec![group_id]);
+    }
+
+    #[tokio::test]
+    async fn edit_user_cannot_deactivate_last_active_committee_member() {
+        let (_, users) = setup_committee(&[UserStatus::Active, UserStatus::Inactive]);
+
+        let mut input = edit_user_input(users[0].id);
+        input.status = Some(UserStatus::Inactive);
+        let error = USER_SERVICE.edit_user(input).await.unwrap_err();
+
+        assert_eq!(error.code, "COMMITTEE_WITHOUT_ACTIVE_MEMBERS");
+        let stored = USER_REPOSITORY.get(&users[0].to_key()).unwrap();
+        assert_eq!(stored.status, UserStatus::Active);
+    }
+
+    #[tokio::test]
+    async fn edit_user_can_remove_committee_member_while_another_stays_active() {
+        let (_, users) = setup_committee(&[UserStatus::Active, UserStatus::Active]);
+
+        let mut input = edit_user_input(users[0].id);
+        input.groups = Some(vec![]);
+        let user = USER_SERVICE.edit_user(input).await.unwrap();
+
+        assert!(user.groups.is_empty());
+    }
+
+    #[tokio::test]
+    async fn edit_user_can_deactivate_committee_member_while_another_stays_active() {
+        let (_, users) = setup_committee(&[UserStatus::Active, UserStatus::Active]);
+
+        let mut input = edit_user_input(users[0].id);
+        input.status = Some(UserStatus::Inactive);
+        let user = USER_SERVICE.edit_user(input).await.unwrap();
+
+        assert_eq!(user.status, UserStatus::Inactive);
+    }
+
+    #[tokio::test]
+    async fn edit_user_outside_committee_works_while_committee_has_no_active_member() {
+        let (_, users) = setup_committee(&[UserStatus::Inactive]);
+        let outsider = mock_user();
+        USER_REPOSITORY.insert(outsider.to_key(), outsider.clone());
+
+        let mut input = edit_user_input(outsider.id);
+        input.name = Some("Renamed".to_string());
+        USER_SERVICE.edit_user(input).await.unwrap();
+
+        let mut input = edit_user_input(users[0].id);
+        input.name = Some("Renamed member".to_string());
+        USER_SERVICE.edit_user(input).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn remove_admin_cannot_remove_last_active_committee_member() {
+        let ctx: TestContext = setup();
+        let mut system_info = SystemInfo::default();
+        system_info.set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
+            user_group_id: *ADMIN_GROUP_ID,
+            quorum: 1,
+        }));
+        write_system_info(system_info);
+        let mut admin = mock_user();
+        admin.groups = vec![*ADMIN_GROUP_ID];
+        ctx.repository.insert(admin.to_key(), admin.clone());
+
+        let error = ctx
+            .service
+            .remove_admin(&admin.identities[0], &ctx.call_context)
+            .await
+            .unwrap_err();
+
+        assert_eq!(error.code, "COMMITTEE_WITHOUT_ACTIVE_MEMBERS");
+        let stored = ctx.repository.get(&admin.to_key()).unwrap();
+        assert_eq!(stored.groups, vec![*ADMIN_GROUP_ID]);
     }
 }
 
