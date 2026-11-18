@@ -39,6 +39,7 @@ impl AddressBookMapper {
     pub fn from_create_input(
         input: AddAddressBookEntryOperationInput,
         entry_id: UUID,
+        created_by: Option<UUID>,
     ) -> Result<AddressBookEntry, MapperError> {
         let new_entry = AddressBookEntry {
             id: entry_id,
@@ -49,6 +50,7 @@ impl AddressBookMapper {
             labels: input.labels,
             metadata: input.metadata.into(),
             last_modification_timestamp: next_time(),
+            last_modified_by: created_by,
         };
 
         Ok(new_entry)
