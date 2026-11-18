@@ -5,6 +5,7 @@ pub enum UpgraderApiError {
     Unauthorized,
     DisasterRecoveryInProgress,
     EmptyCommittee,
+    InvalidQuorum,
     Unexpected(String),
 }
 
@@ -29,6 +30,14 @@ impl From<UpgraderApiError> for ApiError {
             UpgraderApiError::EmptyCommittee => ApiError {
                 code: "EMPTY_COMMITTEE".to_owned(),
                 message: Some("Committee cannot be empty.".to_owned()),
+                details: None,
+            },
+            UpgraderApiError::InvalidQuorum => ApiError {
+                code: "INVALID_QUORUM".to_owned(),
+                message: Some(
+                    "Committee quorum must be greater than 0 and at most the number of committee members."
+                        .to_owned(),
+                ),
                 details: None,
             },
             UpgraderApiError::Unexpected(err) => ApiError {
