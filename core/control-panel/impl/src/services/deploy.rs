@@ -57,6 +57,14 @@ impl DeployService {
         let station_wasm_module = config.station_wasm_module;
         let station_wasm_module_extra_chunks = config.station_wasm_module_extra_chunks;
 
+        // Station init rejects an empty user list, so this would otherwise fail deterministically
+        // after the station has already been created and funded.
+        if input.admins.is_empty() {
+            return Err(DeployError::Failed {
+                reason: "At least one admin must be specified.".to_string(),
+            })?;
+        }
+
         let can_deploy_station_response = user.can_deploy_station();
         match can_deploy_station_response {
             CanDeployStation::Allowed(_) => {}
@@ -69,6 +77,11 @@ impl DeployService {
                 })?;
             }
         }
+
+        // Charged before the first irreversible spend below. Everything past this point costs
+        // cycles whether or not the deployment completes, so the quota must be consumed even if a
+        // later step fails.
+        self.user_service.consume_deploy_quota(&user.id, ctx)?;
 
         // Creates the station canister
         let station_canister = create_canister(input.subnet_selection, CANISTER_CREATION_CYCLES)

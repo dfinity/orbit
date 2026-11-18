@@ -131,6 +131,27 @@ impl UserService {
             .collect()
     }
 
+    /// Charges one deployment against the global and per-user daily quotas.
+    ///
+    /// Must be called before any cycles are spent. Creating and funding a station is irreversible,
+    /// so a deployment that fails afterwards has still consumed real cycles and must consume quota
+    /// too; charging only on success let a caller force a post-spend failure and drain the
+    /// canister's balance without ever advancing either counter.
+    pub fn consume_deploy_quota(&self, user_id: &UserId, ctx: &CallContext) -> ServiceResult<()> {
+        let mut user = self.get_user(user_id, ctx)?;
+        let mut config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
+
+        config.global_rate_limiter.add_deployed_station();
+        user.consume_deploy_quota();
+
+        write_canister_config(config);
+        self.user_repository.insert(user.to_key(), user);
+
+        Ok(())
+    }
+
     pub fn add_deployed_station(
         &self,
         user_id: &UserId,
@@ -138,16 +159,11 @@ impl UserService {
         ctx: &CallContext,
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
-        let mut config = canister_config().ok_or(DeployError::Failed {
-            reason: "Canister config not initialized.".to_string(),
-        })?;
 
-        config.global_rate_limiter.add_deployed_station();
         user.add_deployed_station(station_canister_id);
 
         user.validate()?;
 
-        write_canister_config(config);
         self.user_repository.insert(user.to_key(), user.clone());
 
         FUND_MANAGER.with(|fund_manager| {
@@ -343,6 +359,59 @@ mod tests {
 
         assert!(result.is_ok());
         assert!(duplicated_user_result.is_err());
+    }
+
+    #[tokio::test]
+    async fn consume_deploy_quota_charges_the_user_without_recording_a_station() {
+        crate::core::test_utils::init_canister_config();
+
+        let user: User = mock_user();
+        let ctx = CallContext::new(user.identity);
+        let service = UserService::default();
+
+        service.user_repository.insert(user.to_key(), user.clone());
+
+        for _ in 0..User::MAX_DEPLOYED_STATIONS_PER_DAY {
+            service
+                .consume_deploy_quota(&user.id, &ctx)
+                .expect("Failed to consume deploy quota");
+        }
+
+        let charged = service.user_repository.get(&user.to_key()).unwrap();
+
+        assert!(matches!(
+            charged.can_deploy_station(),
+            CanDeployStation::QuotaExceeded
+        ));
+        // The quota is charged for the attempt; the station itself is only recorded on success.
+        assert!(charged.get_deployed_stations().is_empty());
+    }
+
+    #[tokio::test]
+    async fn consume_deploy_quota_advances_the_global_limiter() {
+        crate::core::test_utils::init_canister_config();
+
+        let user: User = mock_user();
+        let ctx = CallContext::new(user.identity);
+        let service = UserService::default();
+
+        service.user_repository.insert(user.to_key(), user.clone());
+
+        let before = canister_config()
+            .unwrap()
+            .global_rate_limiter
+            .remaining_quota();
+
+        service
+            .consume_deploy_quota(&user.id, &ctx)
+            .expect("Failed to consume deploy quota");
+
+        let after = canister_config()
+            .unwrap()
+            .global_rate_limiter
+            .remaining_quota();
+
+        assert_eq!(before.unwrap() - 1, after.unwrap());
     }
 
     #[tokio::test]
