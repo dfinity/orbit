@@ -1,5 +1,5 @@
 import { createCommand } from 'commander';
-import { assertReplicaIsHealthy, execAsync } from '../utils';
+import { callControlPanel } from './icp';
 import { DeleteRegistryEntryResult } from '~/generated/control_panel';
 
 const command = createCommand('remove').description(
@@ -20,16 +20,13 @@ command
   .requiredOption('-k, --id <VALUE>', 'The id of the registry entry to remove.');
 
 command.action(async options => {
-  assertReplicaIsHealthy(options.network);
-
   console.log(`Removing the registry entry with id ${options.id}...`);
-  const unparsed = await execAsync(`
-    dfx canister call --identity '${options.identity}' --network '${options.network}'  --output json control_panel delete_registry_entry '(record {
-      id = "${options.id}"
-    })'
-  `);
-
-  const result: DeleteRegistryEntryResult = JSON.parse(unparsed);
+  const result = await callControlPanel<DeleteRegistryEntryResult>({
+    method: 'delete_registry_entry',
+    network: options.network,
+    identity: options.identity,
+    arg: `(record { id = "${options.id}" })`,
+  });
   if ('Ok' in result) {
     console.log('The registry entry has been removed.');
     return;
