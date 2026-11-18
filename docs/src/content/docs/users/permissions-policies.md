@@ -116,6 +116,19 @@ Approval policies can be based on the following rule types:
 4. Configure any additional parameters, such as quorum size or percentage.
 5. Save the policy to activate it.
 
+## **System-Level Actions Share One Permission**
+
+**System upgrade**, **Configure disaster recovery**, and **System restore** are listed as separate actions, but they are governed by a single underlying permission. A policy configured for any one of them applies to all three. Because matching policies are combined with OR, the **least restrictive** policy on any of the three decides all of them.
+
+This matters when delegating:
+
+- Granting a group approval authority over **Configure disaster recovery** also gives them approval authority over **System upgrade**, which installs station code.
+- Configuring disaster recovery sets *which group is the recovery committee, and its quorum*. A group that can approve that change can appoint itself as the committee and then recover the station using code of its choosing. It is therefore equivalent in power to a station upgrade in its own right, independently of the shared permission.
+- Adding a **more** restrictive policy to one of the three does not tighten the others. The least restrictive matching policy still applies.
+- **System restore** cannot be configured on its own; it is always governed by whichever policy covers the shared permission.
+
+Treat all three as a single, highest-privilege capability, and delegate them only to the group you would trust to replace the station's code outright.
+
 ## **Best Practices for Approval Policies**
 
 - **Use Predefined policies for Consistency:** Define approval rules for common approval scenarios to reduce errors.
